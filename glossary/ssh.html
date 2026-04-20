@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>SSH — Encrypted Remote Shell, The Front Door Of Every Pentest ☕</title>
+<link rel="stylesheet" href="../assets/styles.css" />
+</head>
+<body data-page-slug="ssh">
+
+<div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
+
+<div class="topbar">
+  <a class="logo" href="../index.html">☕ CYBERSEC.VAULT</a>
+  <nav>
+    <a href="../index.html">Home</a>
+    <a href="../index.html#topics-web">Topics</a>
+    <a href="index.html" class="active">Glossary</a>
+    <a href="../tryhackme/index.html">THM</a>
+  </nav>
+  <div class="search-wrap">
+    <input type="text" class="search" placeholder="Search (press /)..." />
+    <div class="search-results"></div>
+  </div>
+</div>
+
+<div class="breadcrumb">
+  <a href="../index.html">Home</a>
+  <span class="sep">›</span>
+  <a href="index.html">Glossary</a>
+  <span class="sep">›</span>
+  <span>SSH</span>
+</div>
+
+<!-- HERO -->
+<section class="hero" style="min-height: 48vh;">
+  <div class="hero-content">
+    <span class="coffee-badge">📖 glossary · network protocol · port 22</span>
+    <h1>SSH 🔐</h1>
+    <p class="subtitle">Secure Shell. An encrypted tunnel straight to someone else's command line.<br>Used by every sysadmin. Abused by every attacker.</p>
+    <div class="tagline">"port 22 open = maybe you're one password away from a shell." 🎯</div>
+  </div>
+</section>
+
+<!-- WHAT IS IT -->
+<section class="chapter">
+  <div class="chapter-num">Chapter 01 // Definition</div>
+  <h2><span class="emoji">📖</span> What is SSH?</h2>
+  <p class="lead">SSH (<strong>Secure Shell</strong>) is a network protocol for securely logging into a remote machine and typing commands as if you were sitting in front of it. The connection is encrypted end-to-end, which is why the "S" matters.</p>
+
+  <div class="paper">
+    <h4>📝 Think of it like a walkie-talkie tunnel</h4>
+    <p>You're sitting at your laptop. There's a server across the internet. SSH digs an encrypted tunnel between you and the server. Everything you type goes through the tunnel; every output comes back through the tunnel. Anyone snooping on the network sees only encrypted gibberish.</p>
+    <p><span class="highlight">Default port: 22.</span> Default client: <code>ssh</code>. Default server: <code>sshd</code> (the "d" is for daemon — the background process that listens for incoming connections).</p>
+  </div>
+
+  <h3>The anatomy of an SSH command</h3>
+  <div class="code">
+ssh <span class="str">&lt;user&gt;</span>@<span class="str">&lt;host&gt;</span> <span class="com"># basic</span>
+ssh <span class="str">-p 2222</span> <span class="str">talha</span>@<span class="str">10.10.10.5</span> <span class="com"># custom port</span>
+ssh <span class="str">-i ~/.ssh/id_rsa</span> <span class="str">root</span>@<span class="str">target</span> <span class="com"># with a specific key</span>
+  </div>
+</section>
+
+<div class="divider">why it matters</div>
+
+<!-- WHY IT MATTERS -->
+<section class="chapter">
+  <div class="chapter-num">Chapter 02 // Why pentesters care</div>
+  <h2><span class="emoji">💥</span> Port 22 is always interesting</h2>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <h4>🔓 Weak creds = instant shell</h4>
+      <p>Admins deploy a box with <code class="inline">root:root</code> or <code class="inline">admin:password123</code>. Tools like Hydra and Medusa brute-force SSH at thousands of tries per minute. Sometimes you get lucky.</p>
+    </div>
+    <div class="card">
+      <h4>🗝️ Leaked keys = free access</h4>
+      <p>Developers commit <code class="inline">id_rsa</code> private keys to GitHub. Attackers scrape them, use them as SSH keys against the company's servers. Zero authentication needed.</p>
+    </div>
+    <div class="card">
+      <h4>🐛 Old CVEs = full compromise</h4>
+      <p>OpenSSH has had vulns historically (CVE-2024-6387 "regreSSHion", CVE-2023-38408 agent forwarding bugs). Unpatched SSH servers = pre-auth RCE potential.</p>
+    </div>
+    <div class="card">
+      <h4>🔄 Lateral movement</h4>
+      <p>Land a shell on box A, find an SSH key in <code class="inline">~/.ssh/</code>, use it to SSH into box B. This is how attackers hop across an internal network.</p>
+    </div>
+  </div>
+</section>
+
+<div class="divider">real world</div>
+
+<!-- REAL WORLD -->
+<section class="chapter">
+  <div class="chapter-num">Chapter 03 // Real-world carnage</div>
+  <h2><span class="emoji">📰</span> SSH in the headlines</h2>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <div class="card-badge danger">2024</div>
+      <h4>regreSSHion (CVE-2024-6387)</h4>
+      <p>A race condition in OpenSSH &lt; 9.8 allowed <strong>unauthenticated RCE as root</strong> on millions of Linux servers. Dubbed "one of the biggest SSH bugs ever." Patches rolled out, but unpatched boxes remain.</p>
+    </div>
+    <div class="card">
+      <div class="card-badge warn">2024</div>
+      <h4>xz-utils backdoor (CVE-2024-3094)</h4>
+      <p>A malicious maintainer injected a backdoor into <code class="inline">xz-utils</code>, which is loaded by sshd via systemd. Would have given an attacker with a specific key full SSH RCE on nearly every Linux server. Caught by a Microsoft engineer noticing a 500ms timing glitch.</p>
+    </div>
+    <div class="card">
+      <div class="card-badge danger">ongoing</div>
+      <h4>Mirai botnet</h4>
+      <p>Mirai and its descendants compromise hundreds of thousands of IoT devices by brute-forcing SSH and telnet with a list of ~60 default creds. Still active to this day.</p>
+    </div>
+    <div class="card">
+      <div class="card-badge warn">CTF</div>
+      <h4>Every beginner HTB/THM box</h4>
+      <p>Port 22 is open on ~80% of beginner boxes. Grab SSH creds from a web app vuln or scraped service banner, use them to SSH in, escalate from there.</p>
+    </div>
+  </div>
+</section>
+
+<!-- HOW TO USE -->
+<section class="chapter">
+  <div class="chapter-num">Chapter 04 // For the operators</div>
+  <h2><span class="emoji">🛠️</span> SSH moves you should know</h2>
+
+  <h3>Basic usage</h3>
+  <div class="code">
+<span class="com"># Connect with password</span>
+ssh talha@10.10.10.5
+
+<span class="com"># Connect with key (the secure way)</span>
+ssh -i ~/.ssh/target_key talha@10.10.10.5
+
+<span class="com"># Run a single command remotely</span>
+ssh talha@target <span class="str">'whoami; id; hostname'</span>
+
+<span class="com"># Copy files with scp (SSH's file cousin)</span>
+scp myfile.txt talha@target:/tmp/
+scp talha@target:/etc/passwd ./passwd_copy
+  </div>
+
+  <h3>Generating your own key pair</h3>
+  <div class="code">
+ssh-keygen -t ed25519 -C <span class="str">"talha@laptop"</span>
+<span class="com"># Creates:</span>
+<span class="com">#   ~/.ssh/id_ed25519      (PRIVATE — never share)</span>
+<span class="com">#   ~/.ssh/id_ed25519.pub  (public — paste into authorized_keys on server)</span>
+  </div>
+
+  <div class="callout danger">
+    <strong>🚨 Never ever share your private key.</strong> Not in screenshots. Not in git. Not in Slack. If it leaks, anyone can impersonate you on every server that trusts that key. Regenerate immediately if it's exposed.
+  </div>
+
+  <h3>The SSH tunnel trick (port forwarding)</h3>
+  <p>Need to reach an internal service (like a database on <code class="inline">localhost:5432</code> of a remote box) from your own machine?</p>
+  <div class="code">
+<span class="com"># Forward remote port 5432 → your local port 5432</span>
+ssh -L 5432:localhost:5432 talha@target
+
+<span class="com"># Now from YOUR machine: psql -h localhost -p 5432</span>
+<span class="com"># And you're talking to the remote database through the SSH tunnel.</span>
+  </div>
+</section>
+
+<!-- DEFENSE -->
+<section class="chapter" id="defense">
+  <div class="chapter-num">Chapter 05 // Locking it down</div>
+  <h2><span class="emoji">🛡️</span> How to NOT get pwned via SSH</h2>
+
+  <ul>
+    <li><strong>Disable password auth</strong> — set <code class="inline">PasswordAuthentication no</code> in <code class="inline">/etc/ssh/sshd_config</code>. Force key-based auth only.</li>
+    <li><strong>Disable root login</strong> — <code class="inline">PermitRootLogin no</code>. Make attackers brute-force a normal user first, then sudo.</li>
+    <li><strong>Change the default port</strong> — moves you out of the way of drive-by scans. Security theater, but reduces log noise.</li>
+    <li><strong>Use fail2ban</strong> — bans IPs after N failed login attempts. Kills brute-force attacks cold.</li>
+    <li><strong>Patch, patch, patch</strong> — <code class="inline">apt update && apt upgrade openssh-server</code>. regreSSHion-style bugs get patched fast.</li>
+    <li><strong>2FA</strong> — layer TOTP (Google Authenticator) on top of keys via <code class="inline">pam_google_authenticator</code>.</li>
+  </ul>
+
+  <div class="quiz">
+    <h4>🎯 Quick Check</h4>
+    <div class="q">Why do security teams prefer SSH keys over passwords?</div>
+    <div class="options">
+      <div class="opt" onclick="quizAnswer(this, false)">Keys are shorter, so they're faster to type.</div>
+      <div class="opt" onclick="quizAnswer(this, true)">Keys are mathematically infeasible to brute-force, while passwords can be guessed at scale.</div>
+      <div class="opt" onclick="quizAnswer(this, false)">Keys don't need to be stored anywhere.</div>
+      <div class="opt" onclick="quizAnswer(this, false)">Keys work over plain HTTP, no encryption needed.</div>
+    </div>
+    <div class="feedback"></div>
+  </div>
+</section>
+
+<!-- RELATED -->
+<section class="chapter">
+  <div class="related-terms">
+    <h4>🔗 Related in the vault</h4>
+    <div class="tags">
+      <a href="reverse-shell.html">🐚 Reverse Shell</a>
+      <a href="linux-permissions.html">🛡️ Linux Permissions</a>
+      <a href="su.html">👤 su</a>
+      <a href="chmod.html">🔧 chmod</a>
+      <a href="../tryhackme/cybersec-101/linux-fundamentals-part-2.html">🐧 THM: Linux Fundamentals Pt. 2</a>
+    </div>
+  </div>
+</section>
+
+<footer class="site-foot">
+  <p class="coffee-line">Port 22. The oldest door in hacking. ☕</p>
+</footer>
+
+<script src="../assets/glossary.js"></script>
+<script src="../assets/app.js"></script>
+</body>
+</html>

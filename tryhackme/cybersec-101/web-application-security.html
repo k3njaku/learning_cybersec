@@ -1,0 +1,879 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Web Application Security — THM · Cybersecurity 101 ☕</title>
+<link rel="stylesheet" href="../../assets/styles.css" />
+<style>
+  /* ============================================================
+     3-TIER ARCHITECTURE DIAGRAM
+     ============================================================ */
+  .arch-diag {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 14px;
+    margin: 24px 0;
+    align-items: stretch;
+  }
+  .arch-node {
+    background: #0a0f13;
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    padding: 18px;
+    text-align: center;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.2s;
+    font-family: var(--mono);
+  }
+  .arch-node:hover { transform: translateY(-3px); border-color: var(--accent); }
+  .arch-node.active {
+    border-color: var(--accent-2);
+    box-shadow: 0 0 18px rgba(255,46,99,0.35);
+  }
+  .arch-node .icon { font-size: 2.6rem; display: block; margin-bottom: 6px; }
+  .arch-node .title { color: var(--accent); font-size: 1rem; font-weight: bold; }
+  .arch-node .subtitle { color: var(--ink-mute); font-size: 11px; margin-top: 4px; }
+  .arch-arrows {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 14px;
+    margin: -10px 0 8px;
+    font-family: var(--mono);
+    color: var(--ink-mute);
+    font-size: 12px;
+    text-align: center;
+  }
+  .arch-arrows span { opacity: 0.6; }
+  .arch-detail {
+    background: rgba(0,0,0,0.4);
+    border-left: 3px solid var(--accent-2);
+    border-radius: 6px;
+    padding: 16px 18px;
+    margin-top: 12px;
+    min-height: 80px;
+    font-size: 14px;
+  }
+  .arch-detail h5 {
+    color: var(--accent-2);
+    margin: 0 0 6px;
+    font-family: var(--mono);
+    font-size: 13px;
+  }
+  .arch-detail p { margin: 4px 0; font-size: 14px; color: var(--ink-dim); }
+
+  /* ============================================================
+     5-STEP SHOPPING FLOW
+     ============================================================ */
+  .flow-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 10px;
+    margin: 20px 0;
+  }
+  .flow-step {
+    background: #0a0f13;
+    border: 2px solid var(--border);
+    border-radius: 8px;
+    padding: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    text-align: center;
+  }
+  .flow-step:hover { transform: translateY(-2px); border-color: var(--accent-2); }
+  .flow-step.active {
+    border-color: var(--accent-2);
+    background: rgba(255,46,99,0.08);
+    box-shadow: 0 0 14px rgba(255,46,99,0.25);
+  }
+  .flow-step .num {
+    display: inline-block;
+    font-size: 2rem;
+    color: var(--accent);
+    font-family: var(--hand);
+    font-weight: bold;
+  }
+  .flow-step .lbl {
+    display: block;
+    font-size: 13px;
+    color: var(--ink);
+    margin-top: 4px;
+  }
+  .flow-detail {
+    background: rgba(0,0,0,0.4);
+    border-left: 3px solid var(--accent-2);
+    border-radius: 6px;
+    padding: 16px 18px;
+    margin-top: 14px;
+    min-height: 120px;
+  }
+  .flow-detail h5 {
+    color: var(--accent-2);
+    margin: 0 0 8px;
+    font-family: var(--mono);
+    font-size: 13px;
+  }
+  .flow-detail .attack-tag {
+    display: inline-block;
+    background: rgba(255,46,99,0.15);
+    color: var(--accent-2);
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-family: var(--mono);
+    margin: 3px 4px 3px 0;
+  }
+
+  /* ============================================================
+     IDOR SIMULATOR
+     ============================================================ */
+  .idor-sim {
+    background: rgba(0,0,0,0.3);
+    border-radius: 10px;
+    padding: 20px;
+    border: 1px solid var(--border);
+    margin: 20px 0;
+  }
+  .idor-url {
+    background: #000;
+    padding: 12px 16px;
+    border-radius: 6px;
+    font-family: var(--mono);
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    border: 1px solid var(--border);
+  }
+  .idor-url .proto { color: var(--accent); }
+  .idor-url .host { color: var(--ink); }
+  .idor-url .path { color: var(--ink-dim); }
+  .idor-url .param { color: #ffa657; }
+  .idor-url .id-input {
+    background: rgba(255,46,99,0.15);
+    color: var(--accent-2);
+    border: 1px solid var(--accent-2);
+    border-radius: 3px;
+    padding: 2px 6px;
+    width: 70px;
+    font-family: var(--mono);
+    font-size: 14px;
+    outline: none;
+  }
+  .idor-controls {
+    display: flex;
+    gap: 8px;
+    margin: 14px 0;
+    flex-wrap: wrap;
+  }
+  .idor-btn {
+    background: rgba(0,255,157,0.08);
+    color: var(--accent);
+    border: 1px solid var(--accent);
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-family: var(--mono);
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .idor-btn:hover { background: var(--accent); color: #000; }
+  .idor-btn.evil { color: var(--accent-2); border-color: var(--accent-2); background: rgba(255,46,99,0.08); }
+  .idor-btn.evil:hover { background: var(--accent-2); color: #fff; }
+  .idor-profile {
+    background: #0a0f13;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    margin-top: 10px;
+    font-family: var(--mono);
+    font-size: 13px;
+  }
+  .idor-profile .row { display: flex; gap: 14px; padding: 4px 0; }
+  .idor-profile .k { color: var(--ink-mute); min-width: 100px; }
+  .idor-profile .v { color: var(--ink); }
+  .idor-profile .v.secret { color: var(--accent-2); text-shadow: 0 0 6px rgba(255,46,99,0.4); }
+  .idor-profile .banner {
+    color: var(--accent-2);
+    font-family: var(--hand);
+    font-size: 1.2rem;
+    border-top: 1px dashed var(--border);
+    padding-top: 10px;
+    margin-top: 10px;
+  }
+
+  /* ============================================================
+     OWASP CATEGORY CARDS
+     ============================================================ */
+  .owasp-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 14px;
+    margin: 20px 0;
+  }
+  .owasp-card {
+    background: #0a0f13;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 18px;
+    position: relative;
+    overflow: hidden;
+  }
+  .owasp-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; bottom: 0;
+    width: 4px;
+    background: var(--accent);
+  }
+  .owasp-card.a01::before { background: var(--accent-2); }
+  .owasp-card.a02::before { background: var(--warn); }
+  .owasp-card.a03::before { background: var(--accent); }
+  .owasp-card.a07::before { background: var(--accent-3); }
+  .owasp-card .owasp-code {
+    display: inline-block;
+    background: rgba(0,0,0,0.5);
+    color: var(--accent-2);
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-family: var(--mono);
+    margin-bottom: 8px;
+  }
+  .owasp-card h4 { color: var(--ink); margin: 4px 0 8px; }
+  .owasp-card .blurb { color: var(--ink-dim); font-size: 14px; margin-bottom: 10px; }
+  .owasp-card .ex {
+    background: rgba(255,46,99,0.05);
+    border-left: 2px solid var(--accent-2);
+    padding: 8px 12px;
+    font-size: 12px;
+    color: var(--ink-dim);
+    margin-top: 8px;
+    border-radius: 0 4px 4px 0;
+  }
+</style>
+</head>
+<body data-page-slug="thm-web-application-security">
+
+<div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
+
+<div class="topbar">
+  <a class="logo" href="../../index.html">☕ CYBERSEC.VAULT</a>
+  <nav>
+    <a href="../../index.html">Home</a>
+    <a href="../../index.html#topics-web">Topics</a>
+    <a href="../../glossary/index.html">Glossary</a>
+    <a href="../index.html" class="active">THM</a>
+  </nav>
+  <div class="search-wrap">
+    <input type="text" class="search" placeholder="Search (press /)..." />
+    <div class="search-results"></div>
+  </div>
+</div>
+
+<div class="breadcrumb">
+  <a href="../../index.html">Home</a>
+  <span class="sep">›</span>
+  <a href="../index.html">TryHackMe</a>
+  <span class="sep">›</span>
+  <a href="../index.html#paths">Cybersecurity 101</a>
+  <span class="sep">›</span>
+  <span>Web Application Security</span>
+</div>
+
+<!-- HERO -->
+<section class="hero" style="min-height: 55vh;">
+  <div class="hero-content">
+    <span class="coffee-badge">🕸️ thm · cybersecurity 101 · room 03</span>
+    <h1>Web Application <span style="color: var(--accent-2);">Security</span></h1>
+    <p class="subtitle">The 3-tier architecture that powers every web app.<br>The 4 OWASP categories that break it. And your first hands-on <span class="term" data-term="idor">IDOR</span>.</p>
+    <div class="tagline">"it's just a program that forgot to install itself. and forgot to lock the back door." 🚪</div>
+    <div style="margin-top: 24px; display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+      <a href="https://tryhackme.com/room/introwebapplicationsecurity" target="_blank" rel="noopener" class="cta-btn ghost">↗ Open on TryHackMe</a>
+      <a href="#tasks" class="cta-btn">Jump to Tasks 🎯</a>
+    </div>
+  </div>
+</section>
+
+<!-- WHAT YOU'LL LEARN -->
+<section class="chapter" id="tldr">
+  <div class="chapter-num">TL;DR</div>
+  <h2><span class="emoji">⚡</span> What you'll walk away with</h2>
+  <div class="grid cols-3">
+    <div class="card">
+      <h4>🏗️ The 3-tier stack</h4>
+      <p>Client → App Server → Database. Every modern web app. Know the pieces, know the attack surface.</p>
+    </div>
+    <div class="card">
+      <h4>🎯 4 OWASP categories</h4>
+      <p>Access Control, Crypto Failures, Injection, Auth Failures. 80% of web bugs live here.</p>
+    </div>
+    <div class="card">
+      <h4>🎣 Your first IDOR</h4>
+      <p>Change a URL number. Read someone else's data. Classic bug bounty bread-and-butter.</p>
+    </div>
+  </div>
+
+  <div class="callout info" style="margin-top: 20px;">
+    <strong>☕ Heads up:</strong> This room is short (3 tasks, 90 min) but the concepts are <em>everything</em>. Every web bug you'll ever hunt lives in one of these four categories. Understand this room and the rest of your bug bounty career makes sense.
+  </div>
+</section>
+
+<div class="divider">the concepts</div>
+
+<!-- ===== CONCEPT 1: WHAT IS A WEB APP ===== -->
+<section class="chapter" id="concept-webapp">
+  <div class="chapter-num">Concept 01 // The definition</div>
+  <h2><span class="emoji">🌐</span> What even IS a web application?</h2>
+  <p class="lead">A web application is a <strong>program</strong> — just like Excel or Photoshop — except you don't install it. You access it through a web browser.</p>
+
+  <div class="paper">
+    <h4>📝 Think of it like Netflix vs. a Blu-ray disc</h4>
+    <p>A <strong>traditional program</strong> is a Blu-ray — you buy it, insert it, install it, run it locally. Each copy lives on one computer.</p>
+    <p>A <strong>web application</strong> is Netflix — the actual movie lives on a server somewhere. Your "screen" (browser) just streams it. Every device with a browser gets the latest version automatically.</p>
+    <p><span class="highlight">The browser is the universal runtime. Chrome, Firefox, Safari — pick any, the app just works.</span></p>
+  </div>
+
+  <h3>Examples of web applications you use daily</h3>
+  <ul>
+    <li>📧 <strong>Webmail</strong> — Gmail, Outlook, Proton Mail</li>
+    <li>📊 <strong>Office suites</strong> — Google Docs, Microsoft 365, Zoho</li>
+    <li>🛒 <strong>Online shopping</strong> — Amazon, AliExpress, Etsy</li>
+    <li>🏦 <strong>Online banking</strong> — your bank's website</li>
+    <li>🎬 <strong>Streaming</strong> — Netflix, YouTube, Spotify web player</li>
+    <li>💬 <strong>Social media</strong> — Twitter/X, Reddit, Instagram web</li>
+  </ul>
+</section>
+
+<!-- ===== CONCEPT 2: THE 3-TIER ARCHITECTURE ===== -->
+<section class="chapter" id="concept-arch">
+  <div class="chapter-num">Concept 02 // Under the hood</div>
+  <h2><span class="emoji">🏗️</span> The 3-tier architecture (click to explore)</h2>
+  <p class="lead">When you search for "red tires" on an online shop, four things happen behind the scenes. Click each layer to see what it does:</p>
+
+  <div class="arch-diag" id="archDiag">
+    <div class="arch-node active" data-node="client">
+      <span class="icon">💻</span>
+      <span class="title">Client</span>
+      <div class="subtitle">your browser</div>
+    </div>
+    <div class="arch-node" data-node="app">
+      <span class="icon">🌐</span>
+      <span class="title">App Server</span>
+      <div class="subtitle">the web app</div>
+    </div>
+    <div class="arch-node" data-node="db">
+      <span class="icon">🗄️</span>
+      <span class="title">Database</span>
+      <div class="subtitle">the data</div>
+    </div>
+  </div>
+
+  <div class="arch-arrows">
+    <span>type &amp; click →</span>
+    <span>← search query →</span>
+    <span>← rows</span>
+  </div>
+
+  <div class="arch-detail" id="archDetail">
+    <h5>💻 CLIENT (your browser)</h5>
+    <p><strong>What it does:</strong> Runs HTML, CSS, and JavaScript. Collects your input (forms, clicks, keystrokes) and sends it to the server.</p>
+    <p><strong>Attack surface:</strong> XSS (JavaScript running in YOUR context), CSRF (tricking your browser into making requests), clickjacking.</p>
+    <p><strong>Tools attackers use:</strong> Browser DevTools (F12), Burp Suite, curl.</p>
+  </div>
+
+  <h3>The 4-step search flow</h3>
+  <div class="code">
+<span class="num">1.</span> User types <span class="str">"red tires"</span> → browser sends it to the web app.
+<span class="num">2.</span> Web app queries the products database for matching items.
+<span class="num">3.</span> Database returns matching rows to the app.
+<span class="num">4.</span> App formats the results as HTML and sends it back to the browser.
+  </div>
+
+  <div class="callout">
+    <strong>🎯 Security insight:</strong> Every one of those 4 steps is an attack surface. Step 1 can be abused with XSS. Step 2 with SQL injection. Step 3 with data leakage. Step 4 with XSS-in-output. Four opportunities to break something per single user search.
+  </div>
+
+  <div class="brain-power">
+    <div class="label">🧠 Brain Power</div>
+    <div class="question">If the client is YOUR browser, can you trust anything that comes from it? Why or why not?</div>
+    <button class="reveal-btn" onclick="toggleAnswer(this)">Reveal answer</button>
+    <div class="answer">
+      <p><strong>Never trust the client.</strong> Ever. It's on the user's machine — they (or an attacker) can change anything before it reaches the server. JavaScript validation? Disabled in DevTools. Hidden form fields? Edited in Burp. "Read-only" inputs? LOL.</p>
+      <p>This is the <em>single most important lesson</em> in web security: <span class="highlight">validate EVERYTHING on the server. Again. Even if the client said it was fine.</span></p>
+    </div>
+  </div>
+</section>
+
+<!-- ===== CONCEPT 3: THE 5-STEP SHOPPING FLOW ===== -->
+<section class="chapter" id="concept-flow">
+  <div class="chapter-num">Concept 03 // Where do attackers strike?</div>
+  <h2><span class="emoji">🎯</span> The 5-step online order (click to see the attacks)</h2>
+  <p class="lead">THM's favorite example: buying a thing online. Five steps. Each one has its own attack vector. Click each step to see what the attacker does.</p>
+
+  <div class="flow-grid" id="flowGrid">
+    <div class="flow-step active" data-flow="login">
+      <span class="num">1</span>
+      <span class="lbl">Log in</span>
+    </div>
+    <div class="flow-step" data-flow="search">
+      <span class="num">2</span>
+      <span class="lbl">Search product</span>
+    </div>
+    <div class="flow-step" data-flow="cart">
+      <span class="num">3</span>
+      <span class="lbl">Add to cart</span>
+    </div>
+    <div class="flow-step" data-flow="ship">
+      <span class="num">4</span>
+      <span class="lbl">Shipping address</span>
+    </div>
+    <div class="flow-step" data-flow="pay">
+      <span class="num">5</span>
+      <span class="lbl">Payment</span>
+    </div>
+  </div>
+
+  <div class="flow-detail" id="flowDetail">
+    <h5>🎯 STEP 1 — LOG IN</h5>
+    <p>Attacker tries to break in without credentials, or abuse the login form itself.</p>
+    <div style="margin-top: 10px;">
+      <span class="attack-tag">🔑 Brute force</span>
+      <span class="attack-tag">📜 Credential stuffing</span>
+      <span class="attack-tag">💉 SQL injection in username</span>
+      <span class="attack-tag">🎯 No rate limiting</span>
+    </div>
+    <p style="margin-top: 12px; font-size: 13px; color: var(--ink-mute);">👉 OWASP category: <strong style="color: var(--accent-3);">A07 — Identification &amp; Authentication Failures</strong></p>
+  </div>
+
+  <div class="callout success" style="margin-top: 20px;">
+    <strong>🧠 Mental model:</strong> When you see a feature, instead of asking "how does this work?" — ask "<em>how would I break this?</em>" Bug bounty is the second question, every single time.
+  </div>
+</section>
+
+<!-- ===== CONCEPT 4: THE 4 OWASP CATEGORIES ===== -->
+<section class="chapter" id="concept-owasp">
+  <div class="chapter-num">Concept 04 // The categories</div>
+  <h2><span class="emoji">📚</span> The 4 OWASP classes THM introduces here</h2>
+  <p class="lead">OWASP publishes a "Top 10" list of the biggest web vulnerability categories. This room covers 4 of them. Know these four by heart.</p>
+
+  <div class="owasp-grid">
+    <div class="owasp-card a01">
+      <span class="owasp-code">A01</span>
+      <h4>🔓 <span class="term" data-term="access-control">Broken Access Control</span></h4>
+      <p class="blurb">Users can access stuff they shouldn't. The #1 web vuln in the world.</p>
+      <div class="ex">
+        <strong>Example:</strong> Change <code>/user/16</code> to <code>/user/17</code> in the URL and you're reading someone else's profile. That's <span class="term" data-term="idor">IDOR</span> — you'll exploit one in Task 3 of this room.
+      </div>
+    </div>
+
+    <div class="owasp-card a02">
+      <span class="owasp-code">A02</span>
+      <h4>🔐 <span class="term" data-term="cryptographic-failure">Cryptographic Failures</span></h4>
+      <p class="blurb">Sending / storing sensitive data without proper encryption.</p>
+      <div class="ex">
+        <strong>Example:</strong> A login page served over plain <code>http://</code> — anyone sniffing the Wi-Fi sees the password in cleartext. Use <span class="term" data-term="https">HTTPS</span> always.
+      </div>
+    </div>
+
+    <div class="owasp-card a03">
+      <span class="owasp-code">A03</span>
+      <h4>💉 <span class="term" data-term="sql-injection">Injection</span></h4>
+      <p class="blurb">Attacker sneaks code into user input; the server executes it.</p>
+      <div class="ex">
+        <strong>Example:</strong> Search field accepts <code>' OR 1=1--</code> → SQL injection dumps the whole users table. Classic, evergreen.
+      </div>
+    </div>
+
+    <div class="owasp-card a07">
+      <span class="owasp-code">A07</span>
+      <h4>🔑 <span class="term" data-term="authentication">Authentication Failures</span></h4>
+      <p class="blurb">Login is broken or easy to bypass.</p>
+      <div class="ex">
+        <strong>Example:</strong> No account lockout + no CAPTCHA + weak password policy = <span class="term" data-term="brute-force">brute-force</span> heaven. Tools like Hydra test 1000 passwords per minute.
+      </div>
+    </div>
+  </div>
+
+  <div class="callout info">
+    <strong>💡 These are categories, not bugs.</strong> Within each category live dozens of specific bug types. "Access Control" includes IDOR, directory traversal, missing /admin auth check, horizontal privesc, vertical privesc, etc. Learn the category first; the specific bugs become variations on a theme.
+  </div>
+</section>
+
+<!-- ===== CONCEPT 5: IDOR HANDS-ON ===== -->
+<section class="chapter" id="concept-idor">
+  <div class="chapter-num">Concept 05 // The practical attack</div>
+  <h2><span class="emoji">🎣</span> <span class="term" data-term="idor">IDOR</span> — the change-a-number attack</h2>
+  <p class="lead">Task 3 drops you into a live web app. You exploit an IDOR to find which user sabotaged the inventory. Here's how IDOR actually works.</p>
+
+  <div class="paper">
+    <h4>📝 Think of it like hotel rooms with the same key pattern</h4>
+    <p>You check into Room 216. Your key card also happens to work on Rooms 217, 218, 219 — because the hotel programmed the cards sequentially and forgot to check "does this guest belong to THIS room?"</p>
+    <p><span class="highlight">IDOR is when a website uses an ID to look up data but forgets to check: "wait, is this person ALLOWED to see this data?"</span></p>
+  </div>
+
+  <h3>The URL tell</h3>
+  <p>Look for URLs (or request parameters) with sequential-looking IDs:</p>
+  <div class="code">
+<span class="com"># Your profile</span>
+https://store.tryhackme.thm/customers/user?id=<span class="str">16</span>
+
+<span class="com"># 🤔 what if I change 16 to 17?</span>
+https://store.tryhackme.thm/customers/user?id=<span class="str">17</span>  <span class="com"># another user's profile</span>
+
+<span class="com"># Product 52 — but what about 51, 53?</span>
+https://store.tryhackme.thm/products/product?id=<span class="str">52</span>
+  </div>
+
+  <h3>🎮 Try it — IDOR Simulator</h3>
+  <p style="color: var(--ink-dim); font-size: 13px;">Change the <code class="inline">id</code> in the URL. Watch the profile change. See what a real IDOR feels like.</p>
+
+  <div class="playground">
+    <div class="idor-sim">
+      <div class="idor-url">
+        <span class="proto">https://</span><span class="host">store.tryhackme.thm</span><span class="path">/customers/user?</span><span class="param">id=</span><input type="number" class="id-input" id="idorId" value="16" min="1" max="20" oninput="renderIdor()" />
+      </div>
+      <div class="idor-controls">
+        <button class="idor-btn" onclick="stepIdor(-1)">◂ prev (id-1)</button>
+        <button class="idor-btn" onclick="stepIdor(1)">next (id+1) ▸</button>
+        <button class="idor-btn evil" onclick="setIdor(1)">🎯 id=1 (usually admin)</button>
+        <button class="idor-btn evil" onclick="setIdor(17)">🕵️ id=17 (the saboteur)</button>
+        <button class="idor-btn" onclick="setIdor(16)">↺ reset (your account)</button>
+      </div>
+      <div class="idor-profile" id="idorProfile"></div>
+    </div>
+  </div>
+
+  <div class="brain-power">
+    <div class="label">🧠 Brain Power</div>
+    <div class="question">If IDOR is "just changing a number in the URL," why is it one of the highest-paying classes of bugs in bug bounty?</div>
+    <button class="reveal-btn" onclick="toggleAnswer(this)">Reveal answer</button>
+    <div class="answer">
+      <p>Because it's <strong>everywhere</strong> AND devs miss it constantly:</p>
+      <ul>
+        <li>Automated scanners can't find it easily — they don't know what "should" be accessible to whom.</li>
+        <li>Every feature that shows user-specific data is a potential IDOR (profiles, messages, orders, documents, medical records).</li>
+        <li>When it hits PII or financial data, the impact is massive — GDPR/HIPAA fines, lawsuits, breach notifications.</li>
+      </ul>
+      <p>HackerOne has paid out 5-figure bounties for single IDOR bugs at Uber, Shopify, Airbnb. <span class="highlight">It's the bug that pays the bills.</span></p>
+    </div>
+  </div>
+
+  <div class="callout danger">
+    <strong>⚠️ Legal reminder:</strong> IDOR testing is ONLY legal when you have <span class="term" data-term="bug-bounty">bug bounty</span> scope or written permission. Changing IDs on a random website to "just see what happens" = unauthorized access. The tech is easy; the ethics/legality is the part that matters.
+  </div>
+</section>
+
+<div class="divider">task time</div>
+
+<!-- ===== TASKS & ANSWERS ===== -->
+<section class="chapter" id="tasks">
+  <div class="chapter-num">Tasks</div>
+  <h2><span class="emoji">🧪</span> The tasks (with your answers + the why)</h2>
+  <p class="lead">Only 3 tasks, but each packs real concepts. Click to expand answer + reasoning.</p>
+
+  <!-- TASK 1 -->
+  <div class="card" style="margin-bottom: 14px;">
+    <div class="card-badge">TASK 1</div>
+    <h4>Introduction</h4>
+    <p style="color: var(--ink-dim); font-size: 0.92rem;">What web apps are, 3-tier architecture, bug bounty programs intro.</p>
+    <details style="margin-top: 12px;">
+      <summary style="cursor:pointer; color: var(--accent-2); font-family: var(--mono); font-size: 13px;">▸ Show answer + reasoning</summary>
+      <div style="margin-top: 10px; display: grid; gap: 10px;">
+        <div style="padding: 10px 14px; background: rgba(0,0,0,0.3); border-left: 3px solid var(--accent); border-radius: 4px; font-size: 13px;">
+          <strong style="color: var(--accent); font-family: var(--mono);">Q: What do you need to access a web application?</strong><br>
+          <code class="inline">a web browser</code>
+        </div>
+        <div style="padding: 10px 14px; background: rgba(0,0,0,0.3); border-left: 3px solid var(--accent-3); border-radius: 4px; font-size: 14px;">
+          <strong style="color: var(--accent-3); font-family: var(--mono); font-size: 12px;">WHY:</strong>
+          That's the whole point of web apps — they're accessible via any browser, no installation needed. Firefox, Chrome, Safari, Edge — they all work. The browser is the universal runtime.
+        </div>
+      </div>
+    </details>
+  </div>
+
+  <!-- TASK 2 -->
+  <div class="card" style="margin-bottom: 14px;">
+    <div class="card-badge">TASK 2</div>
+    <h4>Web Application Security Risks</h4>
+    <p style="color: var(--ink-dim); font-size: 0.92rem;">The 4 OWASP categories: Auth, Access Control, Injection, Crypto.</p>
+    <details style="margin-top: 12px;">
+      <summary style="cursor:pointer; color: var(--accent-2); font-family: var(--mono); font-size: 13px;">▸ Show answers + reasoning</summary>
+      <div style="margin-top: 10px; display: grid; gap: 10px;">
+        <div style="padding: 10px 14px; background: rgba(0,0,0,0.3); border-left: 3px solid var(--accent); border-radius: 4px; font-size: 13px;">
+          <strong style="color: var(--accent); font-family: var(--mono);">Q: Login page allows unlimited attempts without slowdown/lockout — what category?</strong><br>
+          <code class="inline">Identification and Authentication Failure</code>
+        </div>
+        <div style="padding: 10px 14px; background: rgba(0,0,0,0.3); border-left: 3px solid var(--accent); border-radius: 4px; font-size: 13px;">
+          <strong style="color: var(--accent); font-family: var(--mono);">Q: Username and password sent in cleartext without encryption — what category?</strong><br>
+          <code class="inline">Cryptographic Failures</code>
+        </div>
+        <div style="padding: 10px 14px; background: rgba(0,0,0,0.3); border-left: 3px solid var(--accent-3); border-radius: 4px; font-size: 14px;">
+          <strong style="color: var(--accent-3); font-family: var(--mono); font-size: 12px;">WHY:</strong>
+          <ul style="margin: 6px 0 0 18px; padding: 0;">
+            <li><strong>Unlimited logins</strong> → attacker can <span class="term" data-term="brute-force">brute force</span> passwords at scale → OWASP A07 (Authentication Failures).</li>
+            <li><strong>Cleartext creds</strong> → any attacker on the network path reads them via Wireshark → OWASP A02 (<span class="term" data-term="cryptographic-failure">Cryptographic Failures</span>). Use <span class="term" data-term="https">HTTPS</span> always.</li>
+          </ul>
+        </div>
+      </div>
+    </details>
+  </div>
+
+  <!-- TASK 3 -->
+  <div class="card" style="margin-bottom: 14px;">
+    <div class="card-badge">TASK 3</div>
+    <h4>Practical Example: IDOR Lab</h4>
+    <p style="color: var(--ink-dim); font-size: 0.92rem;">Click "View Site" → Inventory Management System. Someone sabotaged the tire assignments. Find the saboteur via IDOR, revert the changes, get the flag.</p>
+    <details style="margin-top: 12px;">
+      <summary style="cursor:pointer; color: var(--accent-2); font-family: var(--mono); font-size: 13px;">▸ Show walkthrough + reasoning</summary>
+      <div style="margin-top: 10px; display: grid; gap: 10px;">
+        <div style="padding: 12px 14px; background: rgba(0,0,0,0.3); border-left: 3px solid var(--accent); border-radius: 4px; font-size: 13px;">
+          <strong style="color: var(--accent); font-family: var(--mono);">🎯 The steps:</strong>
+          <ol style="margin: 8px 0 0 18px; padding: 0; color: var(--ink);">
+            <li>Click <strong>"View Site"</strong> to open the Inventory Management System.</li>
+            <li>Look at the URL — you're viewing one user's activity. Notice the <code>id=</code> (or similar) parameter.</li>
+            <li>Try changing the ID to other numbers: <code>1, 2, 3...</code> — each one shows a different user's activity.</li>
+            <li>Find the user whose activity shows them <em>mis-assigning tires</em> (scooter tires to bikes, etc.) — that's the saboteur.</li>
+            <li>Revert their changes using the UI. A flag appears.</li>
+          </ol>
+        </div>
+        <div style="padding: 10px 14px; background: rgba(0,0,0,0.3); border-left: 3px solid var(--warn); border-radius: 4px; font-size: 13px;">
+          <strong style="color: var(--warn); font-family: var(--mono);">Q: What is the flag?</strong><br>
+          <code class="inline">[[MACHINE — format: THM{____________}]]</code><br>
+          <em style="color: var(--ink-mute); font-size: 12px;">Fill in when you run the lab. Check the page after reverting the sabotage.</em>
+        </div>
+        <div style="padding: 10px 14px; background: rgba(0,0,0,0.3); border-left: 3px solid var(--accent-3); border-radius: 4px; font-size: 14px;">
+          <strong style="color: var(--accent-3); font-family: var(--mono); font-size: 12px;">WHY:</strong>
+          The website trusts whatever <code>id</code> you send. It never checks "is this user the same as the logged-in user?" — so you can browse through every user's activity. This is <span class="term" data-term="idor">IDOR</span> in its purest form. The fix would be to check the session cookie matches the requested user ID on every request.
+        </div>
+      </div>
+    </details>
+  </div>
+</section>
+
+<!-- RETENTION QUIZ -->
+<section class="chapter" id="quiz">
+  <div class="chapter-num">Retention Check</div>
+  <h2><span class="emoji">🎯</span> Did it stick?</h2>
+
+  <div class="quiz">
+    <h4>🎯 The core concept</h4>
+    <div class="q">A website has a login form over <code class="inline">http://</code> (not <code class="inline">https://</code>). Which OWASP category does this fall under?</div>
+    <div class="options">
+      <div class="opt" onclick="quizAnswer(this, false)">Broken Access Control (A01)</div>
+      <div class="opt" onclick="quizAnswer(this, true)">Cryptographic Failures (A02)</div>
+      <div class="opt" onclick="quizAnswer(this, false)">Injection (A03)</div>
+      <div class="opt" onclick="quizAnswer(this, false)">Authentication Failures (A07)</div>
+    </div>
+    <div class="feedback"></div>
+  </div>
+
+  <div class="quiz" style="margin-top: 24px;">
+    <h4>🎯 Bug bounty scenario</h4>
+    <div class="q">You're logged into a site as user 42. The URL of your profile is <code class="inline">/api/users/42</code>. You change it to <code class="inline">/api/users/43</code> and it returns user 43's email and phone number. What did you just find?</div>
+    <div class="options">
+      <div class="opt" onclick="quizAnswer(this, false)">SQL Injection — you tricked the database.</div>
+      <div class="opt" onclick="quizAnswer(this, false)">XSS — you injected JavaScript.</div>
+      <div class="opt" onclick="quizAnswer(this, true)">IDOR — a form of Broken Access Control. The server doesn't check if YOU are user 43.</div>
+      <div class="opt" onclick="quizAnswer(this, false)">Cryptographic Failure — the data wasn't encrypted.</div>
+    </div>
+    <div class="feedback"></div>
+  </div>
+
+  <div class="quiz" style="margin-top: 24px;">
+    <h4>🎯 Mental model</h4>
+    <div class="q">Where, in the 3-tier architecture, should data validation ALWAYS happen?</div>
+    <div class="options">
+      <div class="opt" onclick="quizAnswer(this, false)">Only in the client (browser JavaScript).</div>
+      <div class="opt" onclick="quizAnswer(this, false)">Only in the database.</div>
+      <div class="opt" onclick="quizAnswer(this, true)">On the server — always. Client validation is UX, not security.</div>
+      <div class="opt" onclick="quizAnswer(this, false)">It doesn't matter as long as HTTPS is enabled.</div>
+    </div>
+    <div class="feedback"></div>
+  </div>
+</section>
+
+<!-- RELATED -->
+<section class="chapter">
+  <div class="related-terms">
+    <h4>🔗 Related in the vault</h4>
+    <div class="tags">
+      <a href="../../glossary/idor.html">🎣 IDOR</a>
+      <a href="../../glossary/access-control.html">🔓 Access Control (A01)</a>
+      <a href="../../glossary/cryptographic-failure.html">🔐 Cryptographic Failures (A02)</a>
+      <a href="../../glossary/authentication.html">🔑 Authentication</a>
+      <a href="../../glossary/brute-force.html">🔨 Brute Force</a>
+      <a href="../../glossary/https.html">🔒 HTTPS</a>
+      <a href="../../glossary/sql-injection-term.html">💉 SQL Injection</a>
+      <a href="../../glossary/bug-bounty.html">💰 Bug Bounty</a>
+      <a href="../../topics/web/sql-injection/index.html">💉 SQLi (topic)</a>
+    </div>
+  </div>
+</section>
+
+<footer class="site-foot">
+  <p class="coffee-line">One URL. One incremented ID. One bounty payout. Welcome to web security. ☕</p>
+  <p style="font-size: 12px;">Original room: <a href="https://tryhackme.com/room/introwebapplicationsecurity" target="_blank" rel="noopener">tryhackme.com/room/introwebapplicationsecurity</a></p>
+</footer>
+
+<script src="../../assets/glossary.js"></script>
+<script src="../../assets/app.js"></script>
+<script>
+  // ============================================================
+  // 3-TIER ARCHITECTURE DIAGRAM
+  // ============================================================
+  const archData = {
+    client: {
+      title: '💻 CLIENT (your browser)',
+      what: 'Runs HTML, CSS, and JavaScript. Collects your input (forms, clicks, keystrokes) and sends it to the server.',
+      attacks: 'XSS (JavaScript running in YOUR context), CSRF (tricking your browser into making requests), clickjacking.',
+      tools: 'Browser DevTools (F12), Burp Suite, curl.'
+    },
+    app: {
+      title: '🌐 APP SERVER (the actual web app)',
+      what: 'Receives requests, runs business logic, talks to the database, builds HTML responses. Lives on a remote machine — this is the REAL program. Written in PHP, Node.js, Python, Java, Ruby, Go, etc.',
+      attacks: 'SQL injection, command injection, SSRF, IDOR, authentication bypass, deserialization, SSTI.',
+      tools: 'Burp Suite (the #1 tool), sqlmap, ffuf, nuclei, manual HTTP crafting.'
+    },
+    db: {
+      title: '🗄️ DATABASE (the data storage)',
+      what: 'Stores all the persistent data — user accounts, products, orders, messages. Structured tables (MySQL, PostgreSQL) or document-based (MongoDB, DynamoDB). Only the app server talks to it directly.',
+      attacks: 'SQL injection (via the app), weak/default credentials, exposed backup files, insecure cloud database configs (open MongoDB on the internet — still happens in 2026!).',
+      tools: 'sqlmap for injection, custom queries if you get RCE on the app server.'
+    }
+  };
+
+  document.querySelectorAll('.arch-node').forEach(node => {
+    node.addEventListener('click', () => {
+      document.querySelectorAll('.arch-node').forEach(n => n.classList.remove('active'));
+      node.classList.add('active');
+      const d = archData[node.dataset.node];
+      document.getElementById('archDetail').innerHTML = `
+        <h5>${d.title}</h5>
+        <p><strong>What it does:</strong> ${d.what}</p>
+        <p><strong>Attack surface:</strong> ${d.attacks}</p>
+        <p><strong>Tools attackers use:</strong> ${d.tools}</p>
+      `;
+    });
+  });
+
+  // ============================================================
+  // 5-STEP SHOPPING FLOW
+  // ============================================================
+  const flowData = {
+    login: {
+      title: '🎯 STEP 1 — LOG IN',
+      desc: 'Attacker tries to break in without credentials, or abuse the login form itself.',
+      tags: ['🔑 Brute force', '📜 Credential stuffing', '💉 SQL injection in username', '🎯 No rate limiting'],
+      owasp: 'A07 — Identification &amp; Authentication Failures'
+    },
+    search: {
+      title: '🎯 STEP 2 — SEARCH FOR A PRODUCT',
+      desc: 'The search field takes user input and queries a database. Prime injection territory.',
+      tags: ['💉 SQL injection', '🔥 XSS in results', '💥 NoSQL injection', '⏱️ Denial of service via complex queries'],
+      owasp: 'A03 — Injection'
+    },
+    cart: {
+      title: '🎯 STEP 3 — ADD TO CART',
+      desc: 'You can modify cart contents, quantities, prices (if stored client-side!).',
+      tags: ['💸 Negative quantity', '💲 Client-side price tampering', '🔓 IDOR on cart ID', '🎭 Race conditions'],
+      owasp: 'A01 — Broken Access Control / A04 — Insecure Design'
+    },
+    ship: {
+      title: '🎯 STEP 4 — SHIPPING ADDRESS',
+      desc: 'Free text fields accepting addresses. Attackers inject payloads AND try to access other users&#39; saved addresses.',
+      tags: ['🔥 Stored XSS', '🎣 IDOR on saved addresses', '💉 Server-side template injection', '📧 Email injection'],
+      owasp: 'A01 / A03'
+    },
+    pay: {
+      title: '🎯 STEP 5 — PAYMENT',
+      desc: 'The juiciest target. Attackers want to steal card details OR pay $0 for something.',
+      tags: ['🔐 Cleartext card data', '💸 Price manipulation', '🎭 Weak payment gateway crypto', '🔥 Server-side race conditions'],
+      owasp: 'A02 — Cryptographic Failures / A04 — Insecure Design'
+    }
+  };
+
+  document.querySelectorAll('.flow-step').forEach(step => {
+    step.addEventListener('click', () => {
+      document.querySelectorAll('.flow-step').forEach(s => s.classList.remove('active'));
+      step.classList.add('active');
+      const f = flowData[step.dataset.flow];
+      document.getElementById('flowDetail').innerHTML = `
+        <h5>${f.title}</h5>
+        <p>${f.desc}</p>
+        <div style="margin-top: 10px;">
+          ${f.tags.map(t => `<span class="attack-tag">${t}</span>`).join('')}
+        </div>
+        <p style="margin-top: 12px; font-size: 13px; color: var(--ink-mute);">👉 OWASP category: <strong style="color: var(--accent-3);">${f.owasp}</strong></p>
+      `;
+    });
+  });
+
+  // ============================================================
+  // IDOR SIMULATOR
+  // ============================================================
+  const idorUsers = {
+    1:  { name: 'Alice Admin',        email: 'admin@store.thm',    role: 'admin',     activity: 'Configured inventory system', flag: '🔒 Access denied', isYou: false, isSaboteur: false },
+    7:  { name: 'Bob Blender',        email: 'bob@store.thm',      role: 'customer',  activity: 'Bought a kitchen blender',  flag: null, isYou: false, isSaboteur: false },
+    12: { name: 'Carla Customer',     email: 'carla@store.thm',    role: 'customer',  activity: 'Browsing tires',             flag: null, isYou: false, isSaboteur: false },
+    15: { name: 'Derek Developer',    email: 'derek@store.thm',    role: 'dev',       activity: 'Deployed new feature',       flag: null, isYou: false, isSaboteur: false },
+    16: { name: 'YOU (tryhackme)',    email: 'you@store.thm',      role: 'customer',  activity: 'Logged in, investigating',   flag: null, isYou: true,  isSaboteur: false },
+    17: { name: 'Evan Evil',          email: 'evan@store.thm',     role: 'customer',  activity: '⚠️ Re-assigned scooter tires → bike assembly (SABOTAGE!)', flag: 'THM{____________}', isYou: false, isSaboteur: true },
+    18: { name: 'Fiona Finance',      email: 'fiona@store.thm',    role: 'finance',   activity: 'Reviewed Q2 payroll',        flag: null, isYou: false, isSaboteur: false },
+    20: { name: 'Grace Ghost',        email: 'grace@store.thm',    role: 'customer',  activity: '(deleted account)',          flag: null, isYou: false, isSaboteur: false }
+  };
+
+  function renderIdor() {
+    const id = +document.getElementById('idorId').value;
+    const user = idorUsers[id];
+    const el = document.getElementById('idorProfile');
+
+    if (!user) {
+      el.innerHTML = `
+        <div class="row"><span class="k">id:</span> <span class="v">${id}</span></div>
+        <div class="row"><span class="k">result:</span> <span class="v" style="color: var(--ink-mute);">(no user with that ID)</span></div>
+        <div class="banner">🔍 empty slot. try another.</div>
+      `;
+      return;
+    }
+
+    let banner = '';
+    if (user.isYou) {
+      banner = '👋 This is YOUR profile. Everything looks normal.';
+    } else if (user.isSaboteur) {
+      banner = '🎯 BINGO — this is the saboteur! Revert their changes to get the flag.';
+    } else if (user.role === 'admin') {
+      banner = '⚠️ You just accessed an ADMIN account\\'s private info. In production, this = CVE + bounty payout.';
+    } else {
+      banner = '😬 You shouldn\\'t be seeing this. But the server doesn\\'t care — classic IDOR.';
+    }
+
+    el.innerHTML = `
+      <div class="row"><span class="k">id:</span> <span class="v">${id}</span></div>
+      <div class="row"><span class="k">name:</span> <span class="v ${user.isYou ? '' : 'secret'}">${user.name}</span></div>
+      <div class="row"><span class="k">email:</span> <span class="v ${user.isYou ? '' : 'secret'}">${user.email}</span></div>
+      <div class="row"><span class="k">role:</span> <span class="v ${user.isYou ? '' : 'secret'}">${user.role}</span></div>
+      <div class="row"><span class="k">activity:</span> <span class="v ${user.isYou ? '' : 'secret'}">${user.activity}</span></div>
+      ${user.flag ? `<div class="row"><span class="k">flag:</span> <span class="v secret">${user.flag}</span></div>` : ''}
+      <div class="banner">${banner}</div>
+    `;
+  }
+
+  function setIdor(id) {
+    document.getElementById('idorId').value = id;
+    renderIdor();
+  }
+
+  function stepIdor(delta) {
+    const el = document.getElementById('idorId');
+    el.value = Math.max(1, Math.min(20, (+el.value) + delta));
+    renderIdor();
+  }
+
+  renderIdor();
+</script>
+</body>
+</html>

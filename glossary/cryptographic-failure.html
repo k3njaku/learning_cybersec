@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Cryptographic Failures (A02) — When The Math Isn't Mathing ☕</title>
+<link rel="stylesheet" href="../assets/styles.css" />
+</head>
+<body data-page-slug="cryptographic-failure">
+
+<div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
+
+<div class="topbar">
+  <a class="logo" href="../index.html">☕ CYBERSEC.VAULT</a>
+  <nav>
+    <a href="../index.html">Home</a>
+    <a href="../index.html#topics-web">Topics</a>
+    <a href="index.html" class="active">Glossary</a>
+    <a href="../tryhackme/index.html">THM</a>
+  </nav>
+  <div class="search-wrap">
+    <input type="text" class="search" placeholder="Search (press /)..." />
+    <div class="search-results"></div>
+  </div>
+</div>
+
+<div class="breadcrumb">
+  <a href="../index.html">Home</a>
+  <span class="sep">›</span>
+  <a href="index.html">Glossary</a>
+  <span class="sep">›</span>
+  <span>Cryptographic Failures</span>
+</div>
+
+<!-- HERO -->
+<section class="hero" style="min-height: 45vh;">
+  <div class="hero-content">
+    <span class="coffee-badge">📖 glossary · OWASP A02 · data protection</span>
+    <h1>Cryptographic Failures 🔐</h1>
+    <p class="subtitle">When apps try to protect data with crypto, and fail.<br>Previously called "Sensitive Data Exposure."</p>
+    <div class="tagline">"we hashed the password... with MD5." — the phrase that launches thousand-dollar bounties. 💸</div>
+  </div>
+</section>
+
+<section class="chapter">
+  <div class="chapter-num">Chapter 01 // Definition</div>
+  <h2><span class="emoji">📖</span> What counts as a crypto failure?</h2>
+  <p class="lead">OWASP A02. The umbrella for every way sensitive data leaks because of bad crypto choices — or no crypto at all.</p>
+
+  <div class="paper">
+    <h4>📝 Think of it like an envelope for your mail</h4>
+    <p>You write a postcard (cleartext) with your credit card number on it and drop it in the mailbox. Everyone who touches that postcard — postal workers, sorters, the mail carrier — reads your card number.</p>
+    <p>You could put it in a locked box (encryption). But if the box uses a combination like 1-2-3-4 (weak key), or the box is made of glass (broken algorithm), or you write the combo on a sticky note on the box (hardcoded secret) — you're back to "anyone can read it."</p>
+    <p><span class="highlight">Crypto failures = any time sensitive data isn't properly protected in transit or at rest.</span></p>
+  </div>
+</section>
+
+<section class="chapter">
+  <div class="chapter-num">Chapter 02 // The failure modes</div>
+  <h2><span class="emoji">💥</span> Classic ways crypto breaks</h2>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <h4>🌐 HTTP instead of HTTPS</h4>
+      <p>Login page on plain <code class="inline">http://</code> — anyone on the Wi-Fi reads creds via Wireshark. Shockingly still happens in 2026. Always use <span class="term" data-term="https">HTTPS</span>.</p>
+    </div>
+    <div class="card">
+      <h4>🔓 Weak hashing algorithms</h4>
+      <p>MD5 (broken 2004), SHA-1 (broken 2017) for password storage. Modern GPUs crack MD5 at 200B hashes/sec. Use bcrypt, argon2, or scrypt.</p>
+    </div>
+    <div class="card">
+      <h4>🧂 No salt on password hashes</h4>
+      <p>Same password = same hash. Attackers pre-compute rainbow tables once, crack millions of accounts forever. Salt = unique random per user.</p>
+    </div>
+    <div class="card">
+      <h4>🗝️ Default / weak encryption keys</h4>
+      <p>Hardcoded keys in source (<code class="inline">key = "1234"</code>), default secrets in frameworks, or predictable IVs. Any attacker reading the code → full decrypt.</p>
+    </div>
+    <div class="card">
+      <h4>♻️ Using encryption backwards</h4>
+      <p>ECB mode when CBC was needed. Reusing IVs. Confusing encryption with encoding (base64 ≠ encryption). Homegrown crypto is ALWAYS wrong.</p>
+    </div>
+    <div class="card">
+      <h4>💾 Unencrypted backups</h4>
+      <p>Production DB encrypted — backup file on S3 wide open. Attackers love backups; skip the live app entirely.</p>
+    </div>
+    <div class="card">
+      <h4>📝 Sensitive data in logs</h4>
+      <p>Passwords, tokens, credit cards accidentally logged in plain text. Log files get shipped to third-party SaaS → data leak.</p>
+    </div>
+    <div class="card">
+      <h4>🔗 Cleartext tokens in URLs</h4>
+      <p>Password-reset links with tokens in the URL get logged by browsers, referers, CDNs, proxies. Should be one-time-use and short-lived.</p>
+    </div>
+  </div>
+</section>
+
+<section class="chapter">
+  <div class="chapter-num">Chapter 03 // Real world</div>
+  <h2><span class="emoji">📰</span> Crypto failures that made headlines</h2>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <div class="card-badge danger">2013</div>
+      <h4>🎮 Adobe</h4>
+      <p>153M user passwords leaked. Encrypted with 3DES using ECB mode (not hashed!). Password hints were in cleartext → the whole dataset got cracked by the community.</p>
+    </div>
+    <div class="card">
+      <div class="card-badge danger">2012</div>
+      <h4>🔗 LinkedIn</h4>
+      <p>117M SHA-1 (unsalted) password hashes stolen. 90% cracked within weeks. LinkedIn paid for identity protection for years.</p>
+    </div>
+    <div class="card">
+      <div class="card-badge warn">2017</div>
+      <h4>🏢 Equifax</h4>
+      <p>Sensitive data (SSNs!) stored unencrypted. 147M Americans' <span class="term" data-term="pii">PII</span> leaked. Multi-billion dollar settlement.</p>
+    </div>
+    <div class="card">
+      <div class="card-badge warn">2019</div>
+      <h4>☁️ Capital One</h4>
+      <p>106M records leaked from S3 bucket. Data wasn't encrypted at rest — once the bucket was accessible via SSRF, everything was in plaintext.</p>
+    </div>
+  </div>
+</section>
+
+<section class="chapter">
+  <div class="chapter-num">Chapter 04 // Doing crypto right</div>
+  <h2><span class="emoji">🛡️</span> The crypto hygiene checklist</h2>
+
+  <ul>
+    <li><strong>HTTPS EVERYWHERE.</strong> HSTS header. Redirect HTTP → HTTPS. Never transmit creds / tokens / session cookies over plain HTTP.</li>
+    <li><strong>Hash passwords with bcrypt, argon2, or scrypt.</strong> Never MD5, SHA-1, SHA-256 (too fast), or (heaven forbid) plaintext.</li>
+    <li><strong>Always salt.</strong> bcrypt/argon2 salt automatically; you don't have to think about it.</li>
+    <li><strong>Encrypt sensitive data at rest.</strong> Databases, backups, logs — full-disk encryption + application-level for PII.</li>
+    <li><strong>Rotate keys</strong> periodically. Store them in a secrets manager (AWS KMS, Vault), NOT in source code.</li>
+    <li><strong>Use vetted libraries.</strong> Node crypto, Python cryptography, Go crypto/*. Never write your own AES.</li>
+    <li><strong>Use modern TLS</strong> (1.2 minimum, 1.3 preferred). Disable old ciphers (RC4, 3DES). Test with SSL Labs.</li>
+    <li><strong>No secrets in logs.</strong> Redact passwords, tokens, card numbers before they hit any logger.</li>
+  </ul>
+
+  <div class="quiz">
+    <h4>🎯 Quick check</h4>
+    <div class="q">A site hashes passwords with SHA-256, no salt. Is this acceptable?</div>
+    <div class="options">
+      <div class="opt" onclick="quizAnswer(this, false)">Yes — SHA-256 is a secure algorithm.</div>
+      <div class="opt" onclick="quizAnswer(this, true)">No — SHA-256 is too fast (GPUs crack billions/sec) and unsalted hashes enable rainbow tables. Use bcrypt / argon2 / scrypt.</div>
+      <div class="opt" onclick="quizAnswer(this, false)">Yes — as long as HTTPS is enabled for login.</div>
+      <div class="opt" onclick="quizAnswer(this, false)">No — you should use MD5.</div>
+    </div>
+    <div class="feedback"></div>
+  </div>
+</section>
+
+<section class="chapter">
+  <div class="related-terms">
+    <h4>🔗 Related in the vault</h4>
+    <div class="tags">
+      <a href="https.html">🔒 HTTPS</a>
+      <a href="authentication.html">🔑 Authentication</a>
+      <a href="pii.html">📋 PII</a>
+      <a href="ssh.html">🔐 SSH</a>
+      <a href="../tryhackme/cybersec-101/web-application-security.html">🕸️ THM: Web App Security</a>
+    </div>
+  </div>
+</section>
+
+<footer class="site-foot">
+  <p class="coffee-line">Don't roll your own crypto. Use the boring libraries. Sleep at night. ☕</p>
+</footer>
+
+<script src="../assets/glossary.js"></script>
+<script src="../assets/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>HTTPS — The Padlock That Actually Matters ☕</title>
+<link rel="stylesheet" href="../assets/styles.css" />
+</head>
+<body data-page-slug="https">
+
+<div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
+
+<div class="topbar">
+  <a class="logo" href="../index.html">☕ CYBERSEC.VAULT</a>
+  <nav>
+    <a href="../index.html">Home</a>
+    <a href="../index.html#topics-web">Topics</a>
+    <a href="index.html" class="active">Glossary</a>
+    <a href="../tryhackme/index.html">THM</a>
+  </nav>
+  <div class="search-wrap">
+    <input type="text" class="search" placeholder="Search (press /)..." />
+    <div class="search-results"></div>
+  </div>
+</div>
+
+<div class="breadcrumb">
+  <a href="../index.html">Home</a>
+  <span class="sep">›</span>
+  <a href="index.html">Glossary</a>
+  <span class="sep">›</span>
+  <span>HTTPS</span>
+</div>
+
+<!-- HERO -->
+<section class="hero" style="min-height: 45vh;">
+  <div class="hero-content">
+    <span class="coffee-badge">📖 glossary · network protocol · port 443</span>
+    <h1>HTTPS 🔒</h1>
+    <p class="subtitle">HTTP wrapped in a TLS tunnel.<br>The reason your Wi-Fi neighbor can't read your bank login.</p>
+    <div class="tagline">"the S is for Secure. finally, an acronym that doesn't lie." ☕</div>
+  </div>
+</section>
+
+<section class="chapter">
+  <div class="chapter-num">Chapter 01 // Definition</div>
+  <h2><span class="emoji">📖</span> What is HTTPS?</h2>
+  <p class="lead">HTTPS = HyperText Transfer Protocol <strong>Secure</strong>. It's the normal HTTP protocol (what your browser uses to fetch web pages) wrapped inside a <strong>TLS</strong> (formerly SSL) encrypted tunnel. Runs on TCP port 443 by default.</p>
+
+  <div class="paper">
+    <h4>📝 Think of HTTP vs HTTPS like postcards vs sealed envelopes</h4>
+    <p>Plain <code>http://</code> is a <strong>postcard</strong>. Anyone on the route (coffee-shop Wi-Fi router, ISP, a guy with a packet sniffer, the NSA) can read every word — including your login credentials, cookies, and credit card numbers.</p>
+    <p><code>https://</code> is a <strong>sealed envelope</strong>. Same letter inside, but now encrypted. The route still sees an envelope moving, but can't read what's inside. Only the intended server can decrypt it.</p>
+    <p><span class="highlight">No HTTPS = every password, cookie, and card number in the open.</span> In 2026, HTTP on a login page = automatic OWASP A02 finding.</p>
+  </div>
+</section>
+
+<section class="chapter">
+  <div class="chapter-num">Chapter 02 // What TLS actually does</div>
+  <h2><span class="emoji">🔐</span> Three guarantees, one handshake</h2>
+
+  <div class="grid cols-3">
+    <div class="card">
+      <h4>🔒 Confidentiality</h4>
+      <p>Traffic is encrypted. Eavesdroppers see scrambled bytes, not passwords.</p>
+    </div>
+    <div class="card">
+      <h4>✅ Integrity</h4>
+      <p>Messages can't be silently modified mid-flight. MITM proxies that try to inject ads into pages get caught.</p>
+    </div>
+    <div class="card">
+      <h4>🪪 Authenticity</h4>
+      <p>Server proves it's really <code class="inline">bank.com</code> via a certificate signed by a trusted Certificate Authority. Fake <code class="inline">bank.com</code> → browser screams.</p>
+    </div>
+  </div>
+
+  <div class="callout info">
+    <strong>💡 The handshake (simplified):</strong>
+    <ol style="margin-top: 8px;">
+      <li>Browser: "Hi, I want HTTPS. Here are the ciphers I support."</li>
+      <li>Server: "Cool. Here's my certificate proving I'm bank.com."</li>
+      <li>Browser checks the cert — signed by a trusted CA? Still valid? Matches hostname? ✅</li>
+      <li>Both agree on a random session key.</li>
+      <li>All further traffic encrypted with that key. 🔐</li>
+    </ol>
+    TLS 1.3 does this in one round trip. TLS 1.2 needs two. Old SSL versions are dead — disable them.
+  </div>
+</section>
+
+<section class="chapter">
+  <div class="chapter-num">Chapter 03 // HTTPS failure modes</div>
+  <h2><span class="emoji">💥</span> When the padlock lies</h2>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <h4>🌐 Mixed content</h4>
+      <p>Page served over HTTPS but loads JS/images over HTTP. The HTTP resource can be MITM'd → injected code runs in the HTTPS context. Modern browsers block this, but older apps still ship it.</p>
+    </div>
+    <div class="card">
+      <h4>⬇️ HTTPS downgrade attacks</h4>
+      <p>Attacker forces the connection to drop back to HTTP. Defense: <strong>HSTS header</strong> (<code class="inline">Strict-Transport-Security</code>) tells browsers "only ever connect to me over HTTPS."</p>
+    </div>
+    <div class="card">
+      <h4>🕰️ Outdated TLS versions</h4>
+      <p>TLS 1.0 / 1.1 have known weaknesses. SSLv3 is fully broken (POODLE). Still enabled? WAF bypass territory, and compliance violations (PCI-DSS).</p>
+    </div>
+    <div class="card">
+      <h4>🧾 Expired / self-signed certs</h4>
+      <p>Users trained to "click through warnings" = they'll click through a real MITM attack, too. Let's Encrypt gives free certs; no excuse in 2026.</p>
+    </div>
+    <div class="card">
+      <h4>🎭 Missing HSTS</h4>
+      <p>Without HSTS, first visit can be MITM'd before the browser knows to require HTTPS. HSTS preload list solves first-visit too.</p>
+    </div>
+    <div class="card">
+      <h4>🔓 Weak ciphers enabled</h4>
+      <p>RC4, 3DES, EXPORT-grade ciphers. Modern attackers downgrade to these if allowed. Restrict to AEAD ciphers only (AES-GCM, ChaCha20-Poly1305).</p>
+    </div>
+  </div>
+</section>
+
+<section class="chapter">
+  <div class="chapter-num">Chapter 04 // For testers & defenders</div>
+  <h2><span class="emoji">🛠️</span> Checking a site's HTTPS</h2>
+
+  <h3>Quick tests anyone can run</h3>
+  <div class="code">
+<span class="com"># The gold standard — SSL Labs free scanner</span>
+https://www.ssllabs.com/ssltest/analyze.html?d=target.com
+
+<span class="com"># Check cert from the CLI</span>
+openssl s_client -connect target.com:443 -servername target.com &lt; /dev/null
+
+<span class="com"># See supported TLS versions + ciphers</span>
+nmap --script ssl-enum-ciphers -p 443 target.com
+
+<span class="com"># Check HSTS and other headers</span>
+curl -I https://target.com
+  </div>
+
+  <h3>The defender's must-haves</h3>
+  <ul>
+    <li><strong>Enable HTTPS everywhere.</strong> Let's Encrypt + auto-renewal = free + painless.</li>
+    <li><strong>Redirect HTTP → HTTPS</strong> at the load balancer / web server level.</li>
+    <li><strong>Set HSTS</strong> (<code class="inline">Strict-Transport-Security: max-age=31536000; includeSubDomains; preload</code>).</li>
+    <li><strong>Disable TLS 1.0 / 1.1 and weak ciphers.</strong> Use Mozilla's SSL Config Generator.</li>
+    <li><strong>Secure cookies.</strong> Add <code class="inline">Secure</code> flag so they're only sent over HTTPS.</li>
+    <li><strong>Monitor cert expiry.</strong> One expired cert = a full outage. Use automated alerts.</li>
+  </ul>
+
+  <div class="callout danger">
+    <strong>🚨 Common myth:</strong> "HTTPS means my site is secure." NO. HTTPS protects data in TRANSIT. It does nothing against SQL injection, XSS, IDOR, or broken auth. You still need all the other defenses. HTTPS is table stakes, not the finish line.
+  </div>
+
+  <div class="quiz">
+    <h4>🎯 Quick check</h4>
+    <div class="q">You visit <code class="inline">https://bank.com</code>. The browser shows a padlock. Which of these is the MOST valuable guarantee?</div>
+    <div class="options">
+      <div class="opt" onclick="quizAnswer(this, false)">The site has no vulnerabilities.</div>
+      <div class="opt" onclick="quizAnswer(this, true)">Your traffic is encrypted AND you're talking to the real bank.com (not an impostor).</div>
+      <div class="opt" onclick="quizAnswer(this, false)">The bank's servers can't be hacked.</div>
+      <div class="opt" onclick="quizAnswer(this, false)">Your password will never be stolen.</div>
+    </div>
+    <div class="feedback"></div>
+  </div>
+</section>
+
+<section class="chapter">
+  <div class="related-terms">
+    <h4>🔗 Related in the vault</h4>
+    <div class="tags">
+      <a href="cryptographic-failure.html">🔐 Cryptographic Failures (A02)</a>
+      <a href="authentication.html">🔑 Authentication</a>
+      <a href="ssh.html">🔐 SSH</a>
+      <a href="../tryhackme/cybersec-101/web-application-security.html">🕸️ THM: Web App Security</a>
+    </div>
+  </div>
+</section>
+
+<footer class="site-foot">
+  <p class="coffee-line">Encryption in transit. The bare minimum, not the goal. ☕</p>
+</footer>
+
+<script src="../assets/glossary.js"></script>
+<script src="../assets/app.js"></script>
+</body>
+</html>

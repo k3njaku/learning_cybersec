@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Linux Fundamentals Part 2 — THM · Cybersecurity 101 ☕</title>
+<link rel="stylesheet" href="../../assets/styles.css" />
+<style>
+  /* ---- PERMISSIONS CALCULATOR (page-local quirk, allowed per AGENTS.md) ---- */
+  .perm-calc {
+    display: grid;
+    grid-template-columns: 120px repeat(3, 1fr) 90px;
+    gap: 10px;
+    align-items: center;
+    background: rgba(0,0,0,0.3);
+    padding: 18px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    margin: 18px 0;
+    font-family: var(--mono);
+  }
+  .perm-calc .lbl {
+    color: var(--accent);
+    font-weight: bold;
+    font-size: 14px;
+  }
+  .perm-calc .bit {
+    text-align: center;
+    padding: 10px 8px;
+    background: #0a0f13;
+    border: 2px solid var(--border);
+    border-radius: 6px;
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.15s;
+    font-size: 14px;
+  }
+  .perm-calc .bit:hover { transform: translateY(-1px); }
+  .perm-calc .bit.on {
+    background: rgba(0,255,157,0.15);
+    border-color: var(--accent);
+    color: var(--accent);
+    text-shadow: 0 0 8px rgba(0,255,157,0.5);
+  }
+  .perm-calc .bit.off { color: var(--ink-mute); opacity: 0.55; }
+  .perm-calc .bit .val {
+    display: block;
+    font-size: 10px;
+    color: var(--ink-mute);
+    margin-top: 2px;
+  }
+  .perm-calc .total {
+    text-align: center;
+    font-size: 1.8rem;
+    color: var(--accent-2);
+    font-weight: bold;
+    background: rgba(255,46,99,0.08);
+    padding: 8px;
+    border-radius: 6px;
+    border: 2px solid var(--accent-2);
+  }
+  .perm-output {
+    font-family: var(--mono);
+    font-size: 1.5rem;
+    text-align: center;
+    margin-top: 14px;
+    padding: 14px;
+    background: #0a0f13;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+  }
+  .perm-output .symbolic { color: var(--accent); }
+  .perm-output .numeric { color: var(--accent-2); }
+  .perm-output .arrow { color: var(--ink-mute); margin: 0 14px; }
+
+  /* ---- DIRECTORY MAP CARDS (common directories task) ---- */
+  .dir-map {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 14px;
+    margin: 24px 0;
+  }
+  .dir-card {
+    background: #0a0f13;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 18px;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.2s;
+  }
+  .dir-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+  .dir-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: var(--accent);
+  }
+  .dir-card.evil::before { background: var(--accent-2); }
+  .dir-card.warn::before { background: var(--warn); }
+  .dir-card.info::before { background: var(--accent-3); }
+  .dir-card h4 {
+    font-family: var(--mono);
+    color: var(--accent);
+    margin: 0 0 8px;
+    font-size: 1.1rem;
+  }
+  .dir-card.evil h4 { color: var(--accent-2); }
+  .dir-card.warn h4 { color: var(--warn); }
+  .dir-card.info h4 { color: var(--accent-3); }
+  .dir-card p { font-size: 13px; color: var(--ink-dim); margin: 0 0 8px; }
+  .dir-card .why {
+    font-size: 12px;
+    color: var(--ink-mute);
+    font-style: italic;
+    border-top: 1px dashed var(--border);
+    padding-top: 8px;
+    margin-top: 10px;
+  }
+
+  /* Command cheat sheet */
+  .cmd-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+    margin: 20px 0;
+  }
+  .cmd-card {
+    background: rgba(0,0,0,0.3);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    border-radius: 6px;
+    padding: 14px;
+    font-family: var(--mono);
+  }
+  .cmd-card .cmd {
+    color: var(--accent);
+    font-size: 1.1rem;
+    font-weight: bold;
+  }
+  .cmd-card .name { font-size: 11px; color: var(--ink-mute); margin-top: 2px; }
+  .cmd-card .desc { font-size: 13px; color: var(--ink); margin-top: 8px; font-family: var(--sans); }
+  .cmd-card .example {
+    font-size: 12px;
+    background: #000;
+    color: var(--accent-3);
+    padding: 6px 8px;
+    border-radius: 4px;
+    margin-top: 8px;
+    display: block;
+  }
+</style>
+</head>
+<body data-page-slug="thm-linux-fundamentals-part-2">
+
+<div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
+
+<div class="topbar">
+  <a class="logo" href="../../index.html">☕ CYBERSEC.VAULT</a>
+  <nav>
+    <a href="../../index.html">Home</a>
+    <a href="../../index.html#topics-web">Topics</a>
+    <a href="../../glossary/index.html">Glossary</a>
+    <a href="../index.html" class="active">THM</a>
+  </nav>
+  <div class="search-wrap">
+    <input type="text" class="search" placeholder="Search (press /)..." />
+    <div class="search-results"></div>
+  </div>
+</div>
+
+<div class="breadcrumb">
+  <a href="../../index.html">Home</a>
+  <span class="sep">›</span>
+  <a href="../index.html">TryHackMe</a>
+  <span class="sep">›</span>
+  <a href="../index.html#paths">Cybersecurity 101</a>
+  <span class="sep">›</span>
+  <span>Linux Fundamentals Part 2</span>
+</div>
+
+<!-- HERO -->
+<section class="hero" style="min-height: 55vh;">
+  <div class="hero-content">
+    <span class="coffee-badge">🐧 thm · cybersecurity 101 · room 02</span>
+    <h1>Linux Fundamentals <span style="color: var(--accent-2);">Pt. 2</span></h1>
+    <p class="subtitle">SSH into a box. Read the manual. Move files around.<br>End the room knowing <em>why</em> <code class="inline">chmod 755</code> means what it means.</p>
+    <div class="tagline">"The terminal isn't scary. The terminal is your new superpower." ⚡</div>
+    <div style="margin-top: 24px; display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+      <a href="https://tryhackme.com/room/linuxfundamentalspart2" target="_blank" rel="noopener" class="cta-btn ghost">↗ Open on TryHackMe</a>
+      <a href="#tasks" class="cta-btn">Jump to Tasks 🎯</a>
+    </div>
+  </div>
+</section>
+
+<!-- WHAT YOU'LL LEARN -->
+<section class="chapter" id="tldr">
+  <div class="chapter-num">TL;DR</div>
+  <h2><span class="emoji">⚡</span> What you'll actually walk away with</h2>
+  <div class="grid cols-3">
+    <div class="card">
+      <h4>🔐 Remote access via SSH</h4>
+      <p>Log into a Linux machine over the network — the single most used tool in pentesting AND sysadmin work.</p>
+    </div>
+    <div class="card">
+      <h4>🚩 Flags, switches & man pages</h4>
+      <p>Every Linux command has hidden superpowers behind flags. You'll know how to find them.</p>
+    </div>
+    <div class="card">
+      <h4>🧮 rwx permissions decoded</h4>
+      <p>Convert <code class="inline">rwxr-xr-x</code> to <code class="inline">755</code> in your head. The thing that confuses every Linux beginner — you'll crush it.</p>
+    </div>
+  </div>
+
+  <div class="callout info" style="margin-top: 20px;">
+    <strong>☕ Heads up:</strong> This room is theory-heavy. The rewrite below cuts the fat and adds interactive playgrounds where THM just walks you through screenshots. Do the tasks on the real THM box, then reinforce here.
+  </div>
+</section>
+
+<div class="divider">the concepts</div>
+
+<!-- ===== CONCEPT 1: SSH ===== -->
+<section class="chapter" id="concept-ssh">
+  <div class="chapter-num">Concept 01 // Remote Control</div>
+  <h2><span class="emoji">🔐</span> <span class="term" data-term="ssh">SSH</span> — your remote keyboard</h2>
+  <p class="lead">When you "deploy" a THM machine, it spins up somewhere in the cloud. You need a way to type commands into THAT machine from YOUR machine. That's SSH.</p>
+
+  <div class="paper">
+    <h4>📝 Think of it like WhatsApp voice call, but for shell commands</h4>
+    <p>You pick up your phone (terminal), dial a number (IP address), and the OTHER phone (the target machine) lets you talk. Only here, instead of talking, you're typing commands — and the other machine executes them and sends the output back.</p>
+    <p><span class="highlight">The whole conversation is encrypted</span> end-to-end. That's what the "S" in SSH means — <strong>Secure</strong> Shell.</p>
+  </div>
+
+  <h3>The command you'll run a thousand times</h3>
+  <div class="code">
+<span class="com"># Generic pattern</span>
+ssh <span class="str">&lt;username&gt;</span>@<span class="str">&lt;target-ip&gt;</span>
+
+<span class="com"># This room specifically</span>
+ssh tryhackme@<span class="str">&lt;MACHINE_IP&gt;</span>
+<span class="com"># password: tryhackme</span>
+  </div>
+
+  <div class="callout">
+    <strong>💡 Why port 22?</strong> SSH runs on TCP port 22 by default. Every scan you do as a pentester, port 22 being open is a <em>huge</em> deal — it means remote shell access is on the table if you can find creds or a vuln.
+  </div>
+
+  <div class="brain-power">
+    <div class="label">🧠 Brain Power</div>
+    <div class="question">Why would a company shut off password-based SSH and force "key-based" auth instead?</div>
+    <button class="reveal-btn" onclick="toggleAnswer(this)">Reveal answer</button>
+    <div class="answer">
+      <p>Because passwords can be <strong>brute-forced</strong>. Attackers run tools like Hydra that hammer SSH with millions of password guesses per minute. An SSH key is a 4096-bit file living on your machine — <em>mathematically</em> infeasible to guess.</p>
+      <p>This is also why every CTF/bounty target with port 22 + password auth is a potential front door. 🚪</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===== CONCEPT 2: FLAGS & MAN PAGES ===== -->
+<section class="chapter" id="concept-flags">
+  <div class="chapter-num">Concept 02 // Unlocking Commands</div>
+  <h2><span class="emoji">🚩</span> Flags, switches & the <span class="term" data-term="man-page">man page</span></h2>
+  <p class="lead">Every Linux command has a default behavior AND a bunch of hidden modes you unlock with <strong>flags</strong> (a.k.a. switches, a.k.a. options).</p>
+
+  <div class="paper right">
+    <h4>📝 Think of flags like video game cheat codes</h4>
+    <p>Default <code>ls</code> shows you some files. But <code>ls -a</code>? Shows you the <em>hidden</em> files too. <code>ls -lh</code>? Shows permissions + human-readable sizes. <code>ls -la</code>? Combines both.</p>
+    <p><span class="highlight">Same command, different superpowers depending on which flags you pass.</span></p>
+  </div>
+
+  <h3>Two ways to learn a command's flags</h3>
+  <div class="grid cols-2">
+    <div class="card">
+      <h4>⚡ Quick reference: <code class="inline">--help</code></h4>
+      <p>Short summary of flags. Fast. Good when you just need to remember which flag does what.</p>
+      <div class="code" style="margin-top: 10px;">ls <span class="str">--help</span></div>
+    </div>
+    <div class="card">
+      <h4>📖 Deep dive: <code class="inline">man</code></h4>
+      <p>Full manual — synopsis, all flags, examples, exit codes. Opens in a pager.</p>
+      <div class="code" style="margin-top: 10px;">man ls</div>
+    </div>
+  </div>
+
+  <div class="callout success">
+    <strong>🎹 Man page navigation cheat sheet:</strong>
+    <ul style="margin-top: 8px;">
+      <li><code class="inline">↓</code> / <code class="inline">↑</code> — scroll line by line</li>
+      <li><code class="inline">Space</code> / <code class="inline">b</code> — page down / page up</li>
+      <li><code class="inline">/pattern</code> — search forward</li>
+      <li><code class="inline">n</code> / <code class="inline">N</code> — next / previous match</li>
+      <li><code class="inline">q</code> — quit (the ONE key every newbie forgets 😅)</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ===== CONCEPT 3: FILESYSTEM COMMANDS ===== -->
+<section class="chapter" id="concept-fs">
+  <div class="chapter-num">Concept 03 // Moving Stuff Around</div>
+  <h2><span class="emoji">📂</span> Create, copy, move, delete</h2>
+  <p class="lead">Six commands that you'll type more than your own name.</p>
+
+  <div class="cmd-grid">
+    <div class="cmd-card">
+      <div class="cmd">touch</div>
+      <div class="name">touch</div>
+      <div class="desc">Create an empty file. Also updates timestamps.</div>
+      <span class="example">touch note.txt</span>
+    </div>
+    <div class="cmd-card">
+      <div class="cmd">mkdir</div>
+      <div class="name">make directory</div>
+      <div class="desc">Create a new folder.</div>
+      <span class="example">mkdir mydir</span>
+    </div>
+    <div class="cmd-card">
+      <div class="cmd">cp</div>
+      <div class="name">copy</div>
+      <div class="desc">Duplicate a file. Source → destination.</div>
+      <span class="example">cp note note2</span>
+    </div>
+    <div class="cmd-card">
+      <div class="cmd">mv</div>
+      <div class="name">move</div>
+      <div class="desc">Move OR rename. Same command either way.</div>
+      <span class="example">mv note2 note3</span>
+    </div>
+    <div class="cmd-card">
+      <div class="cmd">rm</div>
+      <div class="name">remove</div>
+      <div class="desc">Delete. Forever. <strong>No undo, no trash bin.</strong></div>
+      <span class="example">rm note &nbsp;|&nbsp; rm -R dir</span>
+    </div>
+    <div class="cmd-card">
+      <div class="cmd">file</div>
+      <div class="name">file</div>
+      <div class="desc">Tell you what a file actually IS, regardless of extension.</div>
+      <span class="example">file mystery_file</span>
+    </div>
+  </div>
+
+  <div class="callout danger">
+    <strong>⚠️ rm is permanent.</strong> There is no recycle bin on Linux. <code class="inline">rm -R /</code> with root privileges will delete your entire system before you can blink. Many a sysadmin has learned this the painful way. Read twice, hit Enter once.
+  </div>
+
+  <h3>The <code class="inline">file</code> command is a secret weapon</h3>
+  <p>An attacker uploads a file called <code class="inline">image.jpg</code>. Is it really a JPG? Or is it a PHP shell with a fake extension? <code class="inline">file image.jpg</code> reads the actual bytes (magic number) and tells you the truth.</p>
+  <div class="code">
+tryhackme@linux2:~$ file image.jpg
+image.jpg: <span class="str">PHP script, ASCII text</span>   <span class="com"># 🚨 lying about its extension</span>
+  </div>
+</section>
+
+<!-- ===== CONCEPT 4: PERMISSIONS (THE BIG ONE) ===== -->
+<section class="chapter" id="concept-perms">
+  <div class="chapter-num">Concept 04 // The Boss Fight</div>
+  <h2><span class="emoji">🛡️</span> <span class="term" data-term="linux-permissions">Linux permissions</span> decoded</h2>
+  <p class="lead">This is the concept that confuses every single Linux beginner. We're going to murder that confusion in the next 3 minutes.</p>
+
+  <div class="paper">
+    <h4>📝 Think of every file as a nightclub with 3 guest lists</h4>
+    <p>Every file on Linux has <strong>three doors</strong>:</p>
+    <ul>
+      <li>🧑‍💼 <strong>Owner</strong> door — for the file's creator</li>
+      <li>👥 <strong>Group</strong> door — for members of a specific group</li>
+      <li>🌍 <strong>Others</strong> door — for literally everyone else on the system</li>
+    </ul>
+    <p>Each door has its own bouncer checking three things: <span class="highlight">can you READ, WRITE, or EXECUTE?</span></p>
+  </div>
+
+  <h3>The rwx string</h3>
+  <p>When you run <code class="inline">ls -l</code>, you see something like this:</p>
+  <div class="code">
+<span class="com"># This string describes the permissions:</span>
+-rwxr-xr-- &nbsp;1 talha talha 0 Apr 19 10:37 script.sh
+ <span class="str">───</span><span class="num">───</span><span class="com">───</span>
+ owner grp others
+  </div>
+
+  <p>Read it in chunks of 3:</p>
+  <div class="grid cols-3">
+    <div class="card">
+      <h4>Owner: <code class="inline">rwx</code></h4>
+      <p>Can read, write, AND execute. Full control.</p>
+    </div>
+    <div class="card">
+      <h4>Group: <code class="inline">r-x</code></h4>
+      <p>Can read and execute. NO writing. The <code class="inline">-</code> is a "nope" slot.</p>
+    </div>
+    <div class="card">
+      <h4>Others: <code class="inline">r--</code></h4>
+      <p>Can only read. Can't run it, can't change it.</p>
+    </div>
+  </div>
+
+  <h3>Now the scary part: numeric mode</h3>
+  <p>Each letter has a value:</p>
+  <ul>
+    <li><code class="inline">r</code> = <strong>4</strong> (read)</li>
+    <li><code class="inline">w</code> = <strong>2</strong> (write)</li>
+    <li><code class="inline">x</code> = <strong>1</strong> (execute)</li>
+  </ul>
+  <p>Add them up per group. Three groups = three digits. That's your <code class="inline">chmod 755</code>.</p>
+
+  <!-- INTERACTIVE PERMISSIONS CALCULATOR -->
+  <div class="playground">
+    <div class="playground-header">
+      <h4>🧮 Live Permissions Calculator</h4>
+    </div>
+    <p style="font-size: 13px; color: var(--ink-dim); margin-bottom: 12px;">
+      Click the bits to toggle them on/off. Watch the symbolic string AND the numeric value update live.
+    </p>
+
+    <div class="perm-calc">
+      <span class="lbl">Owner</span>
+      <div class="bit on" data-grp="0" data-bit="r" data-val="4">r <span class="val">+4</span></div>
+      <div class="bit on" data-grp="0" data-bit="w" data-val="2">w <span class="val">+2</span></div>
+      <div class="bit on" data-grp="0" data-bit="x" data-val="1">x <span class="val">+1</span></div>
+      <div class="total" data-grp-total="0">7</div>
+    </div>
+
+    <div class="perm-calc">
+      <span class="lbl">Group</span>
+      <div class="bit on" data-grp="1" data-bit="r" data-val="4">r <span class="val">+4</span></div>
+      <div class="bit off" data-grp="1" data-bit="w" data-val="2">w <span class="val">+2</span></div>
+      <div class="bit on" data-grp="1" data-bit="x" data-val="1">x <span class="val">+1</span></div>
+      <div class="total" data-grp-total="1">5</div>
+    </div>
+
+    <div class="perm-calc">
+      <span class="lbl">Others</span>
+      <div class="bit on" data-grp="2" data-bit="r" data-val="4">r <span class="val">+4</span></div>
+      <div class="bit off" data-grp="2" data-bit="w" data-val="2">w <span class="val">+2</span></div>
+      <div class="bit on" data-grp="2" data-bit="x" data-val="1">x <span class="val">+1</span></div>
+      <div class="total" data-grp-total="2">5</div>
+    </div>
+
+    <div class="perm-output">
+      <span class="symbolic" id="permSymbolic">rwxr-xr-x</span>
+      <span class="arrow">===</span>
+      <span class="numeric" id="permNumeric">755</span>
+    </div>
+
+    <div class="preset-chips" style="margin-top: 14px;">
+      <span class="chip" onclick="setPerms(7,5,5)">755 (executable)</span>
+      <span class="chip" onclick="setPerms(6,4,4)">644 (normal file)</span>
+      <span class="chip" onclick="setPerms(7,0,0)">700 (private)</span>
+      <span class="chip evil" onclick="setPerms(7,7,7)">777 (EVIL — world writable!)</span>
+      <span class="chip evil" onclick="setPerms(4,0,0)">400 (read-only key)</span>
+      <span class="chip" onclick="setPerms(7,5,0)">750 (team share)</span>
+    </div>
+  </div>
+
+  <div class="brain-power">
+    <div class="label">🧠 Brain Power</div>
+    <div class="question">A website's upload folder has <code class="inline">chmod 777</code>. Why is that every pentester's favorite sight?</div>
+    <button class="reveal-btn" onclick="toggleAnswer(this)">Reveal answer</button>
+    <div class="answer">
+      <p><code class="inline">777</code> means <strong>everyone can read, write, and execute</strong> — including the webserver. So if you upload a PHP file (because others=rwx lets you write), the webserver can execute it when you visit the URL.</p>
+      <p>Boom — <span class="term" data-term="arbitrary-code-execution">arbitrary code execution</span>. Reverse shell inbound. Game over. 🎯</p>
+      <p>This is why lazy "just chmod 777 it" = the gift that keeps on giving for attackers.</p>
+    </div>
+  </div>
+
+  <h3>Switching users with <span class="term" data-term="su">su</span></h3>
+  <p>Got creds for another user? Slide into their account:</p>
+  <div class="code">
+tryhackme@linux2:~$ su user2
+Password: <span class="str">*********</span>
+user2@linux2:/home/tryhackme$
+
+<span class="com"># Or better — with full login environment:</span>
+tryhackme@linux2:~$ su -l user2
+user2@linux2:~$  <span class="com"># now in user2's home dir, user2's PATH, etc.</span>
+  </div>
+</section>
+
+<!-- ===== CONCEPT 5: COMMON DIRECTORIES ===== -->
+<section class="chapter" id="concept-dirs">
+  <div class="chapter-num">Concept 05 // The Map</div>
+  <h2><span class="emoji">🗺️</span> Common directories (the pentester's treasure map)</h2>
+  <p class="lead">Linux organizes itself into standard folders. Knowing what lives where = knowing where to loot first.</p>
+
+  <div class="dir-map">
+    <div class="dir-card info">
+      <h4>/etc</h4>
+      <p><strong>System configs.</strong> Where the OS stores settings for users, services, apps.</p>
+      <div class="why">🎯 Contains <code>/etc/passwd</code> (users) and <code>/etc/shadow</code> (hashed passwords — readable = jackpot). <code>/etc/sudoers</code> lists who can sudo.</div>
+    </div>
+    <div class="dir-card warn">
+      <h4>/var</h4>
+      <p><strong>Variable data.</strong> Logs, backups, spool files — stuff that changes as the system runs.</p>
+      <div class="why">🎯 <code>/var/log</code> is where logs live. Attackers delete logs from here to cover tracks. Also check <code>/var/www</code> for web app source.</div>
+    </div>
+    <div class="dir-card evil">
+      <h4>/root</h4>
+      <p><strong>Root's home.</strong> The one directory only root can normally enter.</p>
+      <div class="why">🎯 If you land a shell as root, flags and config files live in <code>/root/</code>. THM/HTB flags are often here.</div>
+    </div>
+    <div class="dir-card">
+      <h4>/tmp</h4>
+      <p><strong>Temporary junk.</strong> Wiped on reboot. World-writable by default.</p>
+      <div class="why">🎯 Gold for attackers: drop your enumeration scripts, reverse-shell binaries, LinPEAS here without needing write perms elsewhere.</div>
+    </div>
+    <div class="dir-card info">
+      <h4>/home</h4>
+      <p><strong>User homes.</strong> Each user gets <code>/home/&lt;username&gt;</code>.</p>
+      <div class="why">🎯 Check <code>~/.ssh/</code>, <code>~/.bash_history</code>, <code>~/.env</code> files — devs leave creds everywhere.</div>
+    </div>
+    <div class="dir-card">
+      <h4>/</h4>
+      <p><strong>The root of everything.</strong> Not to be confused with /root. This is the top of the filesystem tree.</p>
+      <div class="why">🎯 Everything else branches off from here. <code>cd /</code> lands you here.</div>
+    </div>
+  </div>
+
+  <div class="callout">
+    <strong>🧠 Mental model:</strong> Linux's filesystem is one giant upside-down tree. <code>/</code> is the trunk. Everything else (including USB drives, other disks) gets "mounted" INTO this tree as branches.
+  </div>
+</section>
+
+<div class="divider">task time</div>
+
+<!-- ===== TASKS & ANSWERS ===== -->
+<section class="chapter" id="tasks">
+  <div class="chapter-num">Tasks</div>
+  <h2><span class="emoji">🧪</span> The tasks (with your answers + the why)</h2>
+  <p class="lead">Each card = one task. Click to expand the answer + reasoning. Answers marked <strong>[[MACHINE]]</strong> require the deployed THM box — fill them in when you run it.</p>
+
+  <!-- TASK 1 -->
+  <div class="card" style="margin-bottom: 14px;">
+    <div class="card-badge">TASK 1</div>
+    <h4>Introduction</h4>
+    <p style="color: var(--ink-dim); font-size: 0.92rem;">Just a read-through. Sets expectations for the room.</p>
+    <details style="margin-top: 12px;">
+      <summary style="cursor:pointer; color: var(--accent-2); font-family: var(--mono); font-size: 13px;">▸ Show answer + reasoning</summary>
+      <div style="margin-top: 10px; display: grid; gap: 8px;">
+        <div style="padding: 10px 14px; background: rgba(0,0,0,0.3); border-left: 3px solid var(--accent); border-radius: 4px;">
+          <strong style="color: var(--accent); font-family: var(--mono); font-size: 12px;">ANSWER:</strong>
+          <code class="inline" style="margin-left: 8px;">No answer needed</code>
+        </div>
+        <div style="padding: 10px 14px; background: rgba(0,0,0,0.3); border-left: 3px solid var(--accent-3); border-radius: 4px; font-size: 14px;">
+          <strong style="color: var(--accent-3); font-family: var(--mono); font-size: 12px;">WHY:</strong>
+          Intro tasks exist to set context. Room promises: SSH, advanced commands, filesystem, perms, common dirs.
+        </div>
+      </div>
+    </details>
+  </div>
+
+  <!-- TASK 2 -->
+  <div class="card" style="margin-bottom: 14px;">
+    <div class="card-badge">TASK 2</div>
+    <h4>Accessing Your Linux Machine Using SSH (Deploy)</h4>
+    <p style="color: var(--ink-dim); font-size: 0.92rem;">Deploy the VM, SSH in with user <code class="inline">tryhackme</code> / password <code class="inline">tryhackme</code>.</p>
+    <details style="margin-top: 12px;">
+      <summary style="cursor:pointer; color: var(--accent-2); font-family: var(--mono); font-size: 13px;">▸ Show answer + reasoning</summary>
+      <div style="margin-top: 10px; display: grid; gap: 8px;">
+        <div style="padding: 10px 14px; background: rgba(0,0,0,0.3); border-left: 3px solid var(--accent); border-radius: 4px;">
+          <strong style="color: var(--accent); font-family: var(--mono); font-size: 12px;">ANSWER:</strong>
+          <code class="inline" style="margin-left: 8px;">ssh tryhackme@&lt;MACHINE_IP&gt;</code>
+        </div>
+        <div style="padding: 10px 14px; background: rgba(0,0,0,0.3); border-left: 3px solid var(--accent-3); border-radius: 4px; font-size: 14px;">
+          <strong style="color: var(--accent-3); font-family: var(--mono); font-size: 12px;">WHY:</strong>
+          SSH pattern: <code class="inline">ssh user@host</code>. The @ splits "who" from "where". You'll type this 10,000 times in your hacking career.
+        </div>
+      </div>
+    </details>
+  </div>
+
+  <!-- TASK 3 -->
+  <div class="card" style="margin-bottom: 14px;">
+    <div class="card-badge">TASK 3</div>
+    <h4>Introduction to Flags and Switches</h4>
+    <p style="color: var(--ink-dim); font-size: 0.92rem;">Explore <code class="inline">man ls</code>, learn navigation + human-readable flag.</p>
+    <details style="margin-top: 12px;">
+      <summary style="cursor:pointer; color: var(--accent-2); font-family: var(--mono); font-size: 13px;">▸ Show answers + reasoning</summary>
+      <div style="margin-top: 10px; display: grid; gap: 10px;">
+        <div style="padding: 10px 14px; background: rgba(0,0,0,0.3); border-left: 3px solid var(--accent); border-radius: 4px; font-size: 13px;">
+          <strong style="color: var(--accent); font-family: var(--mono);">Q: Explore the manual page of the ls command</strong><br>
+          <code class="inline">No answer needed</code> — just run <code class="inline">man ls</code>.
+        </div>
+        <div style="padding: 10px 14px; background: rgba(0,0,0,0.3); border-left: 3px solid var(--accent); border-radius: 4px; font-size: 13px;">
+          <strong style="color: var(--accent); font-family: var(--mono);">Q: Arrow key to navigate DOWN the manual?</strong><br>
+          <code class="inline">down</code> (aka ↓). Also <code class="inline">j</code> and <code class="inline">Space</code> work.
+        </div>
+        <div style="padding: 10px 14px; background: rgba(0,0,0,0.3); border-left: 3px solid var(--accent); border-radius: 4px; font-size: 13px;">
+          <strong style="color: var(--accent); font-family: var(--mono);">Q: Flag for "human-readable" output?</strong><br>
+          <code class="inline">-h</code> — converts sizes from raw bytes (<code class="inline">4096</code>) to KB/MB/GB (<code class="inline">4.0K</code>). Pair with <code class="inline">-l</code> → <code class="inline">ls -lh</code>.
+        </div>
+        <div style="padding: 10px 14px; background: rgba(0,0,0,0.3); border-left: 3px solid var(--accent-3); border-radius: 4px; font-size: 14px;">
+          <strong style="color: var(--accent-3); font-family: var(--mono); font-size: 12px;">WHY:</strong>
+          Man pages use the same controls as <code class="inline">less</code> (the underlying pager). Once you learn it for <code class="inline">man</code>, it works for <code class="inline">less</code>, <code class="inline">git log</code>, and every other paged tool.
+        </div>
+      </div>
+    </details>
+  </div>
+
+  <!-- TASK 4 -->
+  <div class="card" style="margin-bottom: 14px;">
+    <div class="card-badge">TASK 4</div>
+    <h4>Filesystem Interaction Continued</h4>
+    <p style="color: var(--ink-dim); font-size: 0.92rem;">touch / mkdir / cp / mv / rm / file commands.</p>
+    <details style="margin-top: 12px;">
+      <summary style="cursor:pointer; color: var(--accent-2); font-family: var(--mono); font-size: 13px;">▸ Show answers + reasoning</summary>
+      <div style="margin-top: 10px; display: grid; gap: 10px;">
+        <div style="padding: 10px 14px; background: rgba(0,0,0,0.3); border-left: 3px solid var(--accent); border-radius: 4px; font-size: 13px;">
+          <strong style="color: var(--accent); font-family: var(--mono);">Q: How would you create the file "newnote"?</strong><br>
+          <code class="inline">touch newnote</code>
+        </div>
+        <div style="padding: 10px 14px; background: rgba(0,0,0,0.3); border-left: 3px solid var(--warn); border-radius: 4px; font-size: 13px;">
+          <strong style="color: var(--warn); font-family: var(--mono);">Q: File type of "unknown1" in tryhackme's home?</strong><br>
+          <code class="inline">[[MACHINE — run: file ~/unknown1]]</code><br>
+          <em style="color: var(--ink-mute); font-size: 12px;">Common answer from this room is <code class="inline">ASCII text</code>, but confirm on your box.</em>
+        </div>
+        <div style="padding: 10px 14px; background: rgba(0,0,0,0.3); border-left: 3px solid var(--accent); border-radius: 4px; font-size: 13px;">
+          <strong style="color: var(--accent); font-family: var(--mono);">Q: Move "myfile" to directory "myfolder"?</strong><br>
+          <code class="inline">mv myfile myfolder</code>
+        </div>
+        <div style="padding: 10px 14px; background: rgba(0,0,0,0.3); border-left: 3px solid var(--warn); border-radius: 4px; font-size: 13px;">
+          <strong style="color: var(--warn); font-family: var(--mono);">Q: Contents of this file? (flag)</strong><br>
+          <code class="inline">[[MACHINE — run: cat ~/myfolder/myfile]]</code><br>
+          <em style="color: var(--ink-mute); font-size: 12px;">Format hint: <code class="inline">THM{________}</code></em>
+        </div>
+        <div style="padding: 10px 14px; background: rgba(0,0,0,0.3); border-left: 3px solid var(--accent-3); border-radius: 4px; font-size: 14px;">
+          <strong style="color: var(--accent-3); font-family: var(--mono); font-size: 12px;">WHY:</strong>
+          <code class="inline">mv</code> does both moving AND renaming — if the second arg is an existing directory, it moves INTO it. If not, it renames TO it. Same command, context decides.
+        </div>
+      </div>
+    </details>
+  </div>
+
+  <!-- TASK 5 -->
+  <div class="card" style="margin-bottom: 14px;">
+    <div class="card-badge">TASK 5</div>
+    <h4>Permissions 101</h4>
+    <p style="color: var(--ink-dim); font-size: 0.92rem;">su, rwx, numeric permissions, reading the "important" file as user2.</p>
+    <details style="margin-top: 12px;">
+      <summary style="cursor:pointer; color: var(--accent-2); font-family: var(--mono); font-size: 13px;">▸ Show answers + reasoning</summary>
+      <div style="margin-top: 10px; display: grid; gap: 10px;">
+        <div style="padding: 10px 14px; background: rgba(0,0,0,0.3); border-left: 3px solid var(--warn); border-radius: 4px; font-size: 13px;">
+          <strong style="color: var(--warn); font-family: var(--mono);">Q: Who is the owner of "important"?</strong><br>
+          <code class="inline">[[MACHINE — run: ls -lh important]]</code><br>
+          <em style="color: var(--ink-mute); font-size: 12px;">Look at the 3rd column. Common answer: <code class="inline">user2</code>.</em>
+        </div>
+        <div style="padding: 10px 14px; background: rgba(0,0,0,0.3); border-left: 3px solid var(--accent); border-radius: 4px; font-size: 13px;">
+          <strong style="color: var(--accent); font-family: var(--mono);">Q: Command to switch to user2?</strong><br>
+          <code class="inline">su user2</code>
+        </div>
+        <div style="padding: 10px 14px; background: rgba(0,0,0,0.3); border-left: 3px solid var(--accent); border-radius: 4px; font-size: 13px;">
+          <strong style="color: var(--accent); font-family: var(--mono);">Q: Now switch using password "user2"</strong><br>
+          <code class="inline">No answer needed</code> — password goes into the prompt after <code class="inline">su user2</code>.
+        </div>
+        <div style="padding: 10px 14px; background: rgba(0,0,0,0.3); border-left: 3px solid var(--warn); border-radius: 4px; font-size: 13px;">
+          <strong style="color: var(--warn); font-family: var(--mono);">Q: Contents of "important" (the flag)</strong><br>
+          <code class="inline">[[MACHINE — as user2, run: cat important]]</code><br>
+          <em style="color: var(--ink-mute); font-size: 12px;">Format: <code class="inline">THM{________}</code></em>
+        </div>
+        <div style="padding: 10px 14px; background: rgba(0,0,0,0.3); border-left: 3px solid var(--accent-3); border-radius: 4px; font-size: 14px;">
+          <strong style="color: var(--accent-3); font-family: var(--mono); font-size: 12px;">WHY:</strong>
+          The file's <code class="inline">ls -lh</code> output shows the owner. You couldn't read it as <code class="inline">tryhackme</code> because "others" didn't have read perm. <code class="inline">su user2</code> switches to the owner → read succeeds. <strong>This is privesc in miniature.</strong>
+        </div>
+      </div>
+    </details>
+  </div>
+
+  <!-- TASK 6 -->
+  <div class="card" style="margin-bottom: 14px;">
+    <div class="card-badge">TASK 6</div>
+    <h4>Common Directories</h4>
+    <p style="color: var(--ink-dim); font-size: 0.92rem;">/etc, /var, /root, /tmp — know the map.</p>
+    <details style="margin-top: 12px;">
+      <summary style="cursor:pointer; color: var(--accent-2); font-family: var(--mono); font-size: 13px;">▸ Show answers + reasoning</summary>
+      <div style="margin-top: 10px; display: grid; gap: 10px;">
+        <div style="padding: 10px 14px; background: rgba(0,0,0,0.3); border-left: 3px solid var(--accent); border-radius: 4px; font-size: 13px;">
+          <strong style="color: var(--accent); font-family: var(--mono);">Q: Read me!</strong><br>
+          <code class="inline">No answer needed</code>
+        </div>
+        <div style="padding: 10px 14px; background: rgba(0,0,0,0.3); border-left: 3px solid var(--accent); border-radius: 4px; font-size: 13px;">
+          <strong style="color: var(--accent); font-family: var(--mono);">Q: Directory path where logs are stored?</strong><br>
+          <code class="inline">/var/log</code>
+        </div>
+        <div style="padding: 10px 14px; background: rgba(0,0,0,0.3); border-left: 3px solid var(--accent); border-radius: 4px; font-size: 13px;">
+          <strong style="color: var(--accent); font-family: var(--mono);">Q: Which root directory is similar to how RAM works?</strong><br>
+          <code class="inline">/tmp</code> — contents wiped on reboot, just like RAM loses state when powered off.
+        </div>
+        <div style="padding: 10px 14px; background: rgba(0,0,0,0.3); border-left: 3px solid var(--accent); border-radius: 4px; font-size: 13px;">
+          <strong style="color: var(--accent); font-family: var(--mono);">Q: Home directory of the root user?</strong><br>
+          <code class="inline">/root</code>
+        </div>
+        <div style="padding: 10px 14px; background: rgba(0,0,0,0.3); border-left: 3px solid var(--accent); border-radius: 4px; font-size: 13px;">
+          <strong style="color: var(--accent); font-family: var(--mono);">Q: Navigate through these on the deployed machine</strong><br>
+          <code class="inline">No answer needed</code> — just <code class="inline">cd /etc</code>, <code class="inline">cd /var</code>, <code class="inline">cd /tmp</code>, etc.
+        </div>
+        <div style="padding: 10px 14px; background: rgba(0,0,0,0.3); border-left: 3px solid var(--accent-3); border-radius: 4px; font-size: 14px;">
+          <strong style="color: var(--accent-3); font-family: var(--mono); font-size: 12px;">WHY:</strong>
+          <code class="inline">/root</code> vs <code class="inline">/home/root</code> trick: root does NOT live in <code class="inline">/home</code>. It gets its own top-level directory. Remember this or you'll get the answer wrong every time. 😅
+        </div>
+      </div>
+    </details>
+  </div>
+
+  <!-- TASK 7 -->
+  <div class="card" style="margin-bottom: 14px;">
+    <div class="card-badge">TASK 7</div>
+    <h4>Conclusions and Summaries</h4>
+    <p style="color: var(--ink-dim); font-size: 0.92rem;">Recap of what you learned.</p>
+    <details style="margin-top: 12px;">
+      <summary style="cursor:pointer; color: var(--accent-2); font-family: var(--mono); font-size: 13px;">▸ Show answer + reasoning</summary>
+      <div style="margin-top: 10px; display: grid; gap: 8px;">
+        <div style="padding: 10px 14px; background: rgba(0,0,0,0.3); border-left: 3px solid var(--accent); border-radius: 4px;">
+          <strong style="color: var(--accent); font-family: var(--mono); font-size: 12px;">ANSWER:</strong>
+          <code class="inline" style="margin-left: 8px;">No answer needed</code>
+        </div>
+        <div style="padding: 10px 14px; background: rgba(0,0,0,0.3); border-left: 3px solid var(--accent-3); border-radius: 4px; font-size: 14px;">
+          <strong style="color: var(--accent-3); font-family: var(--mono); font-size: 12px;">WHY:</strong>
+          Take the win. You just learned SSH + flags + filesystem ops + rwx + common dirs in one sitting. That's like 40% of daily Linux usage unlocked.
+        </div>
+      </div>
+    </details>
+  </div>
+
+  <!-- TASK 8 -->
+  <div class="card" style="margin-bottom: 14px;">
+    <div class="card-badge">TASK 8</div>
+    <h4>Linux Fundamentals Part 3</h4>
+    <p style="color: var(--ink-dim); font-size: 0.92rem;">Terminate the machine, join Part 3.</p>
+    <details style="margin-top: 12px;">
+      <summary style="cursor:pointer; color: var(--accent-2); font-family: var(--mono); font-size: 13px;">▸ Show answer + reasoning</summary>
+      <div style="margin-top: 10px; display: grid; gap: 8px;">
+        <div style="padding: 10px 14px; background: rgba(0,0,0,0.3); border-left: 3px solid var(--accent); border-radius: 4px;">
+          <strong style="color: var(--accent); font-family: var(--mono); font-size: 12px;">ANSWER:</strong>
+          <code class="inline" style="margin-left: 8px;">No answer needed</code> (terminate + join next)
+        </div>
+        <div style="padding: 10px 14px; background: rgba(0,0,0,0.3); border-left: 3px solid var(--accent-3); border-radius: 4px; font-size: 14px;">
+          <strong style="color: var(--accent-3); font-family: var(--mono); font-size: 12px;">NEXT:</strong>
+          <a href="https://tryhackme.com/room/linuxfundamentalspart3" target="_blank" rel="noopener">Linux Fundamentals Part 3 →</a> When you do that one and it's boring, paste me the URL.
+        </div>
+      </div>
+    </details>
+  </div>
+</section>
+
+<!-- RETENTION QUIZ -->
+<section class="chapter" id="quiz">
+  <div class="chapter-num">Retention Check</div>
+  <h2><span class="emoji">🎯</span> Did it stick?</h2>
+  <div class="quiz">
+    <h4>🎯 The core concept</h4>
+    <div class="q">A file has permissions <code class="inline">rwxr-x---</code>. What's that in numeric form?</div>
+    <div class="options">
+      <div class="opt" onclick="quizAnswer(this, false)">777</div>
+      <div class="opt" onclick="quizAnswer(this, false)">755</div>
+      <div class="opt" onclick="quizAnswer(this, true)">750</div>
+      <div class="opt" onclick="quizAnswer(this, false)">700</div>
+    </div>
+    <div class="feedback"></div>
+  </div>
+
+  <div class="quiz" style="margin-top: 24px;">
+    <h4>🎯 Bonus round</h4>
+    <div class="q">You find a world-writable <code class="inline">backup.sh</code> (<code class="inline">chmod 777</code>) that runs as root every minute via cron. What's your move?</div>
+    <div class="options">
+      <div class="opt" onclick="quizAnswer(this, false)">Download it — it might have creds.</div>
+      <div class="opt" onclick="quizAnswer(this, true)">Edit it to include a reverse shell — cron will run it as root and give you root.</div>
+      <div class="opt" onclick="quizAnswer(this, false)">Report it to the admin and move on.</div>
+      <div class="opt" onclick="quizAnswer(this, false)">Rename it to backup.bak.</div>
+    </div>
+    <div class="feedback"></div>
+  </div>
+</section>
+
+<!-- RELATED -->
+<section class="chapter">
+  <div class="related-terms">
+    <h4>🔗 Related in the vault</h4>
+    <div class="tags">
+      <a href="../../glossary/ssh.html">🔐 SSH</a>
+      <a href="../../glossary/man-page.html">📖 Man Page</a>
+      <a href="../../glossary/linux-permissions.html">🛡️ Linux Permissions</a>
+      <a href="../../glossary/chmod.html">🔧 chmod</a>
+      <a href="../../glossary/su.html">👤 su</a>
+      <a href="../../glossary/arbitrary-code-exec.html">💀 Arbitrary Code Execution</a>
+      <a href="../../glossary/reverse-shell.html">🐚 Reverse Shell</a>
+    </div>
+  </div>
+</section>
+
+<footer class="site-foot">
+  <p class="coffee-line">Terminal mastered. Permissions decoded. Root is only a chmod away. ☕</p>
+  <p style="font-size: 12px;">Original room: <a href="https://tryhackme.com/room/linuxfundamentalspart2" target="_blank" rel="noopener">tryhackme.com/room/linuxfundamentalspart2</a></p>
+</footer>
+
+<script src="../../assets/glossary.js"></script>
+<script src="../../assets/app.js"></script>
+<script>
+  // ============================================================
+  // PERMISSIONS CALCULATOR
+  // ============================================================
+  (function () {
+    const bits = document.querySelectorAll('.perm-calc .bit');
+    const state = [
+      { r: true,  w: true,  x: true  },   // owner
+      { r: true,  w: false, x: true  },   // group
+      { r: true,  w: false, x: true  }    // others
+    ];
+
+    bits.forEach(b => {
+      b.addEventListener('click', () => {
+        const grp = +b.dataset.grp;
+        const bit = b.dataset.bit;
+        state[grp][bit] = !state[grp][bit];
+        render();
+      });
+    });
+
+    function render() {
+      // Update bit visuals
+      document.querySelectorAll('.perm-calc .bit').forEach(b => {
+        const on = state[+b.dataset.grp][b.dataset.bit];
+        b.classList.toggle('on', on);
+        b.classList.toggle('off', !on);
+      });
+      // Update per-group totals
+      for (let g = 0; g < 3; g++) {
+        const s = state[g];
+        const n = (s.r ? 4 : 0) + (s.w ? 2 : 0) + (s.x ? 1 : 0);
+        document.querySelector(`.total[data-grp-total="${g}"]`).textContent = n;
+      }
+      // Update symbolic + numeric output
+      const symbolic = state.map(s =>
+        (s.r ? 'r' : '-') + (s.w ? 'w' : '-') + (s.x ? 'x' : '-')
+      ).join('');
+      const numeric = state.map(s =>
+        (s.r ? 4 : 0) + (s.w ? 2 : 0) + (s.x ? 1 : 0)
+      ).join('');
+      document.getElementById('permSymbolic').textContent = symbolic;
+      document.getElementById('permNumeric').textContent = numeric;
+    }
+
+    window.setPerms = function (o, g, ot) {
+      const decode = n => ({ r: !!(n & 4), w: !!(n & 2), x: !!(n & 1) });
+      state[0] = decode(o);
+      state[1] = decode(g);
+      state[2] = decode(ot);
+      render();
+    };
+
+    render();
+  })();
+</script>
+</body>
+</html>

@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Authentication — Proving You Are Who You Say ☕</title>
+<link rel="stylesheet" href="../assets/styles.css" />
+</head>
+<body data-page-slug="authentication">
+
+<div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
+
+<div class="topbar">
+  <a class="logo" href="../index.html">☕ CYBERSEC.VAULT</a>
+  <nav>
+    <a href="../index.html">Home</a>
+    <a href="../index.html#topics-web">Topics</a>
+    <a href="index.html" class="active">Glossary</a>
+    <a href="../tryhackme/index.html">THM</a>
+  </nav>
+  <div class="search-wrap">
+    <input type="text" class="search" placeholder="Search (press /)..." />
+    <div class="search-results"></div>
+  </div>
+</div>
+
+<div class="breadcrumb">
+  <a href="../index.html">Home</a>
+  <span class="sep">›</span>
+  <a href="index.html">Glossary</a>
+  <span class="sep">›</span>
+  <span>Authentication</span>
+</div>
+
+<!-- HERO -->
+<section class="hero" style="min-height: 45vh;">
+  <div class="hero-content">
+    <span class="coffee-badge">📖 glossary · OWASP A07 · web security</span>
+    <h1>Authentication 🔑</h1>
+    <p class="subtitle">The process of proving you are who you say you are.<br>The login form. The SSH key. The TOTP code.</p>
+    <div class="tagline">"I am Talha, and I can prove it." — every login, ever. ☕</div>
+  </div>
+</section>
+
+<section class="chapter">
+  <div class="chapter-num">Chapter 01 // Definition</div>
+  <h2><span class="emoji">📖</span> What is authentication?</h2>
+  <p class="lead">Authentication (<strong>authn</strong>) is the process of verifying identity — confirming someone is who they claim to be before granting access.</p>
+
+  <div class="paper">
+    <h4>📝 Think of it like showing ID at the airport</h4>
+    <p>The TSA agent doesn't know you. You hand them your passport. They verify the photo matches your face. That's authentication — you proved your claimed identity.</p>
+    <p>What the agent does NEXT (can you board this flight? are you on the no-fly list?) is <em>authorization</em> — a separate check we call <span class="term" data-term="access-control">access control</span>.</p>
+  </div>
+
+  <h3>The three authentication factors</h3>
+  <div class="grid cols-3">
+    <div class="card">
+      <h4>🧠 Something you KNOW</h4>
+      <p>Password, PIN, security question. Memorizable. Also guessable.</p>
+    </div>
+    <div class="card">
+      <h4>📱 Something you HAVE</h4>
+      <p>Phone (for SMS/TOTP codes), hardware key (YubiKey), smart card. Physical possession.</p>
+    </div>
+    <div class="card">
+      <h4>🫆 Something you ARE</h4>
+      <p>Fingerprint, face, voice, retina. Biometrics. Hard to change when stolen.</p>
+    </div>
+  </div>
+
+  <div class="callout info">
+    <strong>💡 Multi-factor authentication (MFA / 2FA):</strong> Requires TWO different factors. Password (know) + phone code (have) = 2FA. Much harder to break because attackers need both.
+  </div>
+</section>
+
+<section class="chapter">
+  <div class="chapter-num">Chapter 02 // Where it breaks</div>
+  <h2><span class="emoji">💥</span> OWASP A07 — Authentication Failures</h2>
+  <p class="lead">When authentication breaks, attackers get in as someone they're not. Here's how it breaks:</p>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <h4>🔨 No rate limiting</h4>
+      <p>Login accepts unlimited attempts. <span class="term" data-term="brute-force">Brute-force</span> runs wild.</p>
+    </div>
+    <div class="card">
+      <h4>📜 Credential stuffing</h4>
+      <p>Attackers take username+password pairs leaked from OTHER breaches and try them here. Password reuse = you're already pwned.</p>
+    </div>
+    <div class="card">
+      <h4>🙈 Weak password policy</h4>
+      <p><code class="inline">password</code>, <code class="inline">123456</code>, <code class="inline">qwerty</code> still top the most-used lists every year. No enforcement = easy wins.</p>
+    </div>
+    <div class="card">
+      <h4>💾 Plaintext password storage</h4>
+      <p>Database gets breached → every password leaks in clear. No bcrypt, no argon2, just raw strings. 2010s-era mistakes that STILL happen.</p>
+    </div>
+    <div class="card">
+      <h4>🪄 Session hijacking</h4>
+      <p>Cookies stolen via XSS, sniffed over HTTP, or leaked in URLs. Attacker replays the cookie = instant login as victim.</p>
+    </div>
+    <div class="card">
+      <h4>🧩 Broken password reset</h4>
+      <p>Predictable reset tokens, sent over email with no expiration, or accessible without verifying the user. Lots of bounty gold here.</p>
+    </div>
+  </div>
+</section>
+
+<section class="chapter">
+  <div class="chapter-num">Chapter 03 // Real world</div>
+  <h2><span class="emoji">📰</span> When login breaks, internet catches fire</h2>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <div class="card-badge danger">2012</div>
+      <h4>🔗 LinkedIn</h4>
+      <p>117M passwords leaked. Stored as unsalted SHA-1 — crackable in hours. Drove the "everyone just cracks every leaked database" era.</p>
+    </div>
+    <div class="card">
+      <div class="card-badge danger">2013</div>
+      <h4>☁️ Yahoo</h4>
+      <p>3 BILLION accounts compromised. MD5 hashes, security questions, backup emails. The largest breach in history until recently.</p>
+    </div>
+    <div class="card">
+      <div class="card-badge warn">2022</div>
+      <h4>🔧 Okta breach</h4>
+      <p>Attackers hit Okta's support contractor, used leaked session tokens to impersonate authenticated users at Okta's customers. 2FA didn't save them because session theft bypasses it.</p>
+    </div>
+    <div class="card">
+      <div class="card-badge danger">ongoing</div>
+      <h4>🧨 Credential stuffing everywhere</h4>
+      <p>Every major service (Disney+, Spotify, Netflix, Zoom) gets waves of credential stuffing monthly. Source: the 10B+ leaked credentials circulating online.</p>
+    </div>
+  </div>
+</section>
+
+<section class="chapter">
+  <div class="chapter-num">Chapter 04 // Building auth right</h2>
+  <h2><span class="emoji">🛡️</span> Defense checklist</h2>
+
+  <ul>
+    <li><strong>Hash passwords</strong> with bcrypt, argon2, or scrypt. Never MD5, SHA-1, or plaintext.</li>
+    <li><strong>Rate limit</strong> login attempts per IP AND per account. Lockouts + CAPTCHAs for repeat offenders.</li>
+    <li><strong>Enforce MFA</strong> — at minimum for admin accounts, ideally for all.</li>
+    <li><strong>Check breached passwords</strong> via HaveIBeenPwned API at signup. Block known-bad passwords.</li>
+    <li><strong>Secure session cookies</strong> — <code class="inline">HttpOnly</code>, <code class="inline">Secure</code>, <code class="inline">SameSite=Lax</code>.</li>
+    <li><strong>Short-lived tokens</strong> — session timeouts, refresh token rotation, expire on password change.</li>
+    <li><strong>HTTPS everywhere</strong> — no auth over plain <span class="term" data-term="https">HTTPS</span> alternatives.</li>
+  </ul>
+
+  <div class="quiz">
+    <h4>🎯 Quick check</h4>
+    <div class="q">A site stores passwords using SHA-256 with no salt. Is this secure?</div>
+    <div class="options">
+      <div class="opt" onclick="quizAnswer(this, false)">Yes — SHA-256 is a strong hash.</div>
+      <div class="opt" onclick="quizAnswer(this, true)">No — SHA-256 is fast, so GPUs can crack billions of hashes/second. Use bcrypt, argon2, or scrypt instead.</div>
+      <div class="opt" onclick="quizAnswer(this, false)">Yes, as long as HTTPS is enabled.</div>
+      <div class="opt" onclick="quizAnswer(this, false)">No — you should use MD5 instead.</div>
+    </div>
+    <div class="feedback"></div>
+  </div>
+</section>
+
+<section class="chapter">
+  <div class="related-terms">
+    <h4>🔗 Related in the vault</h4>
+    <div class="tags">
+      <a href="access-control.html">🔓 Access Control</a>
+      <a href="brute-force.html">🔨 Brute Force</a>
+      <a href="ssh.html">🔐 SSH</a>
+      <a href="https.html">🔒 HTTPS</a>
+      <a href="cryptographic-failure.html">🔐 Crypto Failures</a>
+      <a href="../tryhackme/cybersec-101/web-application-security.html">🕸️ THM: Web App Security</a>
+    </div>
+  </div>
+</section>
+
+<footer class="site-foot">
+  <p class="coffee-line">Prove who you are. Then, separately, prove what you're allowed to do. ☕</p>
+</footer>
+
+<script src="../assets/glossary.js"></script>
+<script src="../assets/app.js"></script>
+</body>
+</html>

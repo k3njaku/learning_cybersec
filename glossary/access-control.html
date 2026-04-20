@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Broken Access Control (A01) — The #1 Web Vuln ☕</title>
+<link rel="stylesheet" href="../assets/styles.css" />
+</head>
+<body data-page-slug="access-control">
+
+<div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
+
+<div class="topbar">
+  <a class="logo" href="../index.html">☕ CYBERSEC.VAULT</a>
+  <nav>
+    <a href="../index.html">Home</a>
+    <a href="../index.html#topics-web">Topics</a>
+    <a href="index.html" class="active">Glossary</a>
+    <a href="../tryhackme/index.html">THM</a>
+  </nav>
+  <div class="search-wrap">
+    <input type="text" class="search" placeholder="Search (press /)..." />
+    <div class="search-results"></div>
+  </div>
+</div>
+
+<div class="breadcrumb">
+  <a href="../index.html">Home</a>
+  <span class="sep">›</span>
+  <a href="index.html">Glossary</a>
+  <span class="sep">›</span>
+  <span>Access Control</span>
+</div>
+
+<!-- HERO -->
+<section class="hero" style="min-height: 48vh;">
+  <div class="hero-content">
+    <span class="coffee-badge">📖 glossary · OWASP A01 · the #1 web vuln</span>
+    <h1>Broken Access Control 🔓</h1>
+    <p class="subtitle">The rules about WHO can do WHAT.<br>When they break, any user does admin things.</p>
+    <div class="tagline">"I was logged in, so the server let me." — the attacker, winning. 🎯</div>
+  </div>
+</section>
+
+<section class="chapter">
+  <div class="chapter-num">Chapter 01 // Definition</div>
+  <h2><span class="emoji">📖</span> What is access control?</h2>
+  <p class="lead">Access control is the mechanism that decides: <em>"this user is logged in — but are they ALLOWED to do this specific thing?"</em> Broken access control = that second check is missing or bypassable.</p>
+
+  <div class="paper">
+    <h4>📝 Think of it like a hotel key card system</h4>
+    <p>You swipe your key at your room door → it opens. Swipe it at the hotel safe → it beeps red. Swipe at the penthouse → no entry. Swipe at the server room → definitely no entry.</p>
+    <p>But imagine a hotel where the key system only checks "is this a real key card?" (yes = open). No check for "which room?", "what floor?", "what time?" Now every guest can walk into every room. <span class="highlight">That's broken access control.</span></p>
+  </div>
+
+  <div class="callout info">
+    <strong>🧠 Auth vs Authz:</strong> <span class="term" data-term="authentication">Authentication</span> = "WHO are you?" (login). Authorization = "what are you ALLOWED to do?" (access control). Apps nail auth but miss authz constantly.
+  </div>
+</section>
+
+<section class="chapter">
+  <div class="chapter-num">Chapter 02 // The flavors</div>
+  <h2><span class="emoji">🎭</span> Types of broken access control</h2>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <h4>🎣 <span class="term" data-term="idor">IDOR</span></h4>
+      <p>Change a number in the URL, access someone else's data. The most common and most lucrative form.</p>
+      <div class="code" style="margin-top: 8px; font-size: 12px;">/user/42 → /user/43</div>
+    </div>
+    <div class="card">
+      <h4>📈 Vertical privilege escalation</h4>
+      <p>Regular user → admin. Access an /admin endpoint while logged in as a normal user.</p>
+      <div class="code" style="margin-top: 8px; font-size: 12px;">/admin/users.php  ← no role check</div>
+    </div>
+    <div class="card">
+      <h4>🤝 Horizontal privilege escalation</h4>
+      <p>One user → another same-level user. Read Bob's messages as Alice.</p>
+      <div class="code" style="margin-top: 8px; font-size: 12px;">/messages?to=alice  (you're bob)</div>
+    </div>
+    <div class="card">
+      <h4>🚪 Forced browsing</h4>
+      <p>Guessing URLs for pages that should require login.</p>
+      <div class="code" style="margin-top: 8px; font-size: 12px;">/admin/, /.git/, /backup.sql</div>
+    </div>
+    <div class="card">
+      <h4>🎭 Role spoofing</h4>
+      <p>Client-side role variables the server trusts. Edit <code class="inline">role=user</code> → <code class="inline">role=admin</code> in cookies/tokens.</p>
+    </div>
+    <div class="card">
+      <h4>🔓 Missing function-level auth</h4>
+      <p>UI hides buttons for non-admins, but the backend endpoint still works if you call it directly. Classic.</p>
+    </div>
+  </div>
+</section>
+
+<section class="chapter">
+  <div class="chapter-num">Chapter 03 // Real world</div>
+  <h2><span class="emoji">📰</span> When access control fails</h2>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <div class="card-badge danger">2019</div>
+      <h4>🏦 First American Financial</h4>
+      <p><strong>885 MILLION documents</strong> (mortgages, SSNs, bank statements) exposed via IDOR. Sequential URL IDs, no ownership check.</p>
+    </div>
+    <div class="card">
+      <div class="card-badge warn">2018</div>
+      <h4>📮 USPS</h4>
+      <p>API leaked info on <strong>60 million postal accounts</strong> via missing auth checks. Took USPS a year to fix after being notified.</p>
+    </div>
+    <div class="card">
+      <div class="card-badge danger">2021</div>
+      <h4>🏥 Microsoft Power Apps</h4>
+      <p>Default misconfiguration leaked <strong>38 million records</strong> across 47 organizations — including COVID contact tracing data and employee SSNs.</p>
+    </div>
+    <div class="card">
+      <div class="card-badge">2017</div>
+      <h4>🛒 Panera Bread</h4>
+      <p>Customer order lookup had no auth. <strong>37 million customer records</strong> (names, emails, partial card numbers) exposed for 8 months.</p>
+    </div>
+  </div>
+</section>
+
+<section class="chapter">
+  <div class="chapter-num">Chapter 04 // The fix</div>
+  <h2><span class="emoji">🛡️</span> Building proper access control</h2>
+
+  <ul>
+    <li><strong>Deny by default.</strong> Every endpoint should be locked unless explicitly opened for a specific role/user.</li>
+    <li><strong>Check ownership on EVERY read/write.</strong> "Does the session user own this resource?" — if no, 403.</li>
+    <li><strong>Server-side enforcement only.</strong> Never trust client-sent roles, flags, or IDs for authz decisions.</li>
+    <li><strong>Use session-based lookups.</strong> <code class="inline">/api/me/profile</code> is safer than <code class="inline">/api/users/:id/profile</code>.</li>
+    <li><strong>Log all authz failures.</strong> A spike in 403s = someone's probing for IDORs.</li>
+    <li><strong>Use a framework's RBAC/ABAC.</strong> Django permissions, Spring Security, Rails Pundit — don't roll your own.</li>
+  </ul>
+
+  <div class="quiz">
+    <h4>🎯 Quick check</h4>
+    <div class="q">An app returns a 403 when you change a URL ID to another user's. Is that app vulnerable to IDOR?</div>
+    <div class="options">
+      <div class="opt" onclick="quizAnswer(this, false)">Yes — any app with IDs in URLs is vulnerable.</div>
+      <div class="opt" onclick="quizAnswer(this, true)">No — a 403 means the server IS checking ownership. That's the correct behavior.</div>
+      <div class="opt" onclick="quizAnswer(this, false)">Maybe — try 50 more IDs first.</div>
+      <div class="opt" onclick="quizAnswer(this, false)">Yes — 403 is proof the endpoint exists, so it's exploitable.</div>
+    </div>
+    <div class="feedback"></div>
+  </div>
+</section>
+
+<section class="chapter">
+  <div class="related-terms">
+    <h4>🔗 Related in the vault</h4>
+    <div class="tags">
+      <a href="idor.html">🎣 IDOR</a>
+      <a href="authentication.html">🔑 Authentication</a>
+      <a href="bug-bounty.html">💰 Bug Bounty</a>
+      <a href="sql-injection-term.html">💉 SQL Injection</a>
+      <a href="../tryhackme/cybersec-101/web-application-security.html">🕸️ THM: Web App Security</a>
+    </div>
+  </div>
+</section>
+
+<footer class="site-foot">
+  <p class="coffee-line">The #1 web vuln. Also the one devs fix last. ☕</p>
+</footer>
+
+<script src="../assets/glossary.js"></script>
+<script src="../assets/app.js"></script>
+</body>
+</html>

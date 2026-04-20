@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Cybersec Learning Vault — Home ☕</title>
+<link rel="stylesheet" href="assets/styles.css" />
+</head>
+<body data-page-slug="home">
+
+<div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
+
+<!-- TOP BAR (every page has this) -->
+<div class="topbar">
+  <a class="logo" href="index.html">☕ CYBERSEC.VAULT</a>
+  <nav>
+    <a href="index.html" class="active">Home</a>
+    <a href="index.html#topics-web">Topics</a>
+    <a href="glossary/index.html">Glossary</a>
+    <a href="tryhackme/index.html">THM</a>
+  </nav>
+  <div class="search-wrap">
+    <input type="text" class="search" placeholder="Search (press /)..." />
+    <div class="search-results"></div>
+  </div>
+</div>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-content">
+    <span class="coffee-badge">☕ web app pentest · bug bounty · random itches</span>
+    <h1>The Vault</h1>
+    <p class="subtitle">Built for the path to becoming a <strong style="color: var(--accent);">sick web app pentester</strong>.<br>Bug bounties are the mission. Side quests welcome.</p>
+    <div class="tagline">"if it's not interactive, it doesn't count."</div>
+    <div style="margin-top: 24px; display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+      <a href="topics/web/sql-injection/index.html" class="cta-btn">Jump into SQLi 🚀</a>
+      <a href="glossary/index.html" class="cta-btn ghost">Browse Glossary 📖</a>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="chapter">
+  <div class="chapter-num">How this vault works</div>
+  <h2><span class="emoji">🧠</span> Designed for how YOU learn.</h2>
+  <div class="grid cols-3">
+    <div class="card">
+      <h4>📚 Topics</h4>
+      <p>Long-form interactive pages on big subjects: SQLi, XSS, CSRF, auth, etc. Each is a full experience with playgrounds + quizzes.</p>
+    </div>
+    <div class="card">
+      <h4>📖 Glossary</h4>
+      <p>Every technical term across every topic gets its own mini-page with definition, analogy, interactive demo, real breaches.</p>
+    </div>
+    <div class="card">
+      <h4>🔗 Click-through Learning</h4>
+      <p>See a blue dashed term? Hover = instant preview. Click = full deep-dive page. Build a mental graph, not a flat list.</p>
+    </div>
+    <div class="card">
+      <h4>🧪 Lab Notes</h4>
+      <p>Your personal walkthroughs of every PortSwigger / TryHackMe / HTB lab you finish — spaced-repetition friendly.</p>
+    </div>
+    <div class="card">
+      <h4>🔍 Search Everything</h4>
+      <p>Press <code class="inline">/</code> anywhere to instantly search topics + glossary. Find anything in 2 seconds.</p>
+    </div>
+    <div class="card">
+      <h4>📊 Progress Tracking</h4>
+      <p>Pages you've viewed + completed are saved in your browser. Your journey, visualized. (Private — never leaves your device.)</p>
+    </div>
+  </div>
+</section>
+
+<div class="divider">topics in the vault</div>
+
+<!-- PRIMARY LANE: WEB APP PENTESTING -->
+<section class="chapter" id="topics-web">
+  <div class="chapter-num">Primary Lane // 🎯 Bug Bounty Territory</div>
+  <h2>🕸️ Web App Pentesting</h2>
+  <p class="lead">This is the main grind. OWASP Top 10, Burp workflows, real-world CVEs, bug bounty methodology.</p>
+
+  <div class="grid cols-2" id="topicsGridWeb">
+    <!-- Populated by script -->
+  </div>
+</section>
+
+<!-- SECONDARY: MISC / RANDOM ITCHES -->
+<section class="chapter" id="topics-misc">
+  <div class="chapter-num">Side Quests // 🎲 Random Itches</div>
+  <h2>🧭 Whatever caught your attention</h2>
+  <p class="lead">Networking, crypto, reverse engineering, OS internals — when your brain wants something different.</p>
+
+  <div class="grid cols-2" id="topicsGridMisc">
+    <!-- Populated by script. Shows a placeholder if empty. -->
+  </div>
+
+  <div class="callout info" style="margin-top: 30px;">
+    <strong>☕ How to add a new topic:</strong> paste a URL, notes, video transcript, or lab description in chat. I'll auto-detect whether it's web-pentest or misc, and build it into the right lane.
+  </div>
+</section>
+
+<div class="divider">tryhackme rooms</div>
+
+<!-- THM SECTION -->
+<section class="chapter" id="thm-home">
+  <div class="chapter-num">TryHackMe // 🎓 Paths You're Working Through</div>
+  <h2>🎯 THM — but not boring</h2>
+  <p class="lead">Rooms you flagged as "zzz..." get rebuilt here in your voice. Same knowledge, 10× the vibes.</p>
+  <div id="thmPreview"></div>
+  <div style="text-align: center; margin-top: 20px;">
+    <a href="tryhackme/index.html" class="cta-btn ghost">Open THM Hub →</a>
+  </div>
+</section>
+
+<div class="divider">your recent activity</div>
+
+<!-- RECENTLY VISITED -->
+<section class="chapter">
+  <div class="chapter-num">Chapter // Recently Viewed</div>
+  <h2>🕐 Pick up where you left off</h2>
+  <div id="recentGrid" class="grid cols-3"></div>
+</section>
+
+<!-- FOOTER -->
+<footer class="site-foot">
+  <p class="coffee-line">The more you break, the more you understand. ☕</p>
+  <p style="font-size: 12px;">Cybersec Learning Vault • Built for your ADHD brain • Private repo, public knowledge</p>
+</footer>
+
+<script src="assets/glossary.js"></script>
+<script src="assets/app.js"></script>
+<script>
+  // Render topics by lane
+  (function () {
+    const webGrid = document.getElementById('topicsGridWeb');
+    const miscGrid = document.getElementById('topicsGridMisc');
+
+    const cardHTML = t => `
+      <a class="card is-link" href="${t.path}">
+        <div class="card-badge">IN PROGRESS</div>
+        <h4>${t.icon} ${t.name}</h4>
+        <p>${t.blurb}</p>
+        <div style="font-family: var(--mono); font-size: 11px; color: var(--ink-mute); margin-top: 10px;">
+          ${t.tags.map(tag => `<span style="margin-right: 8px;">#${tag}</span>`).join('')}
+        </div>
+        <div class="progress"><div style="width: ${Math.round(t.progress * 100)}%"></div></div>
+        <div style="font-size: 11px; color: var(--ink-mute); font-family: var(--mono); margin-top: 4px;">${Math.round(t.progress * 100)}% of chapters explored</div>
+      </a>`;
+
+    const topics = window.SITE_TOPICS || [];
+    const web = topics.filter(t => t.lane === 'web' || !t.lane);
+    const misc = topics.filter(t => t.lane === 'misc');
+
+    // --- WEB LANE ---
+    webGrid.innerHTML = web.map(cardHTML).join('');
+    // Always show the web roadmap placeholders so upcoming bounty topics are visible
+    webGrid.innerHTML += `
+      <div class="card" style="opacity: 0.5;">
+        <div class="card-badge warn">COMING</div>
+        <h4>🔥 XSS (Cross-Site Scripting)</h4>
+        <p>Inject JS into other users' browsers. Cookie theft, session hijack, account takeover.</p>
+      </div>
+      <div class="card" style="opacity: 0.5;">
+        <div class="card-badge warn">COMING</div>
+        <h4>🎭 CSRF</h4>
+        <p>Trick a logged-in user's browser into making state-changing requests.</p>
+      </div>
+      <div class="card" style="opacity: 0.5;">
+        <div class="card-badge warn">COMING</div>
+        <h4>📡 SSRF</h4>
+        <p>Make the server send requests you want — internal services, cloud metadata, pivot.</p>
+      </div>
+      <div class="card" style="opacity: 0.5;">
+        <div class="card-badge warn">COMING</div>
+        <h4>🔐 Authentication / Access Control</h4>
+        <p>Broken auth, IDOR, JWT flaws, privilege escalation. High bounty impact.</p>
+      </div>`;
+
+    // --- MISC LANE ---
+    if (misc.length === 0) {
+      miscGrid.innerHTML = `
+        <div class="card" style="opacity: 0.6; grid-column: 1/-1;">
+          <h4>🎲 Nothing here yet</h4>
+          <p>When you have an itch for something outside web security (networking, crypto, OS, reversing, malware analysis, etc.), just ask — it'll land here.</p>
+        </div>`;
+    } else {
+      miscGrid.innerHTML = misc.map(cardHTML).join('');
+    }
+  })();
+
+  // THM preview — show paths with their latest rebuilt rooms
+  (function () {
+    const container = document.getElementById('thmPreview');
+    const THM = window.SITE_THM || { paths: [] };
+    container.innerHTML = THM.paths.map(p => {
+      const roomCount = (p.rooms || []).length;
+      const preview = roomCount === 0
+        ? `<p style="color: var(--ink-dim); font-size: 0.95rem; margin-top: 8px;">🎲 No rooms rebuilt yet in this path. When one bores you, drop me the URL.</p>`
+        : `<div class="grid cols-3" style="margin-top: 14px;">${
+            p.rooms.slice(0, 3).map(r => `
+              <a class="card is-link" href="${r.path}">
+                <h4>${r.icon || '🏷️'} ${r.name}</h4>
+                <p style="font-size: 13px;">${r.blurb}</p>
+              </a>`).join('')
+          }</div>`;
+      return `
+        <div class="card" style="margin-bottom: 20px; padding: 24px;">
+          <div style="display:flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+            <h4 style="margin-bottom: 0; font-size: 1.2rem;">${p.icon} ${p.name}</h4>
+            <span style="font-family: var(--mono); font-size: 12px; color: var(--ink-mute);">${roomCount} room${roomCount === 1 ? '' : 's'} rebuilt</span>
+          </div>
+          <p style="color: var(--ink-dim); font-size: 0.95rem; margin-top: 4px;">${p.blurb}</p>
+          ${preview}
+        </div>`;
+    }).join('');
+  })();
+
+  // Recently viewed
+  (function () {
+    const grid = document.getElementById('recentGrid');
+    const p = getProgress();
+    const visited = Object.entries(p.visited).sort((a,b) => b[1] - a[1]).slice(0, 6);
+    if (visited.length === 0) {
+      grid.innerHTML = '<p style="color: var(--ink-dim); grid-column: 1/-1;">Nothing yet — start exploring! 🧭</p>';
+      return;
+    }
+    const G = window.GLOSSARY;
+    const topicsBySlug = Object.fromEntries(window.SITE_TOPICS.map(t => [t.slug, t]));
+    // Flatten THM rooms into a slug → { room, pathName } map
+    // THM pages use data-page-slug="thm-<room-slug>"
+    const thmBySlug = {};
+    (window.SITE_THM?.paths || []).forEach(p => {
+      (p.rooms || []).forEach(r => { thmBySlug['thm-' + r.slug] = { r, pathName: p.name }; });
+    });
+    grid.innerHTML = visited.map(([slug, ts]) => {
+      if (topicsBySlug[slug]) {
+        const t = topicsBySlug[slug];
+        return `<a class="card is-link" href="${t.path}">
+          <h4>${t.icon} ${t.name}</h4>
+          <p style="font-size: 12px;">${new Date(ts).toLocaleString()}</p>
+        </a>`;
+      }
+      if (thmBySlug[slug]) {
+        const { r, pathName } = thmBySlug[slug];
+        return `<a class="card is-link" href="${r.path}">
+          <h4>${r.icon || '🎯'} ${r.name}</h4>
+          <p style="font-size: 12px;">THM · ${pathName} · ${new Date(ts).toLocaleString()}</p>
+        </a>`;
+      }
+      if (G[slug]) {
+        const g = G[slug];
+        return `<a class="card is-link" href="glossary/${g.page}">
+          <h4>📖 ${g.name}</h4>
+          <p style="font-size: 12px;">${new Date(ts).toLocaleString()}</p>
+        </a>`;
+      }
+      return '';
+    }).join('') || '<p style="color: var(--ink-dim); grid-column: 1/-1;">Nothing yet 🧭</p>';
+  })();
+</script>
+</body>
+</html>

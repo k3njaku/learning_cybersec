@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<!-- ================================================================
+     TRYHACKME ROOM TEMPLATE
+     Location: tryhackme/<path-slug>/<room-slug>.html
+     e.g.      tryhackme/cybersec-101/offensive-security-intro.html
+
+     BEFORE YOU USE THIS TEMPLATE:
+       1. Read /AGENTS.md (mandatory)
+       2. Read /CONVENTIONS.md
+       3. Add the room to SITE_THM.paths[<path>].rooms[] in assets/app.js
+          BEFORE creating this file (so search / hub links work).
+     REPLACE every [[BRACKET]] placeholder.
+
+     STRUCTURE (don't skip sections):
+       1. Hero with room # + path name
+       2. "What you'll actually learn" — punchy 3-bullet summary
+       3. Concepts — rebuild the room's teaching in your voice
+       4. Tasks & Answers — one card per task with answer + why
+       5. Key terms cross-linked to glossary
+       6. Related in the vault
+================================================================ -->
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>[[Room Name]] — THM · [[Path Name]] ☕</title>
+<!-- Path depth: tryhackme/<path>/<room>.html → 2 levels up to root -->
+<link rel="stylesheet" href="../../assets/styles.css" />
+</head>
+<body data-page-slug="thm-[[room-slug]]">
+
+<div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
+
+<div class="topbar">
+  <a class="logo" href="../../index.html">☕ CYBERSEC.VAULT</a>
+  <nav>
+    <a href="../../index.html">Home</a>
+    <a href="../../index.html#topics-web">Topics</a>
+    <a href="../../glossary/index.html">Glossary</a>
+    <a href="../index.html" class="active">THM</a>
+  </nav>
+  <div class="search-wrap">
+    <input type="text" class="search" placeholder="Search (press /)..." />
+    <div class="search-results"></div>
+  </div>
+</div>
+
+<div class="breadcrumb">
+  <a href="../../index.html">Home</a>
+  <span class="sep">›</span>
+  <a href="../index.html">TryHackMe</a>
+  <span class="sep">›</span>
+  <a href="../index.html#paths">[[Path Name]]</a>
+  <span class="sep">›</span>
+  <span>[[Room Name]]</span>
+</div>
+
+<!-- HERO -->
+<section class="hero" style="min-height: 55vh;">
+  <div class="hero-content">
+    <span class="coffee-badge">🎯 thm · [[Path Name]] · room [[N]]</span>
+    <h1>[[Room Name]]</h1>
+    <p class="subtitle">[[One-line explanation in your voice — what the room is about.]]</p>
+    <div class="tagline">"[[Memorable hook / what-if / joke about the topic]]"</div>
+    <div style="margin-top: 24px; display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+      <a href="[[THM ORIGINAL URL]]" target="_blank" rel="noopener" class="cta-btn ghost">↗ Open on TryHackMe</a>
+      <a href="#tasks" class="cta-btn">Jump to Tasks 🎯</a>
+    </div>
+  </div>
+</section>
+
+<!-- WHAT YOU'LL LEARN -->
+<section class="chapter" id="tldr">
+  <div class="chapter-num">TL;DR</div>
+  <h2><span class="emoji">⚡</span> What you'll actually learn</h2>
+  <div class="grid cols-3">
+    <div class="card">
+      <h4>[[Learning 1]]</h4>
+      <p>[[One-sentence value]]</p>
+    </div>
+    <div class="card">
+      <h4>[[Learning 2]]</h4>
+      <p>[[One-sentence value]]</p>
+    </div>
+    <div class="card">
+      <h4>[[Learning 3]]</h4>
+      <p>[[One-sentence value]]</p>
+    </div>
+  </div>
+</section>
+
+<div class="divider">the concepts</div>
+
+<!-- ===== CONCEPT CHAPTER(S) =====
+     Rewrite THM's boring explanations here. Use analogies (.paper),
+     brain-power boxes, playgrounds, callouts. ADD AS MANY AS THE ROOM NEEDS.
+==================================================== -->
+<section class="chapter" id="concept-1">
+  <div class="chapter-num">Concept 01</div>
+  <h2><span class="emoji">🎯</span> [[Concept 1 name]]</h2>
+  <p class="lead">[[Plain-English hook.]]</p>
+
+  <div class="paper">
+    <h4>📝 [[Analogy title]]</h4>
+    <p>[[Real-world analogy. NetworkChuck it up.]]</p>
+    <p><span class="highlight">[[Key insight highlighted]]</span></p>
+  </div>
+
+  <div class="brain-power">
+    <div class="label">🧠 Brain Power</div>
+    <div class="question">[[Pause-and-think question]]</div>
+    <button class="reveal-btn" onclick="toggleAnswer(this)">Reveal answer</button>
+    <div class="answer">
+      <p>[[Answer that makes it click]]</p>
+    </div>
+  </div>
+</section>
+
+<!-- Add more concept sections as needed, each with its own id -->
+
+<div class="divider">task time</div>
+
+<!-- ===== TASKS & ANSWERS ===== -->
+<section class="chapter" id="tasks">
+  <div class="chapter-num">Tasks</div>
+  <h2><span class="emoji">🧪</span> The tasks (with your answers)</h2>
+  <p class="lead">Each card = one task. Click to expand the answer + the reasoning. Spaced-repetition friendly.</p>
+
+  <!-- TASK 1 -->
+  <div class="card" style="margin-bottom: 14px;">
+    <div class="card-badge">TASK 1</div>
+    <h4>[[Task 1 title]]</h4>
+    <p style="color: var(--ink-dim); font-size: 0.92rem;">[[What the task asks you to do — 1 line]]</p>
+    <details style="margin-top: 12px;">
+      <summary style="cursor:pointer; color: var(--accent-2); font-family: var(--mono); font-size: 13px;">▸ Show answer + reasoning</summary>
+      <div style="margin-top: 10px; display: grid; gap: 8px;">
+        <div style="padding: 10px 14px; background: rgba(0,0,0,0.3); border-left: 3px solid var(--accent); border-radius: 4px;">
+          <strong style="color: var(--accent); font-family: var(--mono); font-size: 12px;">ANSWER:</strong>
+          <code class="inline" style="margin-left: 8px;">[[answer]]</code>
+        </div>
+        <div style="padding: 10px 14px; background: rgba(0,0,0,0.3); border-left: 3px solid var(--accent-3); border-radius: 4px; font-size: 14px;">
+          <strong style="color: var(--accent-3); font-family: var(--mono); font-size: 12px;">WHY:</strong>
+          [[Brief explanation of why the answer is what it is — this is the part future-you will re-read]]
+        </div>
+      </div>
+    </details>
+  </div>
+
+  <!-- Duplicate the .card above for each task -->
+</section>
+
+<!-- OPTIONAL: Quiz to test retention -->
+<section class="chapter" id="quiz">
+  <div class="chapter-num">Retention Check</div>
+  <h2><span class="emoji">🎯</span> Did it stick?</h2>
+  <div class="quiz">
+    <h4>🎯 Pop quiz</h4>
+    <div class="q">[[A question that tests the CORE concept of the room]]</div>
+    <div class="options">
+      <div class="opt" onclick="quizAnswer(this, false)">[[wrong]]</div>
+      <div class="opt" onclick="quizAnswer(this, true)">[[correct]]</div>
+      <div class="opt" onclick="quizAnswer(this, false)">[[wrong]]</div>
+      <div class="opt" onclick="quizAnswer(this, false)">[[wrong]]</div>
+    </div>
+    <div class="feedback"></div>
+  </div>
+</section>
+
+<!-- RELATED TERMS -->
+<section class="chapter">
+  <div class="related-terms">
+    <h4>🔗 Related in the vault</h4>
+    <div class="tags">
+      <!-- Link to glossary terms this room teaches -->
+      <a href="../../glossary/[[term-slug]].html">[[emoji]] [[Term Name]]</a>
+      <!-- Link to topic pages if this room overlaps with a topic you have -->
+      <a href="../../topics/web/[[topic-slug]]/index.html">[[emoji]] [[Topic Name]]</a>
+    </div>
+  </div>
+</section>
+
+<footer class="site-foot">
+  <p class="coffee-line">[[Closing punchline — themed to the room]] ☕</p>
+  <p style="font-size: 12px;">Original room: <a href="[[THM ORIGINAL URL]]" target="_blank" rel="noopener">[[THM URL]]</a></p>
+</footer>
+
+<script src="../../assets/glossary.js"></script>
+<script src="../../assets/app.js"></script>
+</body>
+</html>

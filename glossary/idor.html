@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>IDOR — The Change-A-Number Bug That Pays The Bills ☕</title>
+<link rel="stylesheet" href="../assets/styles.css" />
+<style>
+  .idor-sim {
+    background: rgba(0,0,0,0.3);
+    border-radius: 10px;
+    padding: 20px;
+    border: 1px solid var(--border);
+    margin: 20px 0;
+  }
+  .idor-url {
+    background: #000;
+    padding: 12px 16px;
+    border-radius: 6px;
+    font-family: var(--mono);
+    font-size: 14px;
+    display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+    border: 1px solid var(--border);
+  }
+  .idor-url .proto { color: var(--accent); }
+  .idor-url .host { color: var(--ink); }
+  .idor-url .path { color: var(--ink-dim); }
+  .idor-url .param { color: #ffa657; }
+  .idor-url .id-input {
+    background: rgba(255,46,99,0.15);
+    color: var(--accent-2);
+    border: 1px solid var(--accent-2);
+    border-radius: 3px;
+    padding: 2px 6px;
+    width: 70px;
+    font-family: var(--mono);
+    font-size: 14px;
+    outline: none;
+  }
+  .idor-controls { display: flex; gap: 8px; margin: 14px 0; flex-wrap: wrap; }
+  .idor-btn {
+    background: rgba(0,255,157,0.08);
+    color: var(--accent);
+    border: 1px solid var(--accent);
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-family: var(--mono); font-size: 12px;
+    cursor: pointer; transition: all 0.15s;
+  }
+  .idor-btn:hover { background: var(--accent); color: #000; }
+  .idor-btn.evil { color: var(--accent-2); border-color: var(--accent-2); background: rgba(255,46,99,0.08); }
+  .idor-btn.evil:hover { background: var(--accent-2); color: #fff; }
+  .idor-profile {
+    background: #0a0f13; border: 1px solid var(--border);
+    border-radius: 8px; padding: 16px; margin-top: 10px;
+    font-family: var(--mono); font-size: 13px;
+  }
+  .idor-profile .row { display: flex; gap: 14px; padding: 4px 0; }
+  .idor-profile .k { color: var(--ink-mute); min-width: 100px; }
+  .idor-profile .v { color: var(--ink); }
+  .idor-profile .v.secret { color: var(--accent-2); text-shadow: 0 0 6px rgba(255,46,99,0.4); }
+  .idor-profile .banner {
+    color: var(--accent-2); font-family: var(--hand); font-size: 1.2rem;
+    border-top: 1px dashed var(--border); padding-top: 10px; margin-top: 10px;
+  }
+</style>
+</head>
+<body data-page-slug="idor">
+
+<div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
+
+<div class="topbar">
+  <a class="logo" href="../index.html">☕ CYBERSEC.VAULT</a>
+  <nav>
+    <a href="../index.html">Home</a>
+    <a href="../index.html#topics-web">Topics</a>
+    <a href="index.html" class="active">Glossary</a>
+    <a href="../tryhackme/index.html">THM</a>
+  </nav>
+  <div class="search-wrap">
+    <input type="text" class="search" placeholder="Search (press /)..." />
+    <div class="search-results"></div>
+  </div>
+</div>
+
+<div class="breadcrumb">
+  <a href="../index.html">Home</a>
+  <span class="sep">›</span>
+  <a href="index.html">Glossary</a>
+  <span class="sep">›</span>
+  <span>IDOR</span>
+</div>
+
+<!-- HERO -->
+<section class="hero" style="min-height: 50vh;">
+  <div class="hero-content">
+    <span class="coffee-badge">📖 glossary · web vuln · OWASP A01 · 💰 bounty gold</span>
+    <h1>IDOR 🎣</h1>
+    <p class="subtitle">Insecure Direct Object Reference.<br>Change the ID. Get data that isn't yours.</p>
+    <div class="tagline">"it's just a number" — how every bounty hunter starts their report. 💸</div>
+  </div>
+</section>
+
+<!-- WHAT IS IT -->
+<section class="chapter">
+  <div class="chapter-num">Chapter 01 // Definition</div>
+  <h2><span class="emoji">📖</span> What is IDOR?</h2>
+  <p class="lead">A vulnerability where a web application uses user-supplied input (usually an ID in a URL or request) to look up data — but <strong>forgets to verify the user is allowed to access that data</strong>.</p>
+
+  <div class="paper">
+    <h4>📝 Think of it like a hotel with predictable room keys</h4>
+    <p>You check into Room 216. Your key card also works on 215, 217, 218 — because the hotel made all the keys with the same pattern and the lock never checks "is this guest actually registered to THIS room?"</p>
+    <p>A real hotel would refuse. A poorly-coded web app doesn't. It just serves up whoever's data the key (ID) matches.</p>
+    <p><span class="highlight">IDOR = the lock exists, but it doesn't check if the key belongs to you.</span></p>
+  </div>
+
+  <h3>The anatomy of an IDOR</h3>
+  <div class="code">
+<span class="com"># Your legitimate URL — looking at YOUR profile</span>
+GET /api/users/<span class="str">42</span>/profile
+
+<span class="com"># You change 42 → 43 in the URL and hit send</span>
+GET /api/users/<span class="str">43</span>/profile
+
+<span class="com"># Vulnerable response:</span>
+200 OK
+{
+  "name": "Bob Random",
+  "email": "bob@company.com",
+  "phone": "+1-555-0123"
+}
+
+<span class="com"># What SHOULD have happened:</span>
+403 Forbidden     <span class="com"># you don't own this resource</span>
+  </div>
+</section>
+
+<div class="divider">why it's everywhere</div>
+
+<!-- WHY IT MATTERS -->
+<section class="chapter">
+  <div class="chapter-num">Chapter 02 // Why IDOR prints money</div>
+  <h2><span class="emoji">💰</span> The bug bounty hunter's favorite</h2>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <h4>🔍 Scanners can't find it</h4>
+      <p>Automated tools don't know what "should" be accessible to whom. They'd need to know your permission model, which they can't. IDOR requires human intuition — which pays.</p>
+    </div>
+    <div class="card">
+      <h4>🌐 It's EVERYWHERE</h4>
+      <p>Every feature showing user-specific data is a candidate: profiles, messages, orders, files, invoices, medical records, DMs, bookings. Thousands of surfaces per app.</p>
+    </div>
+    <div class="card">
+      <h4>💥 Impact is huge</h4>
+      <p>One IDOR on a /users/:id endpoint = mass PII dump. Hit an admin-only action (delete user, grant role) = authorization bypass. Hit a billing endpoint = financial data leak.</p>
+    </div>
+    <div class="card">
+      <h4>🧠 Devs miss it constantly</h4>
+      <p>Auth middleware checks "are you logged in?" — but each endpoint must ALSO check "do you own this specific resource?" Devs forget the second check all the time.</p>
+    </div>
+  </div>
+</section>
+
+<!-- INTERACTIVE SIMULATOR -->
+<section class="chapter" id="try-it">
+  <div class="chapter-num">Chapter 03 // Feel the power</div>
+  <h2><span class="emoji">🎮</span> Try an IDOR yourself</h2>
+  <p class="lead">Change the user ID below. See a fake vulnerable server hand you data you shouldn't see. This is what exploiting a real IDOR feels like.</p>
+
+  <div class="playground">
+    <div class="idor-sim">
+      <div class="idor-url">
+        <span class="proto">https://</span><span class="host">bank.vulnerable.thm</span><span class="path">/api/account?</span><span class="param">id=</span><input type="number" class="id-input" id="idorId" value="42" min="1" max="99" oninput="renderIdor()" />
+      </div>
+      <div class="idor-controls">
+        <button class="idor-btn" onclick="stepIdor(-1)">◂ prev</button>
+        <button class="idor-btn" onclick="stepIdor(1)">next ▸</button>
+        <button class="idor-btn" onclick="setIdor(42)">↺ your account (42)</button>
+        <button class="idor-btn evil" onclick="setIdor(1)">🎯 id=1 (CEO?)</button>
+        <button class="idor-btn evil" onclick="setIdor(13)">🕵️ id=13 (big balance)</button>
+        <button class="idor-btn evil" onclick="setIdor(77)">💀 id=77 (leaked creds)</button>
+      </div>
+      <div class="idor-profile" id="idorProfile"></div>
+    </div>
+  </div>
+
+  <div class="brain-power">
+    <div class="label">🧠 Brain Power</div>
+    <div class="question">You found this IDOR on a real bug bounty target. What's the first thing you do?</div>
+    <button class="reveal-btn" onclick="toggleAnswer(this)">Reveal answer</button>
+    <div class="answer">
+      <p><strong>STOP iterating.</strong> Don't enumerate every user — that risks data exposure beyond what's needed to prove the bug.</p>
+      <p>Instead: screenshot ONE or TWO accounts to prove impact (your own + one other), document the exact request/response, and <strong>immediately write the report</strong>. No need to dump the whole database — that crosses from "responsible disclosure" into "unauthorized access." Bug bounty programs have fired people for over-enumeration.</p>
+      <p>Write → report → collect bounty. ☕</p>
+    </div>
+  </div>
+</section>
+
+<div class="divider">where to find them</div>
+
+<!-- WHERE TO LOOK -->
+<section class="chapter">
+  <div class="chapter-num">Chapter 04 // Hunting IDORs</div>
+  <h2><span class="emoji">🔎</span> Where IDORs love to hide</h2>
+
+  <h3>The 4 patterns that signal IDOR</h3>
+  <ul>
+    <li><strong>Sequential integers in URLs/bodies:</strong> <code class="inline">?user_id=42</code>, <code class="inline">/invoice/1009</code>, <code class="inline">{"order":15203}</code></li>
+    <li><strong>Predictable strings:</strong> <code class="inline">/users/talha</code> — try <code class="inline">/users/admin</code>, <code class="inline">/users/root</code></li>
+    <li><strong>Base64-encoded IDs:</strong> <code class="inline">eyJ1c2VyIjo0Mn0=</code> → decode, it's <code class="inline">{"user":42}</code>, just obfuscation</li>
+    <li><strong>UUIDs that leak in responses:</strong> If you see <code class="inline">cust-a7f3...</code> for yourself + others in a list, try using theirs in lookup endpoints</li>
+  </ul>
+
+  <h3>The hunting workflow</h3>
+  <div class="code">
+<span class="com"># 1. Create TWO accounts on the target. Account A (you) and Account B (victim).</span>
+<span class="com"># 2. Log in as A. Burp captures every request.</span>
+<span class="com"># 3. Browse everywhere — profile, orders, messages, settings, files.</span>
+<span class="com"># 4. In Burp's Proxy History, filter requests with an ID parameter.</span>
+<span class="com"># 5. For each request, swap A's ID for B's ID, resend.</span>
+<span class="com"># 6. Does the response contain B's data? IDOR.</span>
+<span class="com"># 7. Does it return 403/401? Good — that endpoint is safe. Move on.</span>
+
+<span class="com"># Tools that help:</span>
+<span class="com">#   - Burp AuthMatrix / Autorize plugins (automate IDOR testing)</span>
+<span class="com">#   - Turbo Intruder (fast ID enumeration)</span>
+<span class="com">#   - ffuf (fuzz IDs against endpoint paths)</span>
+  </div>
+
+  <div class="callout info">
+    <strong>💡 Burp Autorize plugin</strong> is the IDOR hunter's best friend. It replays every request as a second user and flags ones that return different data than they should. Set up once, hunt IDORs on autopilot.
+  </div>
+</section>
+
+<div class="divider">real world</div>
+
+<!-- REAL WORLD BOUNTIES -->
+<section class="chapter" id="real-world">
+  <div class="chapter-num">Chapter 05 // The payouts</div>
+  <h2><span class="emoji">📰</span> Legendary IDOR bug bounties</h2>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <div class="card-badge">$20,000</div>
+      <h4>💳 Shopify (2019)</h4>
+      <p>Researcher found IDOR on a partner endpoint that leaked financial data across shops. Changed the shop ID, got access to any store's revenue data. 20k bounty.</p>
+    </div>
+    <div class="card">
+      <div class="card-badge danger">$50,000</div>
+      <h4>🚗 Uber (2019)</h4>
+      <p>IDOR on driver endpoints allowed reading the personal details of any Uber driver worldwide — names, trip logs, locations. Chained with other bugs = full compromise.</p>
+    </div>
+    <div class="card">
+      <div class="card-badge">$15,000</div>
+      <h4>🏠 Airbnb</h4>
+      <p>IDOR on reservation IDs exposed guests' booking details and host revenue. Sequential IDs meant the whole booking database was walkable.</p>
+    </div>
+    <div class="card">
+      <div class="card-badge danger">$7,500</div>
+      <h4>📸 Facebook / Instagram</h4>
+      <p>IDOR on a Stories endpoint allowed viewing archived Stories of any user, even private accounts. Meta paid fast.</p>
+    </div>
+    <div class="card">
+      <div class="card-badge">Free</div>
+      <h4>🏛️ First American Financial (2019)</h4>
+      <p>Not a bounty — a REAL leak. 885 MILLION mortgage documents were accessible via IDOR on their website. SSNs, bank statements, everything. Class-action lawsuit territory.</p>
+    </div>
+    <div class="card">
+      <div class="card-badge">Free</div>
+      <h4>🏥 US Postal Service (2018)</h4>
+      <p>API endpoint leaked account data for 60 million USPS accounts via IDOR. Discovered by a researcher; USPS ignored for a year until Brian Krebs wrote about it.</p>
+    </div>
+  </div>
+
+  <div class="callout">
+    <strong>🎯 The pattern:</strong> Every breach above followed the same template. Auth check passed (<em>"yes, they're logged in"</em>). Authorization check missing (<em>"but should they see THIS specific record?"</em>). Lesson: auth ≠ authz.
+  </div>
+</section>
+
+<!-- DEFENSE -->
+<section class="chapter" id="defense">
+  <div class="chapter-num">Chapter 06 // The fix</div>
+  <h2><span class="emoji">🛡️</span> How to NOT ship IDORs</h2>
+
+  <h3>Option 1 — Always check ownership</h3>
+  <div class="code safe">
+<span class="com"># ❌ BROKEN — trusts whatever ID the user sent</span>
+@app.route('/api/users/&lt;int:user_id&gt;/profile')
+def profile(user_id):
+    user = User.query.get(user_id)
+    return jsonify(user.to_dict())
+
+<span class="com"># ✅ FIXED — verifies ownership (or admin)</span>
+@app.route('/api/users/&lt;int:user_id&gt;/profile')
+@login_required
+def profile(user_id):
+    <span class="kw">if</span> current_user.id != user_id <span class="kw">and not</span> current_user.is_admin:
+        abort(403)
+    user = User.query.get(user_id)
+    <span class="kw">return</span> jsonify(user.to_dict())
+  </div>
+
+  <h3>Option 2 — Don't expose IDs at all</h3>
+  <p>Use the current user's <em>session</em> as the source of truth:</p>
+  <div class="code safe">
+<span class="com"># ✅ Endpoint implicitly uses current_user — no ID needed in URL</span>
+@app.route('/api/me/profile')
+@login_required
+def my_profile():
+    <span class="kw">return</span> jsonify(current_user.to_dict())
+  </div>
+
+  <h3>Option 3 — Use unguessable IDs</h3>
+  <p>Sequential integers (<code class="inline">1, 2, 3...</code>) are easy to walk. Random UUIDs aren't. Note: this is <strong>obscurity, not security</strong> — always still do the ownership check. But UUIDs raise the bar.</p>
+  <div class="code">
+<span class="com"># UUIDs instead of ints</span>
+/api/users/<span class="str">a7f3c9d2-8b1e-4f62-9c4a-6d8e3b7a2c51</span>/profile
+  </div>
+
+  <div class="callout danger">
+    <strong>🚨 WAFs won't save you.</strong> IDOR is indistinguishable from legitimate traffic — the request is well-formed, the user is authenticated, the URL looks right. It only "looks wrong" if you know the authorization model. This is why WAFs can't detect IDOR; only proper server-side logic can.
+  </div>
+
+  <div class="quiz">
+    <h4>🎯 Check yourself</h4>
+    <div class="q">An app uses random UUIDs for user IDs instead of sequential integers. Is it safe from IDOR?</div>
+    <div class="options">
+      <div class="opt" onclick="quizAnswer(this, false)">Yes — attackers can't guess UUIDs, so IDOR is impossible.</div>
+      <div class="opt" onclick="quizAnswer(this, true)">No — UUIDs are harder to guess, but IDs leak in responses, logs, and shared URLs. The ownership check is still required.</div>
+      <div class="opt" onclick="quizAnswer(this, false)">Yes, as long as HTTPS is enabled.</div>
+      <div class="opt" onclick="quizAnswer(this, false)">No — UUIDs are actually easier to exploit than integers.</div>
+    </div>
+    <div class="feedback"></div>
+  </div>
+</section>
+
+<!-- RELATED -->
+<section class="chapter">
+  <div class="related-terms">
+    <h4>🔗 Related in the vault</h4>
+    <div class="tags">
+      <a href="access-control.html">🔓 Access Control (A01)</a>
+      <a href="authentication.html">🔑 Authentication</a>
+      <a href="bug-bounty.html">💰 Bug Bounty</a>
+      <a href="pii.html">📋 PII</a>
+      <a href="sql-injection-term.html">💉 SQL Injection</a>
+      <a href="../tryhackme/cybersec-101/web-application-security.html">🕸️ THM: Web App Security</a>
+    </div>
+  </div>
+</section>
+
+<footer class="site-foot">
+  <p class="coffee-line">The one-character bug that pays the rent. ☕</p>
+  <p style="font-size: 12px;">Find one IDOR. Write one report. Change one life.</p>
+</footer>
+
+<script src="../assets/glossary.js"></script>
+<script src="../assets/app.js"></script>
+<script>
+  const users = {
+    1:  { name: 'Alice Admin',    email: 'admin@bank.thm',  balance: '$2,450,000.00',  role: 'ADMIN',     notes: 'Master account', risk: 'CRITICAL' },
+    13: { name: 'Warren B.',      email: 'wb@bank.thm',     balance: '$98,742,000.00', role: 'vip',       notes: 'Very wealthy',   risk: 'HIGH' },
+    27: { name: 'Alex Customer',  email: 'alex@bank.thm',   balance: '$3,420.00',      role: 'customer',  notes: '-',              risk: 'LOW' },
+    31: { name: 'Priya Pleasant', email: 'priya@bank.thm',  balance: '$12,900.00',     role: 'customer',  notes: '-',              risk: 'LOW' },
+    42: { name: 'YOU',            email: 'you@bank.thm',    balance: '$247.83',        role: 'customer',  notes: 'Your account',   risk: '-', isYou: true },
+    55: { name: 'Jess Joiner',    email: 'jess@bank.thm',   balance: '$890.00',        role: 'customer',  notes: 'New signup',     risk: 'LOW' },
+    77: { name: 'Dan Dumpster',   email: 'dan@bank.thm',    balance: '$17,420.50',     role: 'customer',  notes: '⚠️ Password="dan77" reused across 14 sites (haveibeenpwned)', risk: 'HIGH' },
+    88: { name: 'Morgan Mystery', email: 'm@bank.thm',      balance: '$42,000.00',     role: 'staff',     notes: 'Internal acct',  risk: 'MED' }
+  };
+
+  function renderIdor() {
+    const id = +document.getElementById('idorId').value;
+    const user = users[id];
+    const el = document.getElementById('idorProfile');
+
+    if (!user) {
+      el.innerHTML = `
+        <div class="row"><span class="k">id:</span> <span class="v">${id}</span></div>
+        <div class="row"><span class="k">server:</span> <span class="v" style="color: var(--ink-mute);">404 Not Found — no user with that ID</span></div>
+        <div class="banner">🔍 empty slot. try another.</div>
+      `;
+      return;
+    }
+
+    let banner;
+    if (user.isYou) {
+      banner = '👋 Your own account. Nothing unusual here.';
+    } else if (user.role === 'ADMIN') {
+      banner = '💀 GAME OVER. You just pulled the admin\\'s account data. $$$.';
+    } else if (user.risk === 'HIGH') {
+      banner = '🎯 Sensitive data leak. This is exactly what a bounty report looks like.';
+    } else {
+      banner = '😬 You\\'re reading another customer\\'s data. Classic IDOR. Don\\'t do this on prod without auth.';
+    }
+
+    el.innerHTML = `
+      <div class="row"><span class="k">id:</span> <span class="v">${id}</span></div>
+      <div class="row"><span class="k">name:</span> <span class="v ${user.isYou ? '' : 'secret'}">${user.name}</span></div>
+      <div class="row"><span class="k">email:</span> <span class="v ${user.isYou ? '' : 'secret'}">${user.email}</span></div>
+      <div class="row"><span class="k">balance:</span> <span class="v ${user.isYou ? '' : 'secret'}">${user.balance}</span></div>
+      <div class="row"><span class="k">role:</span> <span class="v ${user.isYou ? '' : 'secret'}">${user.role}</span></div>
+      <div class="row"><span class="k">notes:</span> <span class="v ${user.isYou ? '' : 'secret'}">${user.notes}</span></div>
+      <div class="banner">${banner}</div>
+    `;
+  }
+
+  function setIdor(id) { document.getElementById('idorId').value = id; renderIdor(); }
+  function stepIdor(delta) {
+    const el = document.getElementById('idorId');
+    el.value = Math.max(1, Math.min(99, (+el.value) + delta));
+    renderIdor();
+  }
+
+  renderIdor();
+</script>
+</body>
+</html>

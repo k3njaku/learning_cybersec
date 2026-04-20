@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>The Single Quote ' — The Character That Broke The Internet ☕</title>
+<link rel="stylesheet" href="../assets/styles.css" />
+</head>
+<body data-page-slug="single-quote">
+
+<div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
+
+<div class="topbar">
+  <a class="logo" href="../index.html">☕ CYBERSEC.VAULT</a>
+  <nav>
+    <a href="../index.html">Home</a>
+    <a href="../index.html#topics-web">Topics</a>
+    <a href="index.html" class="active">Glossary</a>
+    <a href="../tryhackme/index.html">THM</a>
+  </nav>
+  <div class="search-wrap">
+    <input type="text" class="search" placeholder="Search (press /)..." />
+    <div class="search-results"></div>
+  </div>
+</div>
+
+<div class="breadcrumb">
+  <a href="../index.html">Home</a>
+  <span class="sep">›</span>
+  <a href="index.html">Glossary</a>
+  <span class="sep">›</span>
+  <span>Single Quote</span>
+</div>
+
+<!-- HERO -->
+<section class="hero" style="min-height: 50vh;">
+  <div class="hero-content">
+    <span class="coffee-badge">📖 glossary · sql syntax · the big one</span>
+    <h1 style="font-size: clamp(3rem, 10vw, 7rem);">&nbsp;'&nbsp;</h1>
+    <p class="subtitle">One character. <strong style="color: var(--accent-2);">Trillions</strong> of dollars in damages.<br>Welcome to the <em>single quote</em>.</p>
+    <div class="tagline">"It's just a tiny tick mark. How bad could it be?" — famous last words.</div>
+  </div>
+</section>
+
+<!-- WHAT IS IT -->
+<section class="chapter">
+  <div class="chapter-num">Chapter 01 // Definition</div>
+  <h2><span class="emoji">🪪</span> So what IS a single quote?</h2>
+  <p class="lead">In SQL and most programming languages, the single quote <code class="inline">'</code> is a <strong>string delimiter</strong>. It marks "here starts a chunk of text" and "here ends a chunk of text."</p>
+
+  <div class="paper">
+    <h4>📝 Think of it like quotation marks in English</h4>
+    <p>When you write: <span class="highlight">She said "hello" to me.</span></p>
+    <p>The double quotes tell you: <em>this specific text is what she said.</em> Everything inside = quoted speech. Everything outside = narration.</p>
+    <p>SQL uses single quotes the same way. They tell the database: <span class="highlight">"treat everything between these two ticks as a literal string of characters — not code."</span></p>
+  </div>
+
+  <h3>Example in plain SQL</h3>
+  <div class="code">
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> users <span class="kw">WHERE</span> name = <span class="str">'Talha'</span>
+  </div>
+  <p>Here, <code class="inline">'Talha'</code> is a string. The apostrophes wrap it. The database reads:</p>
+  <ul>
+    <li><code class="inline">'</code> ← "string starts now"</li>
+    <li><code class="inline">Talha</code> ← the actual text</li>
+    <li><code class="inline">'</code> ← "string ends now"</li>
+  </ul>
+</section>
+
+<div class="divider">the vulnerability</div>
+
+<!-- WHY IT BREAKS APPS -->
+<section class="chapter" id="why">
+  <div class="chapter-num">Chapter 02 // Why it breaks everything</div>
+  <h2><span class="emoji">💥</span> The problem: developers glue strings.</h2>
+  <p class="lead">When a website wants to search the database for YOU, a naive developer writes code like this:</p>
+
+  <div class="code evil">
+<span class="com">// PHP (the classic offender)</span>
+$name = $_GET[<span class="str">'name'</span>];
+$query = <span class="str">"SELECT * FROM users WHERE name = '"</span> . $name . <span class="str">"'"</span>;
+  </div>
+
+  <p>So if YOU send <code class="inline">?name=Talha</code>, the final query becomes:</p>
+  <div class="code">
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> users <span class="kw">WHERE</span> name = <span class="str">'Talha'</span>
+  </div>
+  <p>Perfect. Everything works. The app ships. The dev goes home.</p>
+
+  <h3>But what if... you send a single quote?</h3>
+
+  <p>Try this: <code class="inline">?name=Tal'ha</code></p>
+  <div class="code evil">
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> users <span class="kw">WHERE</span> name = <span class="str">'Tal</span>'<span class="str">ha'</span>
+  </div>
+  <p>👀 Now the database sees:</p>
+  <ul>
+    <li>First <code class="inline">'</code> → string starts</li>
+    <li><code class="inline">Tal</code> → text</li>
+    <li>Second <code class="inline">'</code> → string ENDS (YOUR apostrophe closed it early!)</li>
+    <li><code class="inline">ha</code> → ??? what even is this? not a keyword, not a string... <strong>SYNTAX ERROR.</strong></li>
+  </ul>
+
+  <div class="callout">
+    <strong>🎯 This is THE tell.</strong> If a website errors out when you submit a single quote, you've likely found a <span class="term" data-term="sql-injection">SQL injection</span> vulnerability. That error is the website screaming <em>"I took your input and stuffed it into my query like an idiot!"</em>
+  </div>
+</section>
+
+<!-- INTERACTIVE PLAYGROUND -->
+<section class="chapter" id="try-it">
+  <div class="chapter-num">Chapter 03 // Feel the power</div>
+  <h2><span class="emoji">🎮</span> Try it yourself.</h2>
+  <p class="lead">Type anything in the box. Watch the database react. No fluff, just vibes.</p>
+
+  <div class="playground">
+    <div class="playground-header">
+      <h4>🧪 Live Single-Quote Experiment</h4>
+    </div>
+    <p style="font-size: 13px; color: var(--ink-dim); margin-bottom: 8px;">You are searching for a user named:</p>
+    <input id="sqInput" class="field" type="text" value="Talha" oninput="runSQ()" />
+    <p style="font-size: 13px; color: var(--ink-dim); margin: 16px 0 6px;">The app builds this query:</p>
+    <div class="query-preview" id="sqQuery"></div>
+    <p style="font-size: 13px; color: var(--ink-dim); margin: 16px 0 6px;">Database responds:</p>
+    <div class="result-box" id="sqResult"></div>
+
+    <div class="preset-chips" style="margin-top: 14px;">
+      <span class="chip" onclick="setSQ(&quot;Talha&quot;)">Talha (normal)</span>
+      <span class="chip" onclick="setSQ(&quot;O'Brien&quot;)">O'Brien (accidental!)</span>
+      <span class="chip evil" onclick="setSQ(&quot;' OR 1=1--&quot;)">' OR 1=1-- (attack)</span>
+      <span class="chip evil" onclick="setSQ(&quot;'; DROP TABLE users;--&quot;)">'; DROP TABLE users;--</span>
+      <span class="chip" onclick="setSQ(&quot;&quot;)">(empty)</span>
+    </div>
+  </div>
+
+  <div class="brain-power">
+    <div class="label">🧠 Brain Power</div>
+    <div class="question">What do you think happens if a user with the legitimate last name <strong>O'Brien</strong> tries to sign up on a vulnerable site?</div>
+    <button class="reveal-btn" onclick="toggleAnswer(this)">Reveal answer</button>
+    <div class="answer">
+      <p>The site crashes. 😅</p>
+      <p>The naive query becomes <code class="inline">INSERT INTO users (name) VALUES ('O'Brien')</code> — the apostrophe in "O'Brien" closes the string early, and the database throws an error. Poor Mrs. O'Brien can't sign up.</p>
+      <p>This is why <strong>string escaping / parameterized queries matter for normal operation, not just security</strong>. SQLi vulns also tend to be bug-prone for legitimate users with weird names. 🌍</p>
+    </div>
+  </div>
+</section>
+
+<div class="divider">history of destruction</div>
+
+<!-- REAL WORLD BREACHES -->
+<section class="chapter" id="real-world">
+  <div class="chapter-num">Chapter 04 // Real-world carnage</div>
+  <h2><span class="emoji">📰</span> Breaches caused by this one character.</h2>
+  <p class="lead">The single quote — exploited via SQLi — has been the root cause of some of the most expensive breaches in history.</p>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <h4>💳 Heartland Payment Systems (2008)</h4>
+      <p><strong>~130 million credit cards stolen.</strong> Albert Gonzalez's crew used SQL injection to get into Heartland's payment processing network. Damages: $140M+.</p>
+    </div>
+    <div class="card">
+      <h4>🎮 Sony Pictures / PSN (2011)</h4>
+      <p>Multiple Sony properties hit with SQL injection by LulzSec. <strong>77 million PlayStation accounts</strong> compromised. PSN was offline for 23 days. Estimated cost: $171M.</p>
+    </div>
+    <div class="card">
+      <h4>💼 TalkTalk (2015)</h4>
+      <p>UK ISP hit by SQLi from a <strong>17-year-old</strong>. 157,000 customer records stolen. £77M in damages. CEO had to resign.</p>
+    </div>
+    <div class="card">
+      <h4>🏛️ Illinois Board of Elections (2016)</h4>
+      <p>SQLi exposed <strong>~200,000 voter records</strong>. Part of broader 2016 election security incidents.</p>
+    </div>
+    <div class="card">
+      <h4>📚 7-Eleven + Nasdaq + Heartland combo (2007-2012)</h4>
+      <p>Same crew, SQLi again. <strong>160 million card numbers</strong> across multiple companies. Biggest criminal hacking case in US history at the time.</p>
+    </div>
+    <div class="card">
+      <h4>🎯 Little Bobby Tables (2007, fictional)</h4>
+      <p>xkcd #327. A kid named <code class="inline">Robert'); DROP TABLE Students;--</code> gets registered at school, nukes the student database. The meme that made SQLi famous outside of security circles.</p>
+    </div>
+  </div>
+
+  <div class="callout danger">
+    <strong>🚨 The pattern:</strong> Every one of these boils down to <em>"a user submitted text containing a single quote, and the server pasted it straight into a SQL query."</em> The fix is ALWAYS the same: <span class="term" data-term="parameterized-query">parameterized queries</span>.
+  </div>
+</section>
+
+<div class="divider">for the hackers</div>
+
+<!-- ATTACKER TOOLKIT -->
+<section class="chapter" id="attacker">
+  <div class="chapter-num">Chapter 05 // For the offensive crowd</div>
+  <h2><span class="emoji">🥷</span> How to USE this knowledge</h2>
+  <p class="lead">You're testing an app for vulnerabilities (with permission, obviously). Here's the playbook.</p>
+
+  <h3>Step 1: Drop a single quote everywhere</h3>
+  <p>Throw <code class="inline">'</code> into:</p>
+  <ul>
+    <li>Every URL parameter (<code class="inline">?id=1'</code>)</li>
+    <li>Every form field (login, search, contact)</li>
+    <li>Every cookie value</li>
+    <li>Every HTTP header the server might read (User-Agent, Referer, X-Forwarded-For)</li>
+    <li>JSON / XML body fields</li>
+  </ul>
+
+  <h3>Step 2: Watch for "tells"</h3>
+  <div class="grid cols-2">
+    <div class="card">
+      <h4>✅ Good signs (SQLi likely)</h4>
+      <ul style="padding-left: 20px; font-size: 13px;">
+        <li>500 Internal Server Error</li>
+        <li>Stack trace with "SQL syntax" or "ORA-" or "MySQL"</li>
+        <li>The page looks different / broken</li>
+        <li>Different response time</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>❌ Null signs (not SQLi, probably)</h4>
+      <ul style="padding-left: 20px; font-size: 13px;">
+        <li>Same response regardless of input</li>
+        <li>Obvious client-side validation blocks it</li>
+        <li>Error says "invalid input" but nothing SQL-ish</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>Step 3: Escalate with payloads</h3>
+  <p>Once the quote breaks something, try these classics (each is its own <a href="index.html">glossary entry</a>):</p>
+  <div class="code evil">
+<span class="com">// Comment-based bypass</span>
+<span class="str">'--</span>
+
+<span class="com">// Always-true condition</span>
+<span class="str">' OR 1=1--</span>
+
+<span class="com">// Union-based data extraction</span>
+<span class="str">' UNION SELECT username, password FROM users--</span>
+
+<span class="com">// Time-based blind</span>
+<span class="str">' AND SLEEP(5)--</span>
+  </div>
+</section>
+
+<div class="divider">the fix</div>
+
+<!-- HOW TO DEFEND -->
+<section class="chapter" id="defense">
+  <div class="chapter-num">Chapter 06 // If you're a developer</div>
+  <h2><span class="emoji">🛡️</span> The fix (there is only ONE right answer)</h2>
+
+  <div class="callout danger">
+    <strong>❌ DO NOT</strong> try to "sanitize" the single quote by replacing <code class="inline">'</code> with <code class="inline">''</code> or <code class="inline">\'</code>. This is called escaping, and it's a whack-a-mole game you WILL lose. Different databases escape differently. Unicode tricks exist. Encoding tricks exist. Just don't.
+  </div>
+
+  <div class="callout success">
+    <strong>✅ DO:</strong> Use <span class="term" data-term="parameterized-query">parameterized queries</span> (a.k.a. prepared statements). The database will never confuse user data with SQL code, because they're sent through separate channels.
+  </div>
+
+  <h3>Quick reference — every major language</h3>
+  <div class="code safe">
+<span class="com">// Python (psycopg2 / sqlite3)</span>
+cursor.execute(<span class="str">"SELECT * FROM users WHERE name = ?"</span>, (user_input,))
+
+<span class="com">// Node.js (mysql2)</span>
+conn.query(<span class="str">'SELECT * FROM users WHERE name = ?'</span>, [userInput]);
+
+<span class="com">// PHP (PDO)</span>
+$stmt = $pdo->prepare(<span class="str">'SELECT * FROM users WHERE name = ?'</span>);
+$stmt->execute([$userInput]);
+
+<span class="com">// Java (JDBC)</span>
+PreparedStatement ps = conn.prepareStatement(<span class="str">"SELECT * FROM users WHERE name = ?"</span>);
+ps.setString(1, userInput);
+
+<span class="com">// C# (ADO.NET)</span>
+cmd.Parameters.AddWithValue(<span class="str">"@name"</span>, userInput);
+  </div>
+
+  <div class="quiz">
+    <h4>🎯 Check Yourself</h4>
+    <div class="q">Why does a parameterized query prevent SQL injection, even if the user types <code class="inline">' OR 1=1--</code>?</div>
+    <div class="options">
+      <div class="opt" onclick="quizAnswer(this, false)">Because the database removes all single quotes automatically.</div>
+      <div class="opt" onclick="quizAnswer(this, true)">Because the query structure is sent to the database FIRST, and user input is sent separately as pure data — it's never parsed as SQL code.</div>
+      <div class="opt" onclick="quizAnswer(this, false)">Because prepared statements are faster.</div>
+      <div class="opt" onclick="quizAnswer(this, false)">Because the client-side JS validates the input first.</div>
+    </div>
+    <div class="feedback"></div>
+  </div>
+</section>
+
+<!-- RELATED -->
+<section class="chapter">
+  <div class="related-terms">
+    <h4>🔗 Related in the vault</h4>
+    <div class="tags">
+      <a href="../topics/web/sql-injection/index.html">💉 SQL Injection (topic)</a>
+      <a href="sql-comment.html">-- SQL Comment</a>
+      <a href="parameterized-query.html">🛡️ Parameterized Query</a>
+      <a href="string-escape.html">\' String Escape</a>
+      <a href="encoding.html">🔣 Encoding</a>
+      <a href="waf.html">🧱 WAF</a>
+      <a href="arbitrary-code-exec.html">💀 Arbitrary Code Execution</a>
+    </div>
+  </div>
+</section>
+
+<footer class="site-foot">
+  <p class="coffee-line">Trillion-dollar character. ☕</p>
+  <p style="font-size: 12px;">One apostrophe. Endless consequences.</p>
+</footer>
+
+<script src="../assets/glossary.js"></script>
+<script src="../assets/app.js"></script>
+<script>
+  // Mini fake database
+  const sqUsers = [
+    { id: 1, name: 'Talha', role: 'user' },
+    { id: 2, name: 'Alice', role: 'user' },
+    { id: 3, name: 'administrator', role: 'admin' }
+  ];
+
+  function setSQ(v) {
+    document.getElementById('sqInput').value = v;
+    runSQ();
+  }
+  function escHTML(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+  function runSQ() {
+    const input = document.getElementById('sqInput').value;
+    const qEl = document.getElementById('sqQuery');
+    const rEl = document.getElementById('sqResult');
+
+    const raw = `SELECT * FROM users WHERE name = '${input}'`;
+    let html = escHTML(raw);
+    html = html.replace(/SELECT|FROM|WHERE/g, m => `<span style="color:#ff79c6;font-weight:bold;">${m}</span>`);
+    // Highlight the injected portion (user input)
+    const userEsc = escHTML(input);
+    if (userEsc) {
+      html = html.replace(userEsc, `<span style="background:rgba(255,46,99,0.3);color:#ff6b9d;padding:0 3px;border-radius:3px;">${userEsc}</span>`);
+    }
+    qEl.innerHTML = html;
+
+    // Simulate the database
+    // Count unescaped quotes in input
+    const quoteCount = (input.match(/'/g) || []).length;
+    if (quoteCount % 2 === 1) {
+      // Odd number of quotes in user input → string becomes unbalanced
+      // UNLESS the input also contains a comment after an odd quote (then everything after is trimmed)
+      if (input.includes("--") && input.indexOf("'") < input.indexOf("--")) {
+        // Attack successful — return all users for OR 1=1, else try to match
+        if (/or\s+1\s*=\s*1/i.test(input)) {
+          rEl.innerHTML = renderTable(sqUsers, true);
+          return;
+        }
+        if (/drop\s+table/i.test(input)) {
+          rEl.innerHTML = `<div style="color: var(--danger); font-family: var(--hand); font-size: 1.2rem;">💀 TABLE DROPPED. All users gone. Your website is now a monument to bad decisions.</div>`;
+          return;
+        }
+        const namePart = input.split("'")[0];
+        const matches = sqUsers.filter(u => u.name.toLowerCase() === namePart.toLowerCase());
+        rEl.innerHTML = matches.length ? renderTable(matches, true) : '<span style="color: var(--ink-dim);">No matches (but the query executed — you proved SQLi works).</span>';
+        return;
+      }
+      // Unbalanced → error
+      rEl.innerHTML = `<div style="color: var(--danger);">❌ SQL Error: unterminated quoted string at or near "${escHTML(input)}"</div><div style="color: var(--ink-dim); font-size: 12px; margin-top: 6px;">🎯 Bingo — this error means the app is vulnerable to SQLi.</div>`;
+      return;
+    }
+
+    // Even quotes or none — run as normal
+    // Extract the actual first string value (between first two quotes, if present)
+    let lookup = input;
+    const matches = sqUsers.filter(u => u.name === lookup);
+    if (matches.length) {
+      rEl.innerHTML = renderTable(matches, false);
+    } else {
+      rEl.innerHTML = '<span style="color: var(--ink-dim);">(no users matched)</span>';
+    }
+  }
+
+  function renderTable(rows, injected) {
+    let html = '<table><tr><th>ID</th><th>Name</th><th>Role</th></tr>';
+    rows.forEach(u => {
+      const danger = u.role === 'admin';
+      html += `<tr><td>${u.id}</td><td class="${danger ? 'secret' : ''}">${u.name}</td><td class="${danger ? 'secret' : ''}">${u.role}</td></tr>`;
+    });
+    html += '</table>';
+    if (injected) {
+      html += '<div style="margin-top: 10px; color: var(--accent-2); font-family: var(--hand); font-size: 1.1rem;">🔥 Injected successfully. You talked straight to the database.</div>';
+    }
+    return html;
+  }
+
+  runSQ();
+</script>
+</body>
+</html>

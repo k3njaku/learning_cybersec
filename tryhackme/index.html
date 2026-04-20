@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>TryHackMe — Rebuilt For Your Brain ☕</title>
+<link rel="stylesheet" href="../assets/styles.css" />
+</head>
+<body data-page-slug="tryhackme-hub">
+
+<div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
+
+<div class="topbar">
+  <a class="logo" href="../index.html">☕ CYBERSEC.VAULT</a>
+  <nav>
+    <a href="../index.html">Home</a>
+    <a href="../index.html#topics-web">Topics</a>
+    <a href="../glossary/index.html">Glossary</a>
+    <a href="index.html" class="active">THM</a>
+  </nav>
+  <div class="search-wrap">
+    <input type="text" class="search" placeholder="Search (press /)..." />
+    <div class="search-results"></div>
+  </div>
+</div>
+
+<div class="breadcrumb">
+  <a href="../index.html">Home</a>
+  <span class="sep">›</span>
+  <span>TryHackMe</span>
+</div>
+
+<!-- HERO -->
+<section class="hero" style="min-height: 50vh;">
+  <div class="hero-content">
+    <span class="coffee-badge">🎯 thm content · reforged</span>
+    <h1>TryHackMe</h1>
+    <p class="subtitle">THM rooms, but the boring text got deleted.<br>Only the rooms you flagged as "zzz..." get rebuilt here.</p>
+    <div class="tagline">"same knowledge, 10× the vibes." ⚡</div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="chapter">
+  <div class="chapter-num">How this section works</div>
+  <h2><span class="emoji">🔧</span> The workflow</h2>
+  <div class="grid cols-3">
+    <div class="card">
+      <h4>1️⃣ You hit a boring room</h4>
+      <p>You're doing a THM room and the explanation is making you zone out.</p>
+    </div>
+    <div class="card">
+      <h4>2️⃣ Paste the URL</h4>
+      <p>Drop the room URL in chat. I fetch it and rebuild it in your voice.</p>
+    </div>
+    <div class="card">
+      <h4>3️⃣ New room page appears</h4>
+      <p>The rebuilt room lands here under its learning path. Cross-linked to glossary + topics.</p>
+    </div>
+  </div>
+  <div class="callout info">
+    <strong>☕ Pro tip:</strong> Rebuilt rooms link back to the original THM URL — so you can do the actual tasks there while referencing the non-boring version here.
+  </div>
+</section>
+
+<div class="divider">your paths</div>
+
+<!-- PATHS + ROOMS -->
+<section class="chapter" id="paths">
+  <div class="chapter-num">Learning Paths</div>
+  <h2>📚 What you're working through</h2>
+  <div id="pathsContainer"></div>
+</section>
+
+<footer class="site-foot">
+  <p class="coffee-line">Rooms that bored you → rooms that stuck. ☕</p>
+  <p style="font-size: 12px;">Powered by caffeine and disrespect for bad UX.</p>
+</footer>
+
+<script src="../assets/glossary.js"></script>
+<script src="../assets/app.js"></script>
+<script>
+  (function () {
+    const THM = window.SITE_THM || { paths: [] };
+    const container = document.getElementById('pathsContainer');
+    container.innerHTML = THM.paths.map(p => {
+      const roomCount = (p.rooms || []).length;
+      const roomsHTML = roomCount === 0
+        ? `<div class="card" style="opacity: 0.6; grid-column: 1/-1;">
+             <h4>🎲 No rooms rebuilt yet</h4>
+             <p>When a room in <strong>${p.name}</strong> bores you to death, drop me the URL. It'll appear here, reforged.</p>
+           </div>`
+        : p.rooms.map(r => `
+            <a class="card is-link" href="../${r.path}">
+              <div class="card-badge ${r.completed ? '' : 'warn'}">${r.completed ? '✅ DONE' : '🚧 WIP'}</div>
+              <h4>${r.icon || '🏷️'} ${r.name}</h4>
+              <p>${r.blurb}</p>
+              <div style="font-family: var(--mono); font-size: 11px; color: var(--ink-mute); margin-top: 10px;">
+                ${(r.tags || []).map(t => `<span style="margin-right: 8px;">#${t}</span>`).join('')}
+              </div>
+            </a>`).join('');
+      return `
+        <div style="margin-bottom: 40px;">
+          <h3 style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+            <span style="font-size: 1.6rem;">${p.icon}</span>
+            <span>${p.name}</span>
+            <span style="font-family: var(--mono); font-size: 12px; color: var(--ink-mute); margin-left: auto;">${roomCount} room${roomCount === 1 ? '' : 's'} rebuilt</span>
+          </h3>
+          <p style="color: var(--ink-dim); font-size: 0.95rem; margin-bottom: 18px;">${p.blurb}</p>
+          <div class="grid cols-2">${roomsHTML}</div>
+        </div>`;
+    }).join('');
+  })();
+</script>
+</body>
+</html>

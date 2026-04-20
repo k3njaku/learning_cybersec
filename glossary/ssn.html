@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>SSN — The 9-Digit Keys To Someone's Life ☕</title>
+<link rel="stylesheet" href="../assets/styles.css" />
+</head>
+<body data-page-slug="ssn">
+
+<div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
+
+<div class="topbar">
+  <a class="logo" href="../index.html">☕ CYBERSEC.VAULT</a>
+  <nav>
+    <a href="../index.html">Home</a>
+    <a href="../index.html#topics-web">Topics</a>
+    <a href="index.html" class="active">Glossary</a>
+    <a href="../tryhackme/index.html">THM</a>
+  </nav>
+  <div class="search-wrap">
+    <input type="text" class="search" placeholder="Search (press /)..." />
+    <div class="search-results"></div>
+  </div>
+</div>
+
+<div class="breadcrumb">
+  <a href="../index.html">Home</a>
+  <span class="sep">›</span>
+  <a href="index.html">Glossary</a>
+  <span class="sep">›</span>
+  <span>SSN</span>
+</div>
+
+<section class="hero" style="min-height: 50vh;">
+  <div class="hero-content">
+    <span class="coffee-badge">📖 glossary · sensitive data · usa-specific</span>
+    <h1>SSN</h1>
+    <p class="subtitle">Social Security Number — 9 digits that unlock your entire US financial life.<br>The reason "data breach" = "change all your credit card numbers AND pray."</p>
+    <div class="tagline">"a password you can never change." 😬</div>
+  </div>
+</section>
+
+<!-- WHAT IT IS -->
+<section class="chapter">
+  <div class="chapter-num">Chapter 01 // The basics</div>
+  <h2><span class="emoji">🪪</span> What even is an SSN?</h2>
+  <p class="lead">A <strong>Social Security Number</strong> is a 9-digit ID number issued by the US <em>Social Security Administration</em>. Every US citizen and most legal residents get one.</p>
+
+  <div class="paper">
+    <h4>📝 The format</h4>
+    <p>An SSN looks like: <span class="highlight">AAA-GG-SSSS</span></p>
+    <ul>
+      <li><strong>AAA</strong> = Area number (first 3 digits) — originally tied to the state where you applied.</li>
+      <li><strong>GG</strong> = Group number (middle 2) — used internally for filing order.</li>
+      <li><strong>SSSS</strong> = Serial number (last 4) — just a sequential number within a group.</li>
+    </ul>
+    <p style="margin-top:8px;">Since 2011, SSNs are <span class="highlight">randomized</span> — no more geographic meaning in the first 3 digits. But the old format still applies to anyone born before that. 📅</p>
+  </div>
+
+  <h3>Why was it created?</h3>
+  <p>Originally (1936), the SSN was <em>purely</em> for tracking contributions to the Social Security retirement program. The card literally said <strong>"NOT FOR IDENTIFICATION"</strong> on it.</p>
+  <p>Over the decades, scope creep happened. Banks, hospitals, schools, employers, landlords — everyone started asking for it. Now it's a de-facto universal US identifier. 🙃</p>
+</section>
+
+<div class="divider">why attackers love them</div>
+
+<!-- WHY IT MATTERS -->
+<section class="chapter">
+  <div class="chapter-num">Chapter 02 // Why SSNs are gold for attackers</div>
+  <h2><span class="emoji">💎</span> The data gold standard</h2>
+  <p class="lead">A leaked credit card? Just cancel it. A leaked SSN? <strong>You're stuck with it for life.</strong></p>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <h4>🏦 Open credit accounts in your name</h4>
+      <p>SSN + DOB + name = enough to open credit cards, take out loans, or get a mortgage as YOU.</p>
+    </div>
+    <div class="card">
+      <h4>💰 Tax refund fraud</h4>
+      <p>File a fake tax return early in the year using stolen SSN + DOB. IRS sends the refund to the attacker. You find out when your real return gets rejected.</p>
+    </div>
+    <div class="card">
+      <h4>🏥 Medical identity theft</h4>
+      <p>Get surgeries, prescriptions, or treatments billed to your insurance. Worse: your medical record gets corrupted with someone else's blood type. 🫥</p>
+    </div>
+    <div class="card">
+      <h4>📞 Phone / utility fraud</h4>
+      <p>Open phone lines, utility accounts, internet — rack up bills that hit YOUR credit report.</p>
+    </div>
+    <div class="card">
+      <h4>🛂 Employment fraud</h4>
+      <p>Undocumented workers sometimes use stolen SSNs to get hired. IRS sees the income on YOUR SSN. Surprise tax bill.</p>
+    </div>
+    <div class="card">
+      <h4>🎭 Synthetic identity fraud</h4>
+      <p>Combine a real SSN (often a child's, since they have no credit history yet) with a fake name and DOB to create a "Frankenstein" identity. Build credit, cash out, disappear.</p>
+    </div>
+  </div>
+
+  <div class="callout danger">
+    <strong>⚠️ The kicker:</strong> The SSA will <em>only</em> issue you a new SSN in extreme cases (like ongoing harassment). For most people, once it's leaked, it's leaked forever. 🔒❌
+  </div>
+</section>
+
+<div class="divider">mass leaks</div>
+
+<!-- BREACHES -->
+<section class="chapter">
+  <div class="chapter-num">Chapter 03 // The leaks of shame</div>
+  <h2><span class="emoji">📉</span> When SSNs went bulk-leak</h2>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <div class="card-badge danger">2017</div>
+      <h4>📊 Equifax — 147 million</h4>
+      <p>Unpatched Apache Struts RCE bug (CVE-2017-5638). Attackers lived inside for <strong>76 days</strong>. Names, SSNs, DOBs, addresses, driver's licenses. Half of the US adult population. $1.4B+ in costs.</p>
+    </div>
+    <div class="card">
+      <div class="card-badge danger">2024</div>
+      <h4>🗄️ National Public Data — 2.9 BILLION records</h4>
+      <p>A background-check data broker you never heard of leaked almost every American's SSN + current & past addresses. Data dumped for free on dark web forums. Truly wild scale.</p>
+    </div>
+    <div class="card">
+      <div class="card-badge danger">2015</div>
+      <h4>🏛️ OPM (US govt) — 21.5 million</h4>
+      <p>Chinese APT breach. SSNs of federal workers + their security clearance forms (with family history, foreign contacts, etc.). Catastrophic for US intel.</p>
+    </div>
+    <div class="card">
+      <div class="card-badge danger">2015</div>
+      <h4>🏥 Anthem — 78.8 million</h4>
+      <p>Health insurer. SSNs + medical IDs + employment info stolen via phishing → lateral movement. Settled for $115M.</p>
+    </div>
+    <div class="card">
+      <div class="card-badge danger">2023</div>
+      <h4>🏢 MOVEit — ~95 million</h4>
+      <p>Zero-day in a file transfer product. Hundreds of companies' employee SSNs leaked through their vendors' vendors. Supply chain pain.</p>
+    </div>
+    <div class="card">
+      <div class="card-badge danger">2013-2014</div>
+      <h4>🎯 Target / Home Depot combo</h4>
+      <p>Mostly credit cards, but some employee SSNs too. Started the era of "enterprise takes breaches seriously."</p>
+    </div>
+  </div>
+</section>
+
+<!-- HOW THEY GET LEAKED -->
+<section class="chapter">
+  <div class="chapter-num">Chapter 04 // HOW do they get leaked?</div>
+  <h2><span class="emoji">🕳️</span> The leak pathways</h2>
+  <p class="lead">SSNs leak from the places that store them. Which is... almost everywhere you've ever given one.</p>
+
+  <ul>
+    <li><strong><span class="term" data-term="sql-injection">SQL Injection</span>:</strong> attacker dumps <code class="inline">SELECT ssn FROM customers</code>. The classic.</li>
+    <li><strong>Unpatched software:</strong> Equifax-style — known CVE, no patch, full <span class="term" data-term="rce">RCE</span>, hello database.</li>
+    <li><strong>Misconfigured cloud storage:</strong> public S3 buckets containing PDFs with SSNs. Happens monthly.</li>
+    <li><strong>Phishing:</strong> trick an HR employee, access the payroll system, export everything.</li>
+    <li><strong>Ransomware:</strong> attackers steal-then-encrypt. Data sold on dark web either way.</li>
+    <li><strong>Insider threat:</strong> employee copies the customer DB on the way out.</li>
+    <li><strong>Lost laptops / USB drives:</strong> still happens in 2026. Encryption is not optional.</li>
+    <li><strong>Third-party vendors:</strong> you gave your SSN to your insurance. Their vendor leaked it. Supply chain risk.</li>
+  </ul>
+</section>
+
+<!-- WHAT YOU CAN DO -->
+<section class="chapter">
+  <div class="chapter-num">Chapter 05 // If you're the user</div>
+  <h2><span class="emoji">🛡️</span> Protect yourself</h2>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <h4>🧊 Freeze your credit</h4>
+      <p>Go to Equifax, Experian, and TransUnion — place a <strong>security freeze</strong>. Free, legally required. Prevents new credit accounts being opened in your name, period.</p>
+    </div>
+    <div class="card">
+      <h4>📬 Check <a href="https://haveibeenpwned.com" target="_blank">haveibeenpwned.com</a></h4>
+      <p>See which breaches include your email. Enable notifications for future ones. Not SSN-specific but a great starting point.</p>
+    </div>
+    <div class="card">
+      <h4>🗣️ Don't hand it out casually</h4>
+      <p>Most places that ask for "the last 4 digits of your SSN" don't actually need it. Ask if you can provide something else (driver's license, passport).</p>
+    </div>
+    <div class="card">
+      <h4>🔐 IRS IP PIN</h4>
+      <p>Get an Identity Protection PIN from the IRS. Prevents tax refund fraud on your SSN. Opt-in, free.</p>
+    </div>
+    <div class="card">
+      <h4>👀 Monitor your credit reports</h4>
+      <p>Free weekly at <a href="https://annualcreditreport.com" target="_blank">annualcreditreport.com</a>. Review for accounts you didn't open.</p>
+    </div>
+    <div class="card">
+      <h4>📝 Freeze ChexSystems & NCTUE too</h4>
+      <p>Not just the big 3 — also freeze ChexSystems (for bank accounts) and NCTUE (for utilities/phone). Lesser known. Extra protection.</p>
+    </div>
+  </div>
+</section>
+
+<!-- WHAT YOU CAN DO AS A DEV -->
+<section class="chapter">
+  <div class="chapter-num">Chapter 06 // If you're a developer</div>
+  <h2><span class="emoji">💻</span> Storing SSNs? Read this first.</h2>
+
+  <ul>
+    <li><strong>Don't store them if you don't have to.</strong> Seriously. Every SSN in your database is a future liability. Use a third party that's already regulated if you can.</li>
+    <li><strong>Encrypt at rest</strong> — strong algorithms (AES-256), per-row or per-column encryption if possible.</li>
+    <li><strong>Encrypt in transit</strong> — TLS 1.2+ everywhere.</li>
+    <li><strong>Tokenize for display</strong> — show <code class="inline">XXX-XX-1234</code> in the UI, never the full number.</li>
+    <li><strong>Restrict access</strong> — only the code paths that MUST see the full SSN should. Audit logs for every access.</li>
+    <li><strong>Kill SQLi with <span class="term" data-term="parameterized-query">parameterized queries</span></strong>. This is table stakes.</li>
+    <li><strong>Hash-only IF you only need verification</strong> — but SSNs are low entropy (10^9 = searchable in minutes), so plain hashing isn't enough. Use HMAC with a secret, or a keyed KDF.</li>
+    <li><strong>Comply with laws</strong> — state breach notification laws (all 50 US states have them), HIPAA, GLBA, PCI if you touch cards alongside.</li>
+  </ul>
+
+  <div class="quiz">
+    <h4>🎯 Quick Check</h4>
+    <div class="q">You're building a school portal. Parents input their child's SSN for enrollment. Which is the BEST approach?</div>
+    <div class="options">
+      <div class="opt" onclick="quizAnswer(this, false)">Store it plaintext in the database — it's behind a login, so it's safe.</div>
+      <div class="opt" onclick="quizAnswer(this, false)">Hash the SSN with SHA-256 before storing.</div>
+      <div class="opt" onclick="quizAnswer(this, true)">Ask yourself if you TRULY need it. If yes: encrypt at rest with a KMS-managed key, use parameterized queries, tokenize for display, strict access controls + audit logs.</div>
+      <div class="opt" onclick="quizAnswer(this, false)">Base64-encode it — same as encrypting, basically.</div>
+    </div>
+    <div class="feedback"></div>
+  </div>
+</section>
+
+<!-- FUN FACTS -->
+<section class="chapter">
+  <div class="chapter-num">Chapter 07 // Cocktail party facts</div>
+  <h2><span class="emoji">🎲</span> SSN trivia that'll weird you out</h2>
+
+  <div class="paper right">
+    <h4>🤯 Did you know?</h4>
+    <ul>
+      <li>The lowest SSN ever issued: <span class="highlight">001-01-0001</span> — to a sailor from New Hampshire in 1936.</li>
+      <li>For decades, SSN <span class="highlight">078-05-1120</span> was used by thousands of people because a wallet manufacturer printed it on sample cards. Whoops.</li>
+      <li>The numbers <span class="highlight">666</span> are never used in the Area field. (Yes, really — to avoid associations.)</li>
+      <li>Your SSN is NOT a secret. It's essentially a username at this point. Treat any system that uses it as ONLY authentication with extreme suspicion.</li>
+      <li>Americans are issued ~5.5 million new SSNs per year.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- RELATED -->
+<section class="chapter">
+  <div class="related-terms">
+    <h4>🔗 Related in the vault</h4>
+    <div class="tags">
+      <a href="pii.html">🪪 PII</a>
+      <a href="../topics/web/sql-injection/index.html">💉 SQL Injection</a>
+      <a href="arbitrary-code-exec.html">💀 ACE / RCE</a>
+      <a href="single-quote.html">' Single Quote</a>
+      <a href="parameterized-query.html">🛡️ Parameterized Query</a>
+    </div>
+  </div>
+</section>
+
+<footer class="site-foot">
+  <p class="coffee-line">A 9-digit password you can never rotate. ☕</p>
+  <p style="font-size: 12px;">Freeze your credit. Do it today.</p>
+</footer>
+
+<script src="../assets/glossary.js"></script>
+<script src="../assets/app.js"></script>
+</body>
+</html>

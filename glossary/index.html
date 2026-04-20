@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Glossary — Cybersec Vault ☕</title>
+<link rel="stylesheet" href="../assets/styles.css" />
+</head>
+<body data-page-slug="glossary-index">
+
+<div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
+
+<div class="topbar">
+  <a class="logo" href="../index.html">☕ CYBERSEC.VAULT</a>
+  <nav>
+    <a href="../index.html">Home</a>
+    <a href="../index.html#topics-web">Topics</a>
+    <a href="index.html" class="active">Glossary</a>
+    <a href="../tryhackme/index.html">THM</a>
+  </nav>
+  <div class="search-wrap">
+    <input type="text" class="search" placeholder="Search (press /)..." />
+    <div class="search-results"></div>
+  </div>
+</div>
+
+<div class="breadcrumb">
+  <a href="../index.html">Home</a>
+  <span class="sep">›</span>
+  <span>Glossary</span>
+</div>
+
+<section class="hero" style="min-height: 40vh;">
+  <div class="hero-content">
+    <span class="coffee-badge">📖 your personal encyclopedia</span>
+    <h1>The Glossary</h1>
+    <p class="subtitle">Every term you've encountered, turned into a bite-sized page with analogies, demos, and real-world context.</p>
+    <div class="tagline">Hover the dashed blue text anywhere in the vault. Instant preview. ⚡</div>
+  </div>
+</section>
+
+<section class="chapter">
+  <div class="chapter-num">Browse</div>
+  <h2><span class="emoji">🔤</span> Jump to a letter</h2>
+  <div class="glossary-az" id="azNav"></div>
+
+  <div id="groups"></div>
+
+  <div class="callout info" style="margin-top: 40px;">
+    <strong>☕ Missing a term?</strong> Just tell me which one next time you chat — I'll add it to the glossary with the full interactive treatment.
+  </div>
+</section>
+
+<footer class="site-foot">
+  <p class="coffee-line">Every term is a doorway. ☕</p>
+</footer>
+
+<script src="../assets/glossary.js"></script>
+<script src="../assets/app.js"></script>
+<script>
+  // Group glossary terms by first letter
+  (function () {
+    const G = window.GLOSSARY;
+    const groups = {};
+    Object.keys(G).forEach(slug => {
+      const entry = G[slug];
+      const letter = entry.name.replace(/[^a-zA-Z]/g,'').toUpperCase().charAt(0) || '#';
+      if (!groups[letter]) groups[letter] = [];
+      groups[letter].push({ slug, ...entry });
+    });
+
+    // A-Z nav
+    const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+    document.getElementById('azNav').innerHTML = letters.map(l =>
+      `<a href="#letter-${l}" class="${groups[l] ? 'has-terms' : 'disabled'}">${l}</a>`
+    ).join('');
+
+    // Render groups
+    const out = document.getElementById('groups');
+    const sortedLetters = Object.keys(groups).sort();
+    out.innerHTML = sortedLetters.map(letter => {
+      const items = groups[letter].sort((a,b) => a.name.localeCompare(b.name));
+      return `
+        <div class="glossary-group" id="letter-${letter}">
+          <h3>${letter}</h3>
+          <div class="glossary-list">
+            ${items.map(it => `
+              <a class="glossary-item" href="${it.page}">
+                <div class="name">${it.name}</div>
+                <div class="blurb">${it.blurb}</div>
+                ${it.aliases && it.aliases.length ? `<div class="aliases">aka: ${it.aliases.join(', ')}</div>` : ''}
+              </a>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    }).join('');
+  })();
+</script>
+</body>
+</html>

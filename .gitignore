@@ -1,0 +1,30 @@
+# ============================================================
+# CYBERSEC VAULT — .gitignore
+# ============================================================
+
+# PDFs (source material — often owner-specific or rebuilt rooms)
+*.pdf
+
+# OS junk
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor / IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.#*
+
+# Logs & temp
+*.log
+/tmp/
+node_modules/
+
+# Local secrets (just in case)
+.env
+.env.local
+*.key
+*.pem

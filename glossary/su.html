@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>su — Switch User, The OG Privesc Command ☕</title>
+<link rel="stylesheet" href="../assets/styles.css" />
+</head>
+<body data-page-slug="su">
+
+<div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
+
+<div class="topbar">
+  <a class="logo" href="../index.html">☕ CYBERSEC.VAULT</a>
+  <nav>
+    <a href="../index.html">Home</a>
+    <a href="../index.html#topics-web">Topics</a>
+    <a href="index.html" class="active">Glossary</a>
+    <a href="../tryhackme/index.html">THM</a>
+  </nav>
+  <div class="search-wrap">
+    <input type="text" class="search" placeholder="Search (press /)..." />
+    <div class="search-results"></div>
+  </div>
+</div>
+
+<div class="breadcrumb">
+  <a href="../index.html">Home</a>
+  <span class="sep">›</span>
+  <a href="index.html">Glossary</a>
+  <span class="sep">›</span>
+  <span>su</span>
+</div>
+
+<!-- HERO -->
+<section class="hero" style="min-height: 45vh;">
+  <div class="hero-content">
+    <span class="coffee-badge">📖 glossary · linux command · identity swap</span>
+    <h1 style="font-family: var(--mono);">su 👤</h1>
+    <p class="subtitle">Switch user. Drop into another account's shell<br>as if you had just logged in as them.</p>
+    <div class="tagline">"got their password? now you ARE them." 🎭</div>
+  </div>
+</section>
+
+<!-- WHAT IS IT -->
+<section class="chapter">
+  <div class="chapter-num">Chapter 01 // Definition</div>
+  <h2><span class="emoji">📖</span> What is su?</h2>
+  <p class="lead">The <strong>su</strong> command ("substitute user" — though everyone says "switch user") lets you change your current shell identity to another user. You need their password (unless you're root).</p>
+
+  <div class="paper">
+    <h4>📝 Think of it like wearing someone else's ID badge</h4>
+    <p>You're logged in as <code>talha</code>. You want to poke around as <code>admin</code>. You type <code>su admin</code>, enter their password, and — congrats — every command you run now executes with admin's privileges, access, and file ownership.</p>
+    <p><span class="highlight">Your terminal didn't reboot. No new SSH session. You just swapped identities mid-session.</span></p>
+  </div>
+
+  <h3>Basic usage</h3>
+  <div class="code">
+<span class="com"># Switch to user "bob"</span>
+talha@box:~$ su bob
+Password: <span class="str">********</span>
+bob@box:/home/talha$   <span class="com"># NOTE: still in talha's home dir!</span>
+
+<span class="com"># Switch AND load bob's full environment</span>
+talha@box:~$ su -l bob     <span class="com"># aka: su - bob, or su --login bob</span>
+Password: <span class="str">********</span>
+bob@box:~$   <span class="com"># now in /home/bob, bob's PATH, bob's shell, etc.</span>
+  </div>
+</section>
+
+<div class="divider">the -l flag matters</div>
+
+<!-- -l FLAG -->
+<section class="chapter">
+  <div class="chapter-num">Chapter 02 // The dash matters</div>
+  <h2><span class="emoji">🔄</span> <code class="inline">su bob</code> vs <code class="inline">su - bob</code></h2>
+  <p class="lead">This tripped me up for months. The difference is subtle but important.</p>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <h4><code class="inline">su bob</code> (no dash)</h4>
+      <ul style="font-size: 14px;">
+        <li>Identity changes ✅</li>
+        <li>Working directory stays ❌</li>
+        <li>PATH stays ❌</li>
+        <li>Environment variables mostly stay</li>
+      </ul>
+      <p style="font-size: 13px; color: var(--ink-mute); margin-top: 10px;">Useful when you want to stay where you are but run ONE command as bob.</p>
+    </div>
+    <div class="card">
+      <h4><code class="inline">su -l bob</code> (with dash / --login)</h4>
+      <ul style="font-size: 14px;">
+        <li>Identity changes ✅</li>
+        <li>Lands in bob's home ✅</li>
+        <li>PATH resets to bob's ✅</li>
+        <li>Full login shell simulated ✅</li>
+      </ul>
+      <p style="font-size: 13px; color: var(--ink-mute); margin-top: 10px;">Useful when you want to pretend you SSH'd in as bob — cleaner, more realistic.</p>
+    </div>
+  </div>
+
+  <div class="callout info">
+    <strong>💡 Pentester preference:</strong> Use <code class="inline">su -l</code> (or <code class="inline">su -</code>) when you escalate — it gives you the target user's environment variables, aliases, history, and dotfiles. Which tells you a LOT about what they do on this box.
+  </div>
+</section>
+
+<div class="divider">su vs sudo</div>
+
+<!-- SU VS SUDO -->
+<section class="chapter">
+  <div class="chapter-num">Chapter 03 // su vs sudo</div>
+  <h2><span class="emoji">⚔️</span> The sibling rivalry</h2>
+  <p class="lead">Newcomers confuse these constantly. They do different things.</p>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <h4>👤 <code class="inline">su</code></h4>
+      <p><strong>Switch identity for the rest of the session.</strong> You become another user; all subsequent commands run as them.</p>
+      <ul style="font-size: 13px;">
+        <li>Needs: target user's password</li>
+        <li>Long-term identity swap</li>
+        <li>Classic Linux command (since 1970s)</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>⚡ <code class="inline">sudo</code></h4>
+      <p><strong>Run ONE command as another user</strong> (defaults to root), then go back to yourself.</p>
+      <ul style="font-size: 13px;">
+        <li>Needs: YOUR password, plus permission in <code class="inline">/etc/sudoers</code></li>
+        <li>Short-term elevation, command by command</li>
+        <li>Audit trail: logs every sudo command</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="callout">
+    <strong>🎯 Modern distros:</strong> Ubuntu and most desktops disable direct root login AND the root password — forcing you to use <code class="inline">sudo</code>. <code class="inline">su</code> to root won't work without first setting the root password. <code class="inline">sudo -i</code> is the modern replacement ("switch to root interactively").
+  </div>
+</section>
+
+<!-- FOR ATTACKERS -->
+<section class="chapter">
+  <div class="chapter-num">Chapter 04 // For the attackers</div>
+  <h2><span class="emoji">🥷</span> su in the privesc playbook</h2>
+
+  <ul>
+    <li><strong>Post-exploitation pivot:</strong> You landed a shell as <code class="inline">www-data</code>. You find <code class="inline">.bash_history</code> showing admin typed a password. Try <code class="inline">su admin</code> with that password — bingo.</li>
+    <li><strong>Leaked creds reuse:</strong> Hydra cracked one user's password. Try <code class="inline">su</code> into every other user on the box with the same password — password reuse is rampant.</li>
+    <li><strong>Catching the mistake:</strong> Developers sometimes add their passwords to scripts or config files. Grep for patterns like <code class="inline">password=</code>, <code class="inline">PASS=</code>, <code class="inline">pwd:</code> — then <code class="inline">su</code> into each user.</li>
+  </ul>
+
+  <div class="code">
+<span class="com"># Classic post-exploit flow</span>
+www-data$ cat /var/www/html/config.php | grep -i pass
+<span class="str">$db_password = "Summer2024!";</span>
+
+www-data$ cat /etc/passwd | cut -d: -f1
+root
+admin
+bob
+talha
+
+www-data$ su admin
+Password: <span class="str">Summer2024!</span>
+admin@box:~$   <span class="com"># 🔥 yep, they reused it</span>
+admin@box:~$ sudo -l    <span class="com"># what can admin do as root?</span>
+  </div>
+</section>
+
+<!-- DEFENSE -->
+<section class="chapter">
+  <div class="chapter-num">Chapter 05 // For defenders</div>
+  <h2><span class="emoji">🛡️</span> Making su harder to abuse</h2>
+
+  <ul>
+    <li><strong>Disable su for normal users</strong> — put admins in the <code class="inline">wheel</code> group and configure <code class="inline">pam_wheel</code> to restrict su to that group.</li>
+    <li><strong>Long unique passwords</strong> — if every user has a 20-char random password, password reuse attacks die.</li>
+    <li><strong>Log su attempts</strong> — successful AND failed su events go to <code class="inline">/var/log/auth.log</code>. Alert on anomalies.</li>
+    <li><strong>Prefer sudo</strong> — command-by-command elevation with audit logs beats long-lived identity swaps.</li>
+    <li><strong>Lock the root account</strong> — <code class="inline">passwd -l root</code> disables password auth for root entirely. Now nobody can <code class="inline">su root</code>.</li>
+  </ul>
+
+  <div class="quiz">
+    <h4>🎯 Quick Check</h4>
+    <div class="q">You need to switch to user "alice" AND land in her home directory with her environment. Which command?</div>
+    <div class="options">
+      <div class="opt" onclick="quizAnswer(this, false)">su alice</div>
+      <div class="opt" onclick="quizAnswer(this, true)">su -l alice</div>
+      <div class="opt" onclick="quizAnswer(this, false)">sudo alice</div>
+      <div class="opt" onclick="quizAnswer(this, false)">chmod alice</div>
+    </div>
+    <div class="feedback"></div>
+  </div>
+</section>
+
+<!-- RELATED -->
+<section class="chapter">
+  <div class="related-terms">
+    <h4>🔗 Related in the vault</h4>
+    <div class="tags">
+      <a href="linux-permissions.html">🛡️ Linux Permissions</a>
+      <a href="chmod.html">🔧 chmod</a>
+      <a href="ssh.html">🔐 SSH</a>
+      <a href="reverse-shell.html">🐚 Reverse Shell</a>
+      <a href="../tryhackme/cybersec-101/linux-fundamentals-part-2.html">🐧 THM: Linux Fundamentals Pt. 2</a>
+    </div>
+  </div>
+</section>
+
+<footer class="site-foot">
+  <p class="coffee-line">One password. One identity swap. Worlds of access unlocked. ☕</p>
+</footer>
+
+<script src="../assets/glossary.js"></script>
+<script src="../assets/app.js"></script>
+</body>
+</html>

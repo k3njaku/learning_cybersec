@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<!-- ================================================================
+     TOPIC PAGE TEMPLATE
+     Location: topics/<lane>/<slug>/index.html
+     Where <lane> is 'web' (default, web-app pentesting) or 'misc'.
+
+     BEFORE YOU USE THIS TEMPLATE:
+       1. Read /AGENTS.md (mandatory)
+       2. Read /CONVENTIONS.md (quick reference)
+     REPLACE every [[BRACKET]] placeholder.
+     Keep the same structural blocks; feel free to add/remove chapters.
+================================================================ -->
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>[[TOPIC NAME]] — [[PUNCHY TAGLINE]] ☕</title>
+<!-- Path depth: topics/<lane>/<slug>/ → need 3 levels up to reach root -->
+<link rel="stylesheet" href="../../../assets/styles.css" />
+</head>
+<body data-page-slug="[[TOPIC-SLUG]]">
+
+<div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
+
+<!-- TOP BAR (identical on every page; only 'active' class changes) -->
+<div class="topbar">
+  <a class="logo" href="../../../index.html">☕ CYBERSEC.VAULT</a>
+  <nav>
+    <a href="../../../index.html">Home</a>
+    <a href="../../../index.html#topics-web" class="active">Topics</a>
+    <a href="../../../glossary/index.html">Glossary</a>
+    <a href="../../../tryhackme/index.html">THM</a>
+  </nav>
+  <div class="search-wrap">
+    <input type="text" class="search" placeholder="Search (press /)..." />
+    <div class="search-results"></div>
+  </div>
+</div>
+
+<!-- BREADCRUMB (always present, always this structure) -->
+<div class="breadcrumb">
+  <a href="../../../index.html">Home</a>
+  <span class="sep">›</span>
+  <a href="../../../index.html#topics-web">Topics</a>
+  <span class="sep">›</span>
+  <span>[[TOPIC NAME]]</span>
+</div>
+
+<!-- ===================== HERO ===================== -->
+<section class="hero" id="hero">
+  <div class="hero-content">
+    <span class="coffee-badge">☕ [[SHORT TAG LINE FOR BADGE]]</span>
+    <h1>[[TOPIC NAME]]</h1>
+    <p class="subtitle">[[TWO-LINE HOOK. IMAGINE NETWORKCHUCK YELLING IT.]]</p>
+    <div class="tagline">"[[A memorable quote or WHAT-IF question]]"</div>
+    <br>
+    <button class="cta-btn" onclick="document.getElementById('what').scrollIntoView()">LET'S GOOOO 🚀</button>
+    <p style="margin-top: 26px; font-size: 12px; color: var(--ink-dim);">
+      💡 Blue dashed terms like <span class="term" data-term="sql-injection">SQL injection</span> → hover for preview, click for full page.
+    </p>
+  </div>
+</section>
+
+<!-- ===================== CHAPTER 1: WHAT IS IT ===================== -->
+<section class="chapter" id="what">
+  <div class="chapter-num">Chapter 01 // The Big Idea</div>
+  <h2><span class="emoji">🎯</span> What even IS [[TOPIC]]?</h2>
+  <p class="lead">[[One-sentence plain-English explanation. No jargon.]]</p>
+
+  <!-- Head First "notebook paper" block — for analogies & gut-level explanations -->
+  <div class="paper">
+    <h4>📝 [[Analogy or metaphor title]]</h4>
+    <p>[[Human-language analogy here. Use real-world objects: nightclubs, doors, letters, whatever clicks.]]</p>
+    <p><span class="highlight">[[Highlight the key insight]]</span></p>
+  </div>
+
+  <!-- Brain Power box — THINK before reveal. Mandatory on most topic pages -->
+  <div class="brain-power">
+    <div class="label">🧠 Brain Power</div>
+    <div class="question">[[A question that makes the reader pause and think BEFORE they see the answer.]]</div>
+    <button class="reveal-btn" onclick="toggleAnswer(this)">Reveal answer</button>
+    <div class="answer">
+      <p>[[The answer. Make it land.]]</p>
+    </div>
+  </div>
+</section>
+
+<div class="divider">why you should care</div>
+
+<!-- ===================== CHAPTER 2: IMPACT ===================== -->
+<section class="chapter" id="impact">
+  <div class="chapter-num">Chapter 02 // Stakes</div>
+  <h2><span class="emoji">💥</span> Why it matters</h2>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <h4>[[Impact 1]]</h4>
+      <p>[[What bad thing happens]]</p>
+    </div>
+    <div class="card">
+      <h4>[[Impact 2]]</h4>
+      <p>[[What bad thing happens]]</p>
+    </div>
+  </div>
+
+  <div class="callout">
+    <strong>☕ NetworkChuck Moment:</strong> [[Bug bounty payouts, real breach stories, or career reason this matters.]]
+  </div>
+</section>
+
+<div class="divider">hands on</div>
+
+<!-- ===================== CHAPTER 3: INTERACTIVE PLAYGROUND =====================
+     Every topic page MUST have at least one playground. This is non-negotiable.
+     Use the .playground container. Include:
+       - URL bar or form field with live oninput="updateX()" handlers
+       - Query/request preview that updates as you type
+       - Result box showing the simulated outcome
+       - Preset chips (.chip / .chip.evil) to demonstrate known payloads
+     Keep simulation logic at the bottom <script>, scoped per-page.
+================================================================================= -->
+<section class="chapter" id="try-it">
+  <div class="chapter-num">Chapter 03 // Hands on</div>
+  <h2><span class="emoji">🎮</span> Try it yourself</h2>
+
+  <div class="playground">
+    <div class="playground-header">
+      <h4>🧪 [[Playground name]]</h4>
+    </div>
+    <div class="url-bar">
+      <span class="proto">https://</span>[[target.com/path?param=]]<input id="demoInput" type="text" value="[[default]]" oninput="runDemo()" />
+    </div>
+    <div class="query-preview" id="demoQuery"></div>
+    <div class="preset-chips">
+      <span class="chip" onclick="setDemo('[[safe-value]]')">[[Safe label]]</span>
+      <span class="chip evil" onclick="setDemo(&quot;[[malicious-payload]]&quot;)">[[Attack label]]</span>
+    </div>
+    <div class="result-box" id="demoResult"></div>
+  </div>
+</section>
+
+<div class="divider">defense</div>
+
+<!-- ===================== CHAPTER 4: HOW TO PREVENT ===================== -->
+<section class="chapter" id="prevent">
+  <div class="chapter-num">Chapter N // The Fix</div>
+  <h2><span class="emoji">🛡️</span> How to prevent it</h2>
+
+  <h3>❌ Broken</h3>
+  <div class="code evil">
+<span class="com">// vulnerable example</span>
+  </div>
+
+  <h3>✅ Fixed</h3>
+  <div class="code safe">
+<span class="com">// safe example</span>
+  </div>
+
+  <div class="quiz">
+    <h4>🎯 Quick Check</h4>
+    <div class="q">[[A question the reader must be able to answer after this page.]]</div>
+    <div class="options">
+      <div class="opt" onclick="quizAnswer(this, false)">[[Wrong option]]</div>
+      <div class="opt" onclick="quizAnswer(this, true)">[[Correct option]]</div>
+      <div class="opt" onclick="quizAnswer(this, false)">[[Wrong option]]</div>
+      <div class="opt" onclick="quizAnswer(this, false)">[[Wrong option]]</div>
+    </div>
+    <div class="feedback"></div>
+  </div>
+</section>
+
+<!-- ===================== RELATED TERMS ===================== -->
+<section class="chapter">
+  <div class="related-terms">
+    <h4>🔗 Related in the vault</h4>
+    <div class="tags">
+      <a href="../../../glossary/[[term1]].html">[[emoji]] [[Term 1]]</a>
+      <a href="../../../glossary/[[term2]].html">[[emoji]] [[Term 2]]</a>
+    </div>
+  </div>
+</section>
+
+<footer class="site-foot">
+  <p class="coffee-line">[[Closing line — punchy, themed.]] ☕</p>
+</footer>
+
+<!-- MANDATORY: shared scripts at the bottom, in this order -->
+<script src="../../../assets/glossary.js"></script>
+<script src="../../../assets/app.js"></script>
+<script>
+  /* =========================================================
+     PAGE-SPECIFIC INTERACTIVE LOGIC
+     Keep all simulation functions here.
+     Do NOT define helpers that belong in /assets/app.js here —
+     if you're reusing logic across pages, put it in app.js.
+     ========================================================= */
+
+  function setDemo(v) {
+    document.getElementById('demoInput').value = v;
+    runDemo();
+  }
+  function runDemo() {
+    const input = document.getElementById('demoInput').value;
+    document.getElementById('demoQuery').textContent = `[[sample query with ]] ${input}`;
+    document.getElementById('demoResult').textContent = '[[simulated result]]';
+  }
+  runDemo();
+</script>
+</body>
+</html>

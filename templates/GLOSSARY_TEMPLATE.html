@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<!-- ================================================================
+     GLOSSARY TERM PAGE TEMPLATE
+     Location: glossary/<term-slug>.html
+
+     BEFORE YOU USE THIS TEMPLATE:
+       1. Read /AGENTS.md
+       2. Add the term to /assets/glossary.js FIRST. This page won't
+          be reachable from hover-previews until the JS entry exists.
+     REPLACE every [[BRACKET]] placeholder.
+     Target length: 5-7 chapters, enough to stand alone as a deep dive.
+================================================================ -->
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>[[Term Name]] — [[Punchy Subtitle]] ☕</title>
+<link rel="stylesheet" href="../assets/styles.css" />
+</head>
+<body data-page-slug="[[term-slug]]">
+
+<div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
+
+<div class="topbar">
+  <a class="logo" href="../index.html">☕ CYBERSEC.VAULT</a>
+  <nav>
+    <a href="../index.html">Home</a>
+    <a href="../index.html#topics-web">Topics</a>
+    <a href="index.html" class="active">Glossary</a>
+    <a href="../tryhackme/index.html">THM</a>
+  </nav>
+  <div class="search-wrap">
+    <input type="text" class="search" placeholder="Search (press /)..." />
+    <div class="search-results"></div>
+  </div>
+</div>
+
+<div class="breadcrumb">
+  <a href="../index.html">Home</a>
+  <span class="sep">›</span>
+  <a href="index.html">Glossary</a>
+  <span class="sep">›</span>
+  <span>[[Term Name]]</span>
+</div>
+
+<!-- HERO -->
+<section class="hero" style="min-height: 45vh;">
+  <div class="hero-content">
+    <span class="coffee-badge">📖 glossary · [[category]] · [[severity-or-note]]</span>
+    <h1>[[Term Name]]</h1>
+    <p class="subtitle">[[One-line explanation in your own voice]]<br>[[Optional second-line hook]]</p>
+    <div class="tagline">"[[Memorable quote about the term]]"</div>
+  </div>
+</section>
+
+<!-- WHAT IT IS -->
+<section class="chapter">
+  <div class="chapter-num">Chapter 01 // Definition</div>
+  <h2><span class="emoji">📖</span> What is [[Term]]?</h2>
+  <p class="lead">[[Plain English, no jargon.]]</p>
+
+  <div class="paper">
+    <h4>📝 [[Analogy title]]</h4>
+    <p>[[Analogy in everyday terms. E.g., for "single quote", compare to quotation marks in English.]]</p>
+  </div>
+</section>
+
+<div class="divider">why it matters</div>
+
+<!-- WHY IT MATTERS -->
+<section class="chapter">
+  <div class="chapter-num">Chapter 02 // Why it matters</div>
+  <h2><span class="emoji">💥</span> [[Why should the reader care?]]</h2>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <h4>[[Reason 1]]</h4>
+      <p>[[Explanation]]</p>
+    </div>
+    <div class="card">
+      <h4>[[Reason 2]]</h4>
+      <p>[[Explanation]]</p>
+    </div>
+  </div>
+</section>
+
+<!-- OPTIONAL: INTERACTIVE DEMO -->
+<!-- If the term has a visualizable/interactive aspect, include a .playground here.
+     If it's a pure concept (like "bug bounty"), this section is optional. -->
+
+<div class="divider">real world</div>
+
+<!-- REAL WORLD -->
+<section class="chapter">
+  <div class="chapter-num">Chapter 03 // Real-world examples</div>
+  <h2><span class="emoji">📰</span> [[Title — "seen in the wild" or "legendary cases"]]</h2>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <div class="card-badge danger">[[YEAR / CVE]]</div>
+      <h4>[[Incident name]]</h4>
+      <p>[[What happened, scale, damage.]]</p>
+    </div>
+    <!-- add 2-4 more real examples -->
+  </div>
+</section>
+
+<!-- DEFENSE OR USAGE -->
+<section class="chapter">
+  <div class="chapter-num">Chapter 04 // [[Defense / How to exploit / How to use]]</div>
+  <h2><span class="emoji">🛡️</span> [[Appropriate title]]</h2>
+
+  <ul>
+    <li>[[Actionable point]]</li>
+    <li>[[Actionable point]]</li>
+  </ul>
+
+  <div class="quiz">
+    <h4>🎯 Quick Check</h4>
+    <div class="q">[[Question]]</div>
+    <div class="options">
+      <div class="opt" onclick="quizAnswer(this, false)">[[Wrong]]</div>
+      <div class="opt" onclick="quizAnswer(this, true)">[[Correct]]</div>
+      <div class="opt" onclick="quizAnswer(this, false)">[[Wrong]]</div>
+      <div class="opt" onclick="quizAnswer(this, false)">[[Wrong]]</div>
+    </div>
+    <div class="feedback"></div>
+  </div>
+</section>
+
+<!-- RELATED TERMS -->
+<section class="chapter">
+  <div class="related-terms">
+    <h4>🔗 Related in the vault</h4>
+    <div class="tags">
+      <a href="[[related-term-1]].html">[[emoji]] [[Related Term 1]]</a>
+      <a href="[[related-term-2]].html">[[emoji]] [[Related Term 2]]</a>
+      <!-- Link to any topic page this term appears in: -->
+      <a href="../topics/web/[[topic-slug]]/index.html">[[emoji]] [[Topic Name]]</a>
+    </div>
+  </div>
+</section>
+
+<footer class="site-foot">
+  <p class="coffee-line">[[Closing punchline]] ☕</p>
+</footer>
+
+<script src="../assets/glossary.js"></script>
+<script src="../assets/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Man Page — The Built-in Linux Manual ☕</title>
+<link rel="stylesheet" href="../assets/styles.css" />
+</head>
+<body data-page-slug="man-page">
+
+<div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
+
+<div class="topbar">
+  <a class="logo" href="../index.html">☕ CYBERSEC.VAULT</a>
+  <nav>
+    <a href="../index.html">Home</a>
+    <a href="../index.html#topics-web">Topics</a>
+    <a href="index.html" class="active">Glossary</a>
+    <a href="../tryhackme/index.html">THM</a>
+  </nav>
+  <div class="search-wrap">
+    <input type="text" class="search" placeholder="Search (press /)..." />
+    <div class="search-results"></div>
+  </div>
+</div>
+
+<div class="breadcrumb">
+  <a href="../index.html">Home</a>
+  <span class="sep">›</span>
+  <a href="index.html">Glossary</a>
+  <span class="sep">›</span>
+  <span>Man Page</span>
+</div>
+
+<!-- HERO -->
+<section class="hero" style="min-height: 45vh;">
+  <div class="hero-content">
+    <span class="coffee-badge">📖 glossary · linux fundamentals · quality-of-life</span>
+    <h1>man(1) 📖</h1>
+    <p class="subtitle">The friendly RTFM. Every Linux command's instruction manual,<br>built into the OS, one <code class="inline">man &lt;command&gt;</code> away.</p>
+    <div class="tagline">"stop googling flags — the manual is literally on your machine." ☕</div>
+  </div>
+</section>
+
+<!-- WHAT IS IT -->
+<section class="chapter">
+  <div class="chapter-num">Chapter 01 // Definition</div>
+  <h2><span class="emoji">📖</span> What's a man page?</h2>
+  <p class="lead">Short for <strong>manual page</strong>. It's the official documentation for a Linux command, built into the operating system. Access it with <code class="inline">man &lt;command&gt;</code>.</p>
+
+  <div class="paper">
+    <h4>📝 Think of it like IKEA instructions, but for commands</h4>
+    <p>You bought a shelf. The box comes with a booklet that tells you every screw, every step, every warning. Linux commands work the same way — each ships with its own booklet. Except you don't have to dig through a drawer to find it; you just run <code>man</code>.</p>
+    <p><span class="highlight">Every man page has a predictable structure</span>: name, synopsis, description, options, examples, see also. Learn the layout once, read every man page faster.</p>
+  </div>
+
+  <h3>Example: <code class="inline">man ls</code></h3>
+  <div class="code">
+LS(1)                   User Commands                   LS(1)
+
+<span class="kw">NAME</span>
+       ls - list directory contents
+
+<span class="kw">SYNOPSIS</span>
+       ls [OPTION]... [FILE]...
+
+<span class="kw">DESCRIPTION</span>
+       List information about the FILEs...
+
+       -a, --all
+              do not ignore entries starting with .
+       -h, --human-readable
+              with -l and -s, print sizes like 1K 234M 2G
+       ...
+  </div>
+</section>
+
+<div class="divider">navigation</div>
+
+<!-- NAVIGATION -->
+<section class="chapter">
+  <div class="chapter-num">Chapter 02 // Getting around</div>
+  <h2><span class="emoji">🎹</span> Man page keyboard shortcuts</h2>
+  <p class="lead">Man pages open inside a pager (usually <code class="inline">less</code>). Once you learn these, you navigate like a pro.</p>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <h4>Scrolling</h4>
+      <ul style="font-size: 14px; padding-left: 20px;">
+        <li><code class="inline">↓</code> / <code class="inline">j</code> — one line down</li>
+        <li><code class="inline">↑</code> / <code class="inline">k</code> — one line up</li>
+        <li><code class="inline">Space</code> / <code class="inline">f</code> — page down</li>
+        <li><code class="inline">b</code> — page up</li>
+        <li><code class="inline">g</code> — jump to top</li>
+        <li><code class="inline">G</code> — jump to bottom</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>Searching & quitting</h4>
+      <ul style="font-size: 14px; padding-left: 20px;">
+        <li><code class="inline">/pattern</code> — search forward</li>
+        <li><code class="inline">?pattern</code> — search backward</li>
+        <li><code class="inline">n</code> — next match</li>
+        <li><code class="inline">N</code> — previous match</li>
+        <li><code class="inline">h</code> — help (shows all keys)</li>
+        <li><code class="inline">q</code> — <strong>quit</strong> (the key newbies forget 😅)</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="callout info">
+    <strong>💡 Hot tip:</strong> The number in <code class="inline">LS(1)</code> isn't random — it's the manual <em>section</em>. Section 1 = user commands, 5 = file formats, 8 = system admin commands. When two things share a name (like <code class="inline">passwd</code> the command AND <code class="inline">passwd</code> the file), use <code class="inline">man 5 passwd</code> to pick the file format version.
+  </div>
+</section>
+
+<div class="divider">why it matters</div>
+
+<!-- WHY IT MATTERS -->
+<section class="chapter">
+  <div class="chapter-num">Chapter 03 // Why hackers love man pages</div>
+  <h2><span class="emoji">🎯</span> Recon AND exploit tool</h2>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <h4>🧪 Command discovery</h4>
+      <p>You land a shell on a target. <code class="inline">man -k <pattern></code> (apropos) searches all man pages for a keyword. <code class="inline">man -k network</code> shows every tool related to networking. Instant recon of available tools.</p>
+    </div>
+    <div class="card">
+      <h4>🔍 GTFOBins pre-check</h4>
+      <p>Found a binary with SUID? Check its man page for <code class="inline">-e</code>, <code class="inline">--exec</code>, or anything that runs a subprocess. Many privesc tricks (see GTFOBins) live in the man pages all along.</p>
+    </div>
+    <div class="card">
+      <h4>⚙️ Offline docs</h4>
+      <p>No internet on the target? Man pages work offline. They're literally on the filesystem (<code class="inline">/usr/share/man/</code>).</p>
+    </div>
+    <div class="card">
+      <h4>🐚 Shell escape</h4>
+      <p>Stuck in a restricted menu that lets you run <code class="inline">man</code>? Inside less, type <code class="inline">!sh</code> and you escape into a shell. Classic jailbreak trick.</p>
+    </div>
+  </div>
+</section>
+
+<!-- USAGE PATTERNS -->
+<section class="chapter">
+  <div class="chapter-num">Chapter 04 // Power moves</div>
+  <h2><span class="emoji">🛠️</span> Beyond <code class="inline">man ls</code></h2>
+
+  <div class="code">
+<span class="com"># Search ALL man pages for a keyword</span>
+man -k password           <span class="com"># aka: apropos password</span>
+
+<span class="com"># Jump to a specific section</span>
+man 5 passwd              <span class="com"># the /etc/passwd file format, not the command</span>
+
+<span class="com"># Quick one-line summary</span>
+whatis ls                 <span class="com"># ls (1) - list directory contents</span>
+
+<span class="com"># See which sections have a page for 'printf'</span>
+man -f printf             <span class="com"># printf (1), printf (3)</span>
+
+<span class="com"># Get JUST the synopsis</span>
+man ls | head -20
+  </div>
+
+  <div class="callout success">
+    <strong>🎓 Modern alternative:</strong> <code class="inline">tldr</code> gives you the 5 most common usage examples without wading through the full manual. Install with <code class="inline">apt install tldr</code>. Great when you just need "how do I tar this folder" without a 600-line deep dive.
+  </div>
+
+  <div class="quiz">
+    <h4>🎯 Quick Check</h4>
+    <div class="q">You're stuck inside a man page and can't figure out how to leave. Which key gets you out?</div>
+    <div class="options">
+      <div class="opt" onclick="quizAnswer(this, false)">Ctrl+C</div>
+      <div class="opt" onclick="quizAnswer(this, false)">Esc</div>
+      <div class="opt" onclick="quizAnswer(this, true)">q</div>
+      <div class="opt" onclick="quizAnswer(this, false)">exit</div>
+    </div>
+    <div class="feedback"></div>
+  </div>
+</section>
+
+<!-- RELATED -->
+<section class="chapter">
+  <div class="related-terms">
+    <h4>🔗 Related in the vault</h4>
+    <div class="tags">
+      <a href="linux-permissions.html">🛡️ Linux Permissions</a>
+      <a href="chmod.html">🔧 chmod</a>
+      <a href="ssh.html">🔐 SSH</a>
+      <a href="../tryhackme/cybersec-101/linux-fundamentals-part-2.html">🐧 THM: Linux Fundamentals Pt. 2</a>
+    </div>
+  </div>
+</section>
+
+<footer class="site-foot">
+  <p class="coffee-line">The manual was always there. You just had to <code class="inline">man</code> it. ☕</p>
+</footer>
+
+<script src="../assets/glossary.js"></script>
+<script src="../assets/app.js"></script>
+</body>
+</html>

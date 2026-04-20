@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Brute Force — Guessing Until It Works ☕</title>
+<link rel="stylesheet" href="../assets/styles.css" />
+</head>
+<body data-page-slug="brute-force">
+
+<div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
+
+<div class="topbar">
+  <a class="logo" href="../index.html">☕ CYBERSEC.VAULT</a>
+  <nav>
+    <a href="../index.html">Home</a>
+    <a href="../index.html#topics-web">Topics</a>
+    <a href="index.html" class="active">Glossary</a>
+    <a href="../tryhackme/index.html">THM</a>
+  </nav>
+  <div class="search-wrap">
+    <input type="text" class="search" placeholder="Search (press /)..." />
+    <div class="search-results"></div>
+  </div>
+</div>
+
+<div class="breadcrumb">
+  <a href="../index.html">Home</a>
+  <span class="sep">›</span>
+  <a href="index.html">Glossary</a>
+  <span class="sep">›</span>
+  <span>Brute Force</span>
+</div>
+
+<!-- HERO -->
+<section class="hero" style="min-height: 45vh;">
+  <div class="hero-content">
+    <span class="coffee-badge">📖 glossary · attack technique · patience wins</span>
+    <h1>Brute Force 🔨</h1>
+    <p class="subtitle">Trying millions of passwords until one works.<br>The least elegant attack, yet it works constantly.</p>
+    <div class="tagline">"what if I just tried every password?" 🤔 — works more than you'd think.</div>
+  </div>
+</section>
+
+<section class="chapter">
+  <div class="chapter-num">Chapter 01 // Definition</div>
+  <h2><span class="emoji">📖</span> What is brute force?</h2>
+  <p class="lead">A brute-force attack is exactly what it sounds like — trying every possible password (or a list of common ones) until one is accepted. No cleverness. Just raw iteration.</p>
+
+  <div class="paper">
+    <h4>📝 Think of it like trying every combination on a bike lock</h4>
+    <p>3-digit lock has 1,000 combinations (000–999). If you try them one by one at 1 per second, you'll crack it in under 17 minutes. No skill. Just patience and a working finger.</p>
+    <p>Computers try passwords the same way — except at millions per second.</p>
+  </div>
+
+  <div class="callout">
+    <strong>🧠 Why it still works in 2026:</strong> Even though password policies exist everywhere, <strong>password reuse</strong> and <strong>weak defaults</strong> mean brute-force still compromises thousands of accounts daily. Mirai botnet became famous by just trying ~60 default creds on IoT devices.
+  </div>
+</section>
+
+<section class="chapter">
+  <div class="chapter-num">Chapter 02 // Flavors of brute force</div>
+  <h2><span class="emoji">🎭</span> Different strategies</h2>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <h4>🎰 Pure brute force</h4>
+      <p>Try literally every combination: <code class="inline">aaaa, aaab, aaac...</code>. Only works for short passwords. 8-char alphanumeric = 218 trillion tries = GPU cluster for days.</p>
+    </div>
+    <div class="card">
+      <h4>📖 Dictionary attack</h4>
+      <p>Try a wordlist of common passwords first (<code class="inline">password123</code>, <code class="inline">qwerty</code>, <code class="inline">letmein</code>). Wordlists like rockyou.txt (14M entries) crack most weak passwords in seconds.</p>
+    </div>
+    <div class="card">
+      <h4>📜 Credential stuffing</h4>
+      <p>Take leaked <code class="inline">user:pass</code> pairs from breach X, try them on site Y. Banks on password reuse. Stunningly effective.</p>
+    </div>
+    <div class="card">
+      <h4>💦 Password spraying</h4>
+      <p>Try ONE common password (<code class="inline">Spring2024!</code>) against MANY usernames. Stays under per-account rate limits. Used heavily by APT groups.</p>
+    </div>
+    <div class="card">
+      <h4>🎯 Hybrid / rule-based</h4>
+      <p>Take a wordlist, apply rules: add numbers, capitalize, swap letters. <code class="inline">password</code> → <code class="inline">P@ssw0rd1</code>, <code class="inline">P@ssw0rd!</code>. Tools like hashcat specialize in this.</p>
+    </div>
+    <div class="card">
+      <h4>🌈 Rainbow tables</h4>
+      <p>Pre-computed hash lookups for stolen password databases. Not live brute-force — offline cracking. Defeated by salting.</p>
+    </div>
+  </div>
+</section>
+
+<section class="chapter">
+  <div class="chapter-num">Chapter 03 // The tools</div>
+  <h2><span class="emoji">🛠️</span> The brute-force arsenal</h2>
+
+  <div class="code">
+<span class="com"># Hydra — the classic, works against everything</span>
+hydra -l admin -P rockyou.txt ssh://10.10.10.5
+
+<span class="com"># Against HTTP login forms</span>
+hydra -l admin -P pass.txt 10.10.10.5 http-post-form <span class="str">\
+  "/login:username=^USER^&amp;password=^PASS^:F=invalid"</span>
+
+<span class="com"># Burp Intruder (GUI, great for web)</span>
+<span class="com"># Use "Sniper" or "Cluster bomb" attack type with the right payload set</span>
+
+<span class="com"># ffuf — fast HTTP fuzzer, great for basic auth / login brute</span>
+ffuf -w pass.txt -u <span class="str">"https://site.com/login"</span> \
+     -X POST -d <span class="str">"user=admin&amp;pass=FUZZ"</span> \
+     -mc 200 -fs 0
+
+<span class="com"># Hashcat — OFFLINE cracking of captured hashes</span>
+hashcat -m 1400 hashes.txt rockyou.txt     <span class="com"># SHA-256</span>
+hashcat -m 3200 hashes.txt rockyou.txt     <span class="com"># bcrypt</span>
+
+<span class="com"># John the Ripper — the OG hash cracker</span>
+john --wordlist=rockyou.txt hashes.txt
+  </div>
+
+  <div class="callout danger">
+    <strong>⚠️ Legal note:</strong> Brute-forcing a system you don't own or have permission for = unauthorized access = potentially a crime (CFAA, Computer Misuse Act, etc.). Practice only on CTF platforms (THM, HTB), bug bounty programs in scope, or your own test environments.
+  </div>
+</section>
+
+<section class="chapter">
+  <div class="chapter-num">Chapter 04 // Defense</div>
+  <h2><span class="emoji">🛡️</span> Killing brute-force dead</h2>
+
+  <ul>
+    <li><strong>Rate limiting</strong> — N attempts per IP per minute. After that, slow down or block.</li>
+    <li><strong>Account lockout</strong> — lock the account for 15 mins after 5 failed attempts. Attacker's automated tool hits a wall.</li>
+    <li><strong>CAPTCHAs</strong> — after 3 failures, require hCaptcha/reCAPTCHA. Humans still proceed; bots die.</li>
+    <li><strong>MFA</strong> — even if the password is correct, attacker doesn't have the 2FA code. Kills credential stuffing cold.</li>
+    <li><strong>Block known-bad passwords</strong> at signup. Use HaveIBeenPwned Passwords API (free).</li>
+    <li><strong>Alert on spikes</strong> — sudden surge of 401s from one IP range? Automated block.</li>
+    <li><strong>Long passwords required</strong> — 14+ chars with diversity. Brute force becomes computationally unfeasible.</li>
+  </ul>
+
+  <div class="quiz">
+    <h4>🎯 Quick check</h4>
+    <div class="q">A login form has no rate limit, no CAPTCHA, no lockout, and accepts 4-character passwords. What's the biggest concern?</div>
+    <div class="options">
+      <div class="opt" onclick="quizAnswer(this, false)">SQL Injection</div>
+      <div class="opt" onclick="quizAnswer(this, false)">Cross-Site Scripting (XSS)</div>
+      <div class="opt" onclick="quizAnswer(this, true)">Brute force — an attacker can try every 4-char password in minutes.</div>
+      <div class="opt" onclick="quizAnswer(this, false)">IDOR</div>
+    </div>
+    <div class="feedback"></div>
+  </div>
+</section>
+
+<section class="chapter">
+  <div class="related-terms">
+    <h4>🔗 Related in the vault</h4>
+    <div class="tags">
+      <a href="authentication.html">🔑 Authentication</a>
+      <a href="ssh.html">🔐 SSH</a>
+      <a href="payload.html">💥 Payload</a>
+      <a href="access-control.html">🔓 Access Control</a>
+      <a href="../tryhackme/cybersec-101/web-application-security.html">🕸️ THM: Web App Security</a>
+    </div>
+  </div>
+</section>
+
+<footer class="site-foot">
+  <p class="coffee-line">Brains beat brute force. But brute force still pays rent. ☕</p>
+</footer>
+
+<script src="../assets/glossary.js"></script>
+<script src="../assets/app.js"></script>
+</body>
+</html>

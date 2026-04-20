@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>SQL Injection — Hack the Database, Break the Matrix ☕</title>
+<link rel="stylesheet" href="../../../assets/styles.css" />
+</head>
+<body data-page-slug="sql-injection">
+
+<div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
+
+<div class="topbar">
+  <a class="logo" href="../../../index.html">☕ CYBERSEC.VAULT</a>
+  <nav>
+    <a href="../../../index.html">Home</a>
+    <a href="../../../index.html#topics-web" class="active">Topics</a>
+    <a href="../../../glossary/index.html">Glossary</a>
+    <a href="../../../tryhackme/index.html">THM</a>
+  </nav>
+  <div class="search-wrap">
+    <input type="text" class="search" placeholder="Search (press /)..." />
+    <div class="search-results"></div>
+  </div>
+</div>
+
+<div class="breadcrumb">
+  <a href="../../../index.html">Home</a>
+  <span class="sep">›</span>
+  <span>Topics</span>
+  <span class="sep">›</span>
+  <span>SQL Injection</span>
+</div>
+
+<!-- ===================== HERO ===================== -->
+<section class="hero" id="hero">
+  <div class="hero-content">
+    <span class="coffee-badge">☕ grab your coffee — it's hacking time</span>
+    <h1>SQL Injection</h1>
+    <p class="subtitle">The vulnerability that made Little Bobby Tables famous.<br>You're about to learn how to talk to databases they don't want you to talk to.</p>
+    <div class="tagline">"What if I told you... a single apostrophe can break the internet?"</div>
+    <br>
+    <button class="cta-btn" onclick="document.getElementById('what').scrollIntoView()">LET'S GOOOO 🚀</button>
+    <p style="margin-top: 26px; font-size: 12px; color: var(--ink-dim);">
+      💡 See dashed-blue terms like <span class="term" data-term="single-quote">single quote</span>? Hover for a preview, click for the full page.
+    </p>
+  </div>
+</section>
+
+<!-- ===================== WHAT IS SQLi ===================== -->
+<section class="chapter" id="what">
+  <div class="chapter-num">Chapter 01 // The Big Idea</div>
+  <h2><span class="emoji">💉</span> What even IS SQL injection?</h2>
+  <p class="lead">Okay, real talk. Before we get fancy, let's imagine a <strong>nightclub</strong>.</p>
+
+  <div class="playground" style="padding: 28px 20px;">
+    <div id="bouncer-stage" style="display:grid; grid-template-columns: 1fr auto 1fr; gap: 20px; align-items: center; min-height: 200px;">
+      <div style="text-align:center; padding: 10px;">
+        <span id="customerEmoji" style="font-size: 3.5rem; display:block; margin-bottom:8px;">🙂</span>
+        <div style="font-family: var(--mono); font-size: 11px; color: var(--ink-dim); letter-spacing: 1px;">YOU (the web app user)</div>
+        <div id="customerSpeech" style="background:#fff; color:#000; padding:10px 14px; border-radius:12px; font-size:13px; margin:8px auto 0; max-width:220px;">I'd like to enter, please.</div>
+      </div>
+      <div style="background:#8b4513; color:#fff; padding:25px 20px; border-radius:8px; font-family: var(--hand); text-align:center; box-shadow: inset 0 0 20px rgba(0,0,0,0.5); min-width:110px;">
+        <div style="font-size:1.8rem;">🚪</div>
+        <div style="font-family: var(--mono); font-size: 10px; margin-top: 6px;">THE DATABASE</div>
+        <div id="doorLight" style="width: 12px; height: 12px; border-radius: 50%; background: #666; margin: 10px auto 0; transition: background 0.3s;"></div>
+      </div>
+      <div style="text-align:center; padding: 10px;">
+        <span style="font-size: 3.5rem; display:block; margin-bottom:8px;">💂</span>
+        <div style="font-family: var(--mono); font-size: 11px; color: var(--ink-dim); letter-spacing: 1px;">THE BOUNCER (SQL)</div>
+        <div id="bouncerSpeech" style="background:#fff; color:#000; padding:10px 14px; border-radius:12px; font-size:13px; margin:8px auto 0; max-width:220px;">Name? Password? Show ID.</div>
+      </div>
+    </div>
+    <div style="display:flex; gap:10px; justify-content:center; margin-top:20px; flex-wrap:wrap;">
+      <button class="chip" onclick="bouncerScene('normal')">👤 Normal User</button>
+      <button class="chip evil" onclick="bouncerScene('inject')">😈 Inject SQL</button>
+      <button class="chip evil" onclick="bouncerScene('bypass')">🕶️ Bypass Login</button>
+      <button class="chip" onclick="bouncerScene('reset')">🔄 Reset</button>
+    </div>
+    <div id="doorStatus" style="text-align:center; margin-top: 18px; font-family: var(--mono); font-size: 1rem; min-height: 22px;">👆 Click a button above to see what happens.</div>
+  </div>
+
+  <div class="paper">
+    <h4>📝 Plain English, please</h4>
+    <p>A web app is basically a <span class="highlight">middleman</span> between you and a database.</p>
+    <p>When you search "funny cat shirts," your browser sends that text to the server, and the server builds a SQL query like:</p>
+    <p style="font-family: monospace; background: #f5e9c8; padding: 4px 8px; display: inline-block; border-radius: 3px; margin: 6px 0;">SELECT * FROM products WHERE name = 'funny cat shirts'</p>
+    <p><strong>SQL injection</strong> = you sneak SQL code INTO that search box, and the server runs it as if it were part of the original query. 🤯</p>
+    <p style="margin-top: 10px;">It's like whispering extra instructions to the bouncer so he lets you into the VIP room.</p>
+  </div>
+
+  <div class="brain-power">
+    <div class="label">🧠 Brain Power</div>
+    <div class="question">Why does this even work? Why doesn't the database just "know" which part is user input and which part is code?</div>
+    <button class="reveal-btn" onclick="toggleAnswer(this)">Reveal answer</button>
+    <div class="answer">
+      <p>Because by default, the web app just <strong>glues strings together</strong>. It takes your input and stuffs it into a SQL sentence. The database then parses that whole sentence as one instruction — it has no idea which parts came from you and which came from the developer.</p>
+      <p style="margin-top: 10px;">👉 This is the root cause. And the fix (<span class="term" data-term="parameterized-query">parameterized queries</span>) is basically telling the database: <em>"Hey, THIS part is data, not code."</em> We'll get to that at the end.</p>
+    </div>
+  </div>
+</section>
+
+<div class="divider">why should you care</div>
+
+<!-- ===================== IMPACT ===================== -->
+<section class="chapter" id="impact">
+  <div class="chapter-num">Chapter 02 // Why attackers LOVE this</div>
+  <h2><span class="emoji">💥</span> The impact is... chef's kiss.</h2>
+  <p class="lead">SQLi isn't just "oops you saw a hidden product." It's been responsible for some of the biggest breaches in history.</p>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <h4>🔓 Stolen Data</h4>
+      <p>Passwords, credit cards, <span class="term" data-term="ssn">SSNs</span>, private messages. Anything in the database is fair game.</p>
+    </div>
+    <div class="card">
+      <h4>🗑️ Destroyed Data</h4>
+      <p>DELETE, DROP, UPDATE. An attacker can modify or wipe data permanently.</p>
+    </div>
+    <div class="card">
+      <h4>🔑 Full Auth Bypass</h4>
+      <p>Log in as anyone — including admin — without knowing the password.</p>
+    </div>
+    <div class="card">
+      <h4>🖥️ Server Takeover</h4>
+      <p>In some configs, SQLi leads to <span class="term" data-term="arbitrary-code-execution">arbitrary code execution</span> on the actual server. Game over.</p>
+    </div>
+  </div>
+
+  <div class="callout">
+    <strong>☕ NetworkChuck Moment:</strong> Companies pay <span class="term" data-term="bug-bounty">bug bounty</span> hunters <strong>thousands of dollars</strong> for finding SQLi in production. It's one of the OG vulnerabilities. OWASP Top 10. Always.
+  </div>
+</section>
+
+<div class="divider">sniffing it out</div>
+
+<!-- ===================== DETECT ===================== -->
+<section class="chapter" id="detect">
+  <div class="chapter-num">Chapter 03 // The Detective Work</div>
+  <h2><span class="emoji">🔍</span> How do you even FIND SQLi?</h2>
+  <p class="lead">You poke at every input and watch for weird reactions. Like prodding a lion to see if it's real or stuffed.</p>
+
+  <div class="paper right">
+    <h4>🕵️ The SQLi Smell Test</h4>
+    <p>Throw each of these at every input field, URL parameter, cookie, header:</p>
+    <ul>
+      <li><span class="highlight">'</span> (just a <span class="term" data-term="single-quote">single quote</span>) — if the app errors out = <strong>ding ding ding</strong></li>
+      <li><span class="highlight">OR 1=1</span> — does the page return way more data than expected?</li>
+      <li><span class="highlight">OR 1=2</span> — does the page return nothing?</li>
+      <li><span class="highlight">time delays</span> — does the page hang for 5 seconds?</li>
+      <li><span class="term" data-term="oast">OAST</span> payloads — does your server get a ping you didn't expect?</li>
+    </ul>
+    <p style="margin-top:10px;">If <em>any</em> of these change the behavior, you've probably got SQLi. 🎯</p>
+  </div>
+
+  <h3>Where does it hide?</h3>
+  <p>Most people think SQLi only happens in <code class="inline">WHERE</code> clauses. WRONG. It can live in:</p>
+  <ul>
+    <li><code class="inline">UPDATE</code> statements (in the value OR the WHERE)</li>
+    <li><code class="inline">INSERT</code> statements (in the inserted values)</li>
+    <li>Table names or column names</li>
+    <li><code class="inline">ORDER BY</code> clauses (these are sneaky — prepared statements don't always help here!)</li>
+  </ul>
+
+  <h3>Different input formats, same attack</h3>
+  <p>Think SQLi only happens in URL parameters like <code class="inline">?id=1</code>? Nope. It can happen in:</p>
+  <div class="code">
+POST /search HTTP/1.1
+Content-Type: application/json
+
+{
+  "productId": "<span class="inject">' OR 1=1--</span>"
+}
+  </div>
+  <p>Or even XML, using <span class="term" data-term="encoding">encoding</span> to slip past <span class="term" data-term="waf">WAFs</span>:</p>
+  <div class="code">
+&lt;stockCheck&gt;
+  &lt;productId&gt;123&lt;/productId&gt;
+  &lt;storeId&gt;999 <span class="inject">&amp;#x53;ELECT * FROM users</span>&lt;/storeId&gt;
+&lt;/stockCheck&gt;
+  </div>
+  <p style="color: var(--ink-dim);">☝️ That <code class="inline">&amp;#x53;</code> is the letter "S" encoded — useful for slipping past filters that block the word "SELECT".</p>
+</section>
+
+<div class="divider">attack #1</div>
+
+<!-- ===================== HIDDEN DATA ===================== -->
+<section class="chapter" id="hidden">
+  <div class="chapter-num">Chapter 04 // Your First Real Attack</div>
+  <h2><span class="emoji">👻</span> Retrieving Hidden Data <span style="font-size: 1rem; color: var(--accent);">(this is Lab 1!)</span></h2>
+  <p class="lead">Imagine a shopping site with categories. When you click "Gifts," your browser goes:</p>
+
+  <div class="playground">
+    <div class="playground-header">
+      <h4>🎮 Live Playground — Hidden Data Attack</h4>
+    </div>
+    <div class="url-bar">
+      <span class="proto">https://</span>shop.com/products?<span class="key">category=</span><input id="hiddenInput" type="text" value="Gifts" oninput="runHidden()" />
+    </div>
+    <p style="font-size: 13px; color: var(--ink-dim); margin: 10px 0 6px;">Behind the scenes, the server builds this query:</p>
+    <div class="query-preview" id="hiddenQuery"></div>
+    <p style="font-size: 13px; color: var(--ink-dim); margin: 10px 0 6px;">Try these <span class="term" data-term="payload">payloads</span> — click to auto-fill:</p>
+    <div class="preset-chips">
+      <span class="chip" onclick="setHidden('Gifts')">Gifts (normal)</span>
+      <span class="chip evil" onclick="setHidden(&quot;Gifts'--&quot;)">Gifts'--</span>
+      <span class="chip evil" onclick="setHidden(&quot;Gifts' OR 1=1--&quot;)">Gifts' OR 1=1--</span>
+      <span class="chip evil" onclick="setHidden(&quot;Pets' OR 1=1--&quot;)">Pets' OR 1=1--</span>
+    </div>
+    <p style="font-size: 13px; color: var(--ink-dim); margin: 10px 0 6px;">Results:</p>
+    <div class="result-box" id="hiddenResult"></div>
+  </div>
+
+  <div class="paper">
+    <h4>💡 Why does <code>--</code> work?</h4>
+    <p>In SQL, <span class="highlight">two dashes</span> is a <span class="term" data-term="sql-comment">SQL comment</span> — meaning "ignore the rest of the line."</p>
+    <p>So when you inject <code>Gifts'--</code>, the bouncer reads:</p>
+    <p style="font-family: monospace; font-size: 13px;">WHERE category = 'Gifts'<span style="color:#999;">--' AND released = 1</span></p>
+    <p>Everything after the dashes is <strong>deleted from the bouncer's brain</strong>. The "only show released products" rule? Gone. Now you see unreleased products too.</p>
+  </div>
+
+  <div class="brain-power">
+    <div class="label">🧠 Brain Power</div>
+    <div class="question">Why did we need the <span class="term" data-term="single-quote">single quote</span> <code>'</code> before the <code>--</code>? What happens if you forget it?</div>
+    <button class="reveal-btn" onclick="toggleAnswer(this)">Reveal answer</button>
+    <div class="answer">
+      <p>The original query is <code>WHERE category = 'Gifts' AND released = 1</code>. The apostrophes are a <strong>string delimiter</strong> — they tell SQL "this text is one string."</p>
+      <p>If we just inject <code>Gifts--</code>, the query becomes <code>WHERE category = 'Gifts--' AND released = 1</code>. The <code>--</code> is inside the string, so it's just treated as literal text. No comment, no bypass. 💀</p>
+      <p>We inject the apostrophe to <strong>close the string early</strong>, THEN write our comment. It's the key move.</p>
+    </div>
+  </div>
+
+  <div class="callout danger">
+    <strong>⚠️ Warning:</strong> Be careful with <code>OR 1=1</code>. If that same input is also used in an <code>UPDATE</code> or <code>DELETE</code> query elsewhere, you might accidentally update/delete EVERYTHING. On real targets, always start with <code>--</code> style bypasses.
+  </div>
+</section>
+
+<div class="divider">attack #2</div>
+
+<!-- ===================== LOGIN BYPASS ===================== -->
+<section class="chapter" id="logic">
+  <div class="chapter-num">Chapter 05 // Log in as Anyone</div>
+  <h2><span class="emoji">🗝️</span> Subverting Application Logic <span style="font-size: 1rem; color: var(--accent);">(this is Lab 2!)</span></h2>
+  <p class="lead">This one still feels illegal every time. Log in as the <strong>administrator</strong>. Without knowing the password.</p>
+
+  <div class="paper right">
+    <h4>🎭 The Setup</h4>
+    <p>Login form asks for username + password. Server runs:</p>
+    <p style="font-family: monospace; font-size: 13px;">SELECT * FROM users WHERE username = '<span class="highlight">YOU</span>' AND password = '<span class="highlight">YOU</span>'</p>
+    <p>If any row is returned → you're logged in as that user. 🤔 What if we... just... skip the password part?</p>
+  </div>
+
+  <div class="playground">
+    <div class="playground-header">
+      <h4>🎮 Live Login Form</h4>
+    </div>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px;">
+      <div>
+        <label style="font-size:12px; color: var(--ink-dim);">Username</label>
+        <input id="loginUser" class="field" type="text" value="wiener" oninput="runLogin()" style="margin-top:4px;" />
+      </div>
+      <div>
+        <label style="font-size:12px; color: var(--ink-dim);">Password</label>
+        <input id="loginPass" class="field" type="text" value="peter" oninput="runLogin()" style="margin-top:4px;" />
+      </div>
+    </div>
+    <div class="preset-chips">
+      <span class="chip" onclick="setLogin('wiener','peter')">Normal login</span>
+      <span class="chip" onclick="setLogin('admin','wrongpass')">Wrong admin pass</span>
+      <span class="chip evil" onclick="setLogin(&quot;administrator'--&quot;,'')">administrator'-- (bypass!)</span>
+      <span class="chip evil" onclick="setLogin(&quot;' OR 1=1--&quot;,'')">' OR 1=1-- (login as first user)</span>
+    </div>
+    <p style="font-size: 13px; color: var(--ink-dim); margin: 10px 0 6px;">Generated query:</p>
+    <div class="query-preview" id="loginQuery"></div>
+    <p style="font-size: 13px; color: var(--ink-dim); margin: 10px 0 6px;">Result:</p>
+    <div class="result-box" id="loginResult"></div>
+  </div>
+
+  <div class="brain-power">
+    <div class="label">🧠 Brain Power</div>
+    <div class="question">The PortSwigger lab specifically asks you to log in as <code>administrator</code>. Why wouldn't <code>' OR 1=1--</code> in the username field always work for that?</div>
+    <button class="reveal-btn" onclick="toggleAnswer(this)">Reveal answer</button>
+    <div class="answer">
+      <p><code>' OR 1=1--</code> returns <strong>all users</strong>, and the app typically logs you in as the <em>first one returned</em>, which is usually whoever was registered first — not necessarily the admin.</p>
+      <p>That's why <code>administrator'--</code> is the cleaner attack: you explicitly target that username and comment out the password check. 🎯</p>
+    </div>
+  </div>
+
+  <div class="quiz">
+    <h4>🎯 Mini-Boss Quiz</h4>
+    <div class="q">The input <code>administrator'--</code> in the username field produces what final SQL query?</div>
+    <div class="options">
+      <div class="opt" onclick="quizAnswer(this, false)">SELECT * FROM users WHERE username = 'administrator' AND password = ''</div>
+      <div class="opt" onclick="quizAnswer(this, true)">SELECT * FROM users WHERE username = 'administrator'--' AND password = ''</div>
+      <div class="opt" onclick="quizAnswer(this, false)">SELECT * FROM users WHERE username = 'administrator'; DROP TABLE users;</div>
+      <div class="opt" onclick="quizAnswer(this, false)">SELECT * FROM admins WHERE authenticated = true</div>
+    </div>
+    <div class="feedback"></div>
+  </div>
+</section>
+
+<div class="divider">attack #3</div>
+
+<!-- ===================== UNION ===================== -->
+<section class="chapter" id="union">
+  <div class="chapter-num">Chapter 06 // Stealing From Other Tables</div>
+  <h2><span class="emoji">🏴‍☠️</span> <span class="term" data-term="union-attack">UNION</span> Attacks</h2>
+  <p class="lead">What if the data you want isn't in the products table? What if it's in the <code class="inline">users</code> table? Enter: <strong>UNION</strong>.</p>
+
+  <div class="paper">
+    <h4>🔗 UNION in 30 seconds</h4>
+    <p><code>UNION</code> is a SQL keyword that says: <span class="highlight">"run a second query and glue the results onto the first one."</span></p>
+    <p>So if the app runs:</p>
+    <p style="font-family: monospace; font-size: 13px;">SELECT name, description FROM products WHERE category = '<span class="highlight">YOU</span>'</p>
+    <p>You can inject:</p>
+    <p style="font-family: monospace; font-size: 13px;">' UNION SELECT username, password FROM users--</p>
+    <p>And now the page displays... usernames and passwords, side by side with product names. 🎣</p>
+  </div>
+
+  <div class="callout">
+    <strong>⚙️ Two rules for UNION:</strong><br>
+    1️⃣ Both queries must return the <strong>same number of columns</strong><br>
+    2️⃣ The data types must be <strong>compatible</strong> (usually: find a column that's a string type)
+  </div>
+
+  <p>We'll go deep on UNION in its own dedicated page (determining column counts with <code class="inline">ORDER BY n</code> or <code class="inline">UNION SELECT NULL,NULL,...</code>, finding string columns, chaining data into one column with concatenation, etc.). This is a whole art form. 🎨</p>
+</section>
+
+<div class="divider">attack #4</div>
+
+<!-- ===================== BLIND ===================== -->
+<section class="chapter" id="blind">
+  <div class="chapter-num">Chapter 07 // Hacking in the Dark</div>
+  <h2><span class="emoji">🕶️</span> <span class="term" data-term="blind-sqli">Blind SQL Injection</span></h2>
+  <p class="lead">Sometimes the app doesn't show you query results OR errors. It's silent. But you can still hack it — by asking yes/no questions.</p>
+
+  <div class="paper right">
+    <h4>🎲 The 3 Blind Techniques</h4>
+    <ul>
+      <li><strong>Boolean-based:</strong> "If the admin's password starts with 'a', show the welcome message. Otherwise, show nothing." You infer the answer from the page's behavior.</li>
+      <li><strong>Time-based:</strong> "If true, sleep 5 seconds." Watch your stopwatch. ⏱️</li>
+      <li><strong>Out-of-Band (<span class="term" data-term="oast">OAST</span>):</strong> "Hey database, DNS lookup this domain I own with the password as the subdomain." Your server receives a ping with the answer. 🛰️</li>
+    </ul>
+  </div>
+
+  <div class="callout">
+    <strong>🎧 Think of it like this:</strong> You're talking to someone through a wall. You can't hear them, but you can tell if they knocked once (yes) or twice (no). Blind SQLi is literally asking the database yes/no questions one character at a time. It's slow. It's tedious. It's <em>beautiful</em>.
+  </div>
+
+  <p>Tools like <strong>sqlmap</strong> automate this. We'll build out a full blind SQLi simulator on its own page when we get to that PortSwigger section. 💪</p>
+</section>
+
+<div class="divider">the antidote</div>
+
+<!-- ===================== PREVENT ===================== -->
+<section class="chapter" id="prevent">
+  <div class="chapter-num">Chapter 08 // The Good Guy Chapter</div>
+  <h2><span class="emoji">🛡️</span> How to Prevent SQLi</h2>
+  <p class="lead">One fix. One answer. Memorize this forever: <span class="term" data-term="parameterized-query">parameterized queries</span>.</p>
+
+  <h3>❌ Broken (string concatenation)</h3>
+  <div class="code evil">
+<span class="kw">String</span> query = <span class="str">"SELECT * FROM products WHERE category = '"</span> + input + <span class="str">"'"</span>;
+<span class="com">// input = "Gifts' OR 1=1--"  →  RIP database</span>
+Statement statement = connection.createStatement();
+ResultSet rs = statement.executeQuery(query);
+  </div>
+
+  <h3>✅ Fixed (parameterized)</h3>
+  <div class="code safe">
+PreparedStatement statement = connection.prepareStatement(
+  <span class="str">"SELECT * FROM products WHERE category = ?"</span>
+);
+statement.setString(1, input);
+<span class="com">// input is now DATA, never treated as SQL code. Safe ✅</span>
+ResultSet rs = statement.executeQuery();
+  </div>
+
+  <div class="paper">
+    <h4>🧠 Why it works</h4>
+    <p>With a prepared statement, the SQL structure is <span class="highlight">fixed and sent to the database FIRST</span>. Then the user input is sent separately, as pure data.</p>
+    <p>The database already knows "this is a SELECT with one string parameter." Your input can never change that — it can only fill in the blank. The apostrophe is just... an apostrophe. 🤷</p>
+  </div>
+
+  <div class="callout danger">
+    <strong>⚠️ Gotcha:</strong> Prepared statements <strong>can't</strong> parameterize table names, column names, or <code>ORDER BY</code>. For those, you MUST use an allowlist (e.g., <code>if (sortField not in ['name','price','date']) reject;</code>).
+  </div>
+
+  <div class="quiz">
+    <h4>🎯 Final Quiz</h4>
+    <div class="q">Which of these is the REAL fix for SQL injection?</div>
+    <div class="options">
+      <div class="opt" onclick="quizAnswer(this, false)">Escape apostrophes by replacing ' with ''</div>
+      <div class="opt" onclick="quizAnswer(this, false)">Blacklist the word SELECT in user input</div>
+      <div class="opt" onclick="quizAnswer(this, true)">Use parameterized queries (prepared statements)</div>
+      <div class="opt" onclick="quizAnswer(this, false)">Hash the user's input before using it</div>
+    </div>
+    <div class="feedback"></div>
+  </div>
+</section>
+
+<div class="divider">lab review zone</div>
+
+<!-- ===================== LABS ===================== -->
+<section class="chapter" id="labs">
+  <div class="chapter-num">Chapter 09 // Your Labs (review & reinforce)</div>
+  <h2><span class="emoji">🧪</span> The Labs You've Done</h2>
+  <p class="lead">Science says: you remember stuff better when you explain it back to yourself. These are spaced-repetition style cards.</p>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <div class="card-badge">LAB 1 ✅</div>
+      <h4>SQLi in WHERE clause — retrieving hidden data</h4>
+      <p style="color: var(--ink-dim); font-size: 0.9rem;">Goal: Show products from ALL categories, including unreleased ones.</p>
+      <details style="margin-top: 12px;">
+        <summary style="cursor:pointer; color: var(--accent-2); font-family: var(--mono); font-size: 13px;">▸ Show my walkthrough</summary>
+        <div style="margin-top: 10px; display: grid; gap: 8px;">
+          <div style="padding: 10px 14px; background: rgba(0,0,0,0.3); border-left: 3px solid var(--accent); border-radius: 4px; font-family: var(--mono); font-size: 13px;">1. Navigate to a category (e.g. Gifts). URL: <code>?category=Gifts</code></div>
+          <div style="padding: 10px 14px; background: rgba(0,0,0,0.3); border-left: 3px solid var(--accent); border-radius: 4px; font-family: var(--mono); font-size: 13px;">2. Inject: <code>?category=Gifts'+OR+1=1--</code></div>
+          <div style="padding: 10px 14px; background: rgba(0,0,0,0.3); border-left: 3px solid var(--accent); border-radius: 4px; font-family: var(--mono); font-size: 13px;">3. Query becomes: <code>WHERE category='Gifts' OR 1=1--' AND released=1</code></div>
+          <div style="padding: 10px 14px; background: rgba(0,0,0,0.3); border-left: 3px solid var(--accent); border-radius: 4px; font-family: var(--mono); font-size: 13px;">4. ✅ All products appear — even unreleased ones. Lab solved.</div>
+        </div>
+      </details>
+    </div>
+
+    <div class="card">
+      <div class="card-badge">LAB 2 ✅</div>
+      <h4>SQLi — login bypass</h4>
+      <p style="color: var(--ink-dim); font-size: 0.9rem;">Goal: Log in as <code>administrator</code> without the password.</p>
+      <details style="margin-top: 12px;">
+        <summary style="cursor:pointer; color: var(--accent-2); font-family: var(--mono); font-size: 13px;">▸ Show my walkthrough</summary>
+        <div style="margin-top: 10px; display: grid; gap: 8px;">
+          <div style="padding: 10px 14px; background: rgba(0,0,0,0.3); border-left: 3px solid var(--accent); border-radius: 4px; font-family: var(--mono); font-size: 13px;">1. Login page.</div>
+          <div style="padding: 10px 14px; background: rgba(0,0,0,0.3); border-left: 3px solid var(--accent); border-radius: 4px; font-family: var(--mono); font-size: 13px;">2. Username: <code>administrator'--</code> · Password: anything</div>
+          <div style="padding: 10px 14px; background: rgba(0,0,0,0.3); border-left: 3px solid var(--accent); border-radius: 4px; font-family: var(--mono); font-size: 13px;">3. Query: <code>WHERE username='administrator'--' AND password='x'</code></div>
+          <div style="padding: 10px 14px; background: rgba(0,0,0,0.3); border-left: 3px solid var(--accent); border-radius: 4px; font-family: var(--mono); font-size: 13px;">4. ✅ Logged in as admin.</div>
+        </div>
+      </details>
+    </div>
+
+    <div class="card" style="opacity: 0.7;">
+      <div class="card-badge warn">LAB 3 ⏳</div>
+      <h4>SQLi UNION — determining columns</h4>
+      <p style="color: var(--ink-dim); font-size: 0.9rem;">Next up. Tell me when you're ready and we'll build a dedicated UNION page with a live column-counter simulator.</p>
+    </div>
+  </div>
+</section>
+
+<!-- RELATED -->
+<section class="chapter">
+  <div class="related-terms">
+    <h4>🔗 Related in the vault</h4>
+    <div class="tags">
+      <a href="../../../glossary/single-quote.html">' Single Quote</a>
+      <a href="../../../glossary/sql-comment.html">-- SQL Comment</a>
+      <a href="../../../glossary/union-attack.html">🔗 UNION Attack</a>
+      <a href="../../../glossary/blind-sqli.html">🕶️ Blind SQLi</a>
+      <a href="../../../glossary/parameterized-query.html">🛡️ Parameterized Query</a>
+      <a href="../../../glossary/arbitrary-code-exec.html">💀 Arbitrary Code Execution</a>
+      <a href="../../../glossary/ssn.html">🪪 SSN</a>
+      <a href="../../../glossary/waf.html">🧱 WAF</a>
+      <a href="../../../glossary/oast.html">📡 OAST</a>
+    </div>
+  </div>
+</section>
+
+<footer class="site-foot">
+  <p class="coffee-line">The more you break, the more you understand. ☕</p>
+  <p style="font-size: 12px;">Next up: UNION attacks deep-dive, Blind SQLi simulator, or examining-the-database — your call.</p>
+</footer>
+
+<script src="../../../assets/glossary.js"></script>
+<script src="../../../assets/app.js"></script>
+<script>
+  /* ---------- BOUNCER SCENE ---------- */
+  function bouncerScene(mode) {
+    const customerEmoji = document.getElementById('customerEmoji');
+    const customerSpeech = document.getElementById('customerSpeech');
+    const bouncerSpeech = document.getElementById('bouncerSpeech');
+    const doorLight = document.getElementById('doorLight');
+    const doorStatus = document.getElementById('doorStatus');
+
+    customerSpeech.style.background = '#fff';
+    if (mode === 'normal') {
+      customerEmoji.textContent = '🙂';
+      customerSpeech.textContent = "I'd like to browse the Gifts category.";
+      bouncerSpeech.textContent = "SELECT * FROM products WHERE category='Gifts' AND released=1 ✅";
+      doorLight.style.background = '#00ff9d';
+      doorStatus.innerHTML = "<span style='color: var(--accent);'>✅ NORMAL ACCESS — bouncer did his job.</span>";
+    } else if (mode === 'inject') {
+      customerEmoji.textContent = '😈';
+      customerSpeech.style.background = '#ffdde1';
+      customerSpeech.textContent = "Category: Gifts' OR 1=1--";
+      bouncerSpeech.textContent = "WHERE category='Gifts' OR 1=1-- ... released filter ignored 💀";
+      doorLight.style.background = '#ff2e63';
+      doorStatus.innerHTML = "<span style='color: var(--accent-2);'>💥 INJECTED! You see ALL products — including unreleased.</span>";
+    } else if (mode === 'bypass') {
+      customerEmoji.textContent = '🕶️';
+      customerSpeech.style.background = '#ffdde1';
+      customerSpeech.textContent = "Username: administrator'--";
+      bouncerSpeech.textContent = "WHERE username='administrator'--' AND password=''  😵";
+      doorLight.style.background = '#ff2e63';
+      doorStatus.innerHTML = "<span style='color: var(--accent-2);'>🔥 LOGIN BYPASSED — you're in as admin.</span>";
+    } else {
+      customerEmoji.textContent = '🙂';
+      customerSpeech.textContent = "I'd like to enter, please.";
+      bouncerSpeech.textContent = "Name? Password? Show ID.";
+      doorLight.style.background = '#666';
+      doorStatus.innerHTML = "👆 Click a button above to see what happens.";
+    }
+  }
+
+  /* ---------- HIDDEN DATA PLAYGROUND ---------- */
+  const products = [
+    { name: "Lovebird Tamagotchi", cat: "Pets", released: 1 },
+    { name: "Hamster Ball 3000", cat: "Pets", released: 1 },
+    { name: "Secret Cat Laser (unreleased)", cat: "Pets", released: 0 },
+    { name: "Mystery Gift Box", cat: "Gifts", released: 1 },
+    { name: "Glow-in-dark Mug", cat: "Gifts", released: 1 },
+    { name: "Holiday Surprise (unreleased)", cat: "Gifts", released: 0 },
+    { name: "Classified Prototype (unreleased)", cat: "Tech", released: 0 }
+  ];
+
+  function setHidden(v) {
+    document.getElementById('hiddenInput').value = v;
+    runHidden();
+  }
+  function highlightSQL(q, input) {
+    const safe = q.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    let out = safe.replace(/SELECT|FROM|WHERE|AND|OR|UNION/g, m => `<span style="color:#ff79c6;font-weight:bold;">${m}</span>`);
+    if (input) {
+      const esc = input.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+      out = out.replace(esc, `<span style="background:rgba(255,46,99,0.3);color:#ff6b9d;padding:0 3px;border-radius:3px;">${esc}</span>`);
+    }
+    return out;
+  }
+  function runHidden() {
+    const input = document.getElementById('hiddenInput').value;
+    const queryEl = document.getElementById('hiddenQuery');
+    const resultEl = document.getElementById('hiddenResult');
+    const rawQuery = `SELECT * FROM products WHERE category = '${input}' AND released = 1`;
+    queryEl.innerHTML = highlightSQL(rawQuery, input);
+
+    let rows = [];
+    if (input.includes("'--") || input.includes("' --")) {
+      const catPart = input.split("'")[0];
+      if (input.toLowerCase().includes("or 1=1")) {
+        rows = products;
+      } else {
+        rows = products.filter(p => p.cat.toLowerCase() === catPart.toLowerCase());
+      }
+    } else if (input.includes("'")) {
+      resultEl.innerHTML = `<span style="color: var(--danger);">❌ SQL ERROR: unterminated string literal near "${input}"</span><br><span style="color: var(--ink-dim); font-size: 12px;">(in a real lab, this error tells you SQLi is possible!)</span>`;
+      return;
+    } else {
+      rows = products.filter(p => p.cat.toLowerCase() === input.toLowerCase() && p.released === 1);
+    }
+
+    if (rows.length === 0) {
+      resultEl.innerHTML = '<span style="color: var(--ink-dim);">(no products matched)</span>';
+    } else {
+      let html = '<table><tr><th>Name</th><th>Category</th><th>Released</th></tr>';
+      rows.forEach(p => {
+        const unreleased = p.released === 0;
+        html += `<tr><td class="${unreleased ? 'secret' : ''}">${p.name}</td><td>${p.cat}</td><td>${p.released ? '✅' : '🔒 hidden'}</td></tr>`;
+      });
+      html += '</table>';
+      if (rows.some(r => r.released === 0)) {
+        html += '<div style="margin-top: 10px; color: var(--accent-2); font-family: var(--hand); font-size: 1.1rem;">🎉 You leaked hidden data!</div>';
+      }
+      resultEl.innerHTML = html;
+    }
+  }
+
+  /* ---------- LOGIN PLAYGROUND ---------- */
+  const users = [
+    { u: 'wiener', p: 'peter', role: 'user' },
+    { u: 'carlos', p: 'montoya', role: 'user' },
+    { u: 'administrator', p: 'verysecretpass123', role: '👑 ADMIN' }
+  ];
+
+  function setLogin(u, p) {
+    document.getElementById('loginUser').value = u;
+    document.getElementById('loginPass').value = p;
+    runLogin();
+  }
+  function runLogin() {
+    const u = document.getElementById('loginUser').value;
+    const p = document.getElementById('loginPass').value;
+    const queryEl = document.getElementById('loginQuery');
+    const resultEl = document.getElementById('loginResult');
+    const q = `SELECT * FROM users WHERE username = '${u}' AND password = '${p}'`;
+    queryEl.innerHTML = highlightSQL(q, u);
+
+    let matched = null;
+    if (u.includes("'--") || u.includes("' --")) {
+      const realUser = u.split("'")[0];
+      if (u.toLowerCase().includes("or 1=1")) {
+        matched = users[0];
+      } else {
+        matched = users.find(x => x.u === realUser);
+      }
+    } else if (u.includes("'")) {
+      resultEl.innerHTML = `<span style="color: var(--danger);">❌ SQL ERROR: unterminated string. (In a lab, this is your signal SQLi is possible.)</span>`;
+      return;
+    } else {
+      matched = users.find(x => x.u === u && x.p === p);
+    }
+
+    if (matched) {
+      const isInjection = u.includes("'");
+      resultEl.innerHTML = `
+        <div style="color: var(--accent);">✅ LOGIN SUCCESSFUL</div>
+        <div style="margin-top: 6px;">Logged in as: <strong style="color: var(--accent-2);">${matched.u}</strong> (${matched.role})</div>
+        ${isInjection ? '<div style="margin-top:8px; color: var(--accent-2); font-family: var(--hand); font-size: 1.1rem;">🔥 You bypassed auth via SQLi.</div>' : ''}
+      `;
+    } else {
+      resultEl.innerHTML = '<span style="color: var(--ink-dim);">❌ Invalid credentials.</span>';
+    }
+  }
+
+  runHidden();
+  runLogin();
+</script>
+</body>
+</html>

