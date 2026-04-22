@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Log Files — The Server's Diary ☕</title>
+<link rel="stylesheet" href="../assets/styles.css" />
+</head>
+<body data-page-slug="log-file">
+
+<div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
+
+<div class="topbar">
+  <a class="logo" href="../index.html">☕ CYBERSEC.VAULT</a>
+  <nav>
+    <a href="../index.html">Home</a>
+    <a href="../index.html#topics-web">Topics</a>
+    <a href="index.html" class="active">Glossary</a>
+    <a href="../tryhackme/index.html">THM</a>
+  </nav>
+  <div class="search-wrap">
+    <input type="text" class="search" placeholder="Search (press /)..." />
+    <div class="search-results"></div>
+  </div>
+</div>
+
+<div class="breadcrumb">
+  <a href="../index.html">Home</a>
+  <span class="sep">›</span>
+  <a href="index.html">Glossary</a>
+  <span class="sep">›</span>
+  <span>Log File</span>
+</div>
+
+<section class="hero" style="min-height: 45vh;">
+  <div class="hero-content">
+    <span class="coffee-badge">📖 glossary · linux · the server's diary</span>
+    <h1 style="font-family: var(--mono);">Log Files <span style="color: var(--accent-2);">📝</span></h1>
+    <p class="subtitle">Every login, every request, every crash — the system writes it all to /var/log/.<br>Where attackers hide, where defenders look, and where YOU should hunt first.</p>
+    <div class="tagline">"Logs don't lie. They also rarely forgive." 🔍</div>
+  </div>
+</section>
+
+<section class="chapter">
+  <div class="chapter-num">Chapter 01 // Definition</div>
+  <h2><span class="emoji">📖</span> What is a log file?</h2>
+  <p class="lead">A log file is a plain-text file where software writes timestamped records of events: who logged in, what URL was hit, what error fired, when a service crashed.</p>
+
+  <div class="paper">
+    <h4>📝 Think of it like a security camera with a notepad</h4>
+    <p>A camera films 24/7 but can't analyze. It just records. Later, when something goes wrong — "who was in this room at 3 AM?" — you rewind. Log files are the same idea, except the tape is infinite, it's text, and you search it with <code>grep</code> instead of a remote.</p>
+  </div>
+
+  <h3>Where they live</h3>
+  <p>On Linux, almost every log lives in <code class="inline">/var/log/</code>. Services each get their own file or directory:</p>
+  <div class="code">
+/var/log/auth.log           <span class="com"># logins, sudo, SSH attempts</span>
+/var/log/syslog             <span class="com"># general system events</span>
+/var/log/kern.log           <span class="com"># kernel messages</span>
+/var/log/apache2/access.log <span class="com"># every web hit</span>
+/var/log/apache2/error.log  <span class="com"># web server errors</span>
+/var/log/nginx/*.log        <span class="com"># same but for nginx</span>
+/var/log/fail2ban.log       <span class="com"># blocked brute-force IPs</span>
+/var/log/ufw.log            <span class="com"># firewall drops/allows</span>
+  </div>
+</section>
+
+<div class="divider">reading logs</div>
+
+<section class="chapter">
+  <div class="chapter-num">Chapter 02 // The log-reading toolkit</div>
+  <h2><span class="emoji">⌨️</span> Commands you'll use daily</h2>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <h4><code class="inline">tail -f /var/log/...</code></h4>
+      <p>Follow a log live — new lines appear as they're written. Perfect for watching in real time during an attack.</p>
+    </div>
+    <div class="card">
+      <h4><code class="inline">grep "ERROR" app.log</code></h4>
+      <p>Search a log for matching lines. <code class="inline">-i</code> for case-insensitive, <code class="inline">-E</code> for regex, <code class="inline">-c</code> to count matches.</p>
+    </div>
+    <div class="card">
+      <h4><code class="inline">less /var/log/syslog</code></h4>
+      <p>Scroll a big log with pager controls (arrow keys, <code class="inline">/</code> to search, <code class="inline">q</code> to quit).</p>
+    </div>
+    <div class="card">
+      <h4><code class="inline">journalctl -u sshd</code></h4>
+      <p>Modern systemd log viewer. Filter by service, time, priority, user. Replaces most <code class="inline">/var/log/</code> browsing on recent distros.</p>
+    </div>
+  </div>
+
+  <h3>Anatomy of an Apache access log line</h3>
+  <div class="code">
+192.168.1.50 - - [22/Apr/2026:13:41:02 +0000] <span class="str">"GET /admin.html HTTP/1.1"</span> 200 1843 <span class="str">"-"</span> <span class="str">"Mozilla/5.0..."</span>
+<span class="com">│                                        │       │     │    │                              </span>
+<span class="com">│ └── timestamp                          │       │     │    └── User-Agent                  </span>
+<span class="com">│                                        │       │     └── referer                          </span>
+<span class="com">│                                        │       └── bytes sent                             </span>
+<span class="com">└── client IP                            └── request line &amp; status code                    </span>
+  </div>
+</section>
+
+<div class="divider">the security angle</div>
+
+<section class="chapter">
+  <div class="chapter-num">Chapter 03 // Logs for offense</div>
+  <h2><span class="emoji">🥷</span> What pentesters find in logs</h2>
+
+  <div class="callout danger">
+    <strong>🚨 Goldmines hiding in logs:</strong>
+    <ul style="margin-top: 8px;">
+      <li><strong>Valid usernames.</strong> <code class="inline">auth.log</code> shows every SSH login attempt — including successful ones. Now you know which accounts are real.</li>
+      <li><strong>Internal IPs &amp; hostnames.</strong> App logs often reveal the private network structure you can't see from outside.</li>
+      <li><strong>Creds in query strings.</strong> Lazy devs put tokens/passwords in URLs → those get logged in plaintext access logs. Forever.</li>
+      <li><strong>Vulnerable endpoints.</strong> <code class="inline">error.log</code> mentions stack traces and paths that shouldn't be public knowledge.</li>
+      <li><strong>Old attack traces.</strong> Previous pentesters or bad actors left footprints — scan for <code class="inline">UNION</code>, <code class="inline">../</code>, <code class="inline">&lt;script&gt;</code>, <code class="inline">.php</code>.</li>
+    </ul>
+  </div>
+</section>
+
+<section class="chapter">
+  <div class="chapter-num">Chapter 04 // Logs for defense</div>
+  <h2><span class="emoji">🛡️</span> Spotting an attack from logs</h2>
+
+  <p>When investigating a breach, these queries are bread-and-butter:</p>
+  <div class="code">
+<span class="com"># Failed SSH login attempts by IP (sorted by count)</span>
+grep "Failed password" /var/log/auth.log | awk '{print $11}' | sort | uniq -c | sort -rn
+
+<span class="com"># All 404s from the last hour</span>
+grep " 404 " /var/log/apache2/access.log | grep "$(date +'%d/%b/%Y:%H')"
+
+<span class="com"># Requests with suspicious payloads</span>
+egrep -i "union|select|&lt;script|\.\./|base64" /var/log/apache2/access.log
+  </div>
+
+  <div class="brain-power">
+    <div class="label">🧠 Brain Power</div>
+    <div class="question">You pop a root shell and want to cover tracks. Why is "just deleting /var/log/auth.log" a bad move?</div>
+    <button class="reveal-btn" onclick="toggleAnswer(this)">Reveal answer</button>
+    <div class="answer">
+      <p>Three reasons: <strong>(1)</strong> Most production systems forward logs to a remote SIEM or log server — the local file is just a copy, the originals are already gone to a place you can't reach. <strong>(2)</strong> A missing or truncated auth.log is itself a huge red flag that triggers alerts. <strong>(3)</strong> systemd's journald may still have the entries in binary form under <code class="inline">/var/log/journal/</code>. Real OPSEC is don't generate the logs in the first place — use living-off-the-land binaries, minimize commands, and avoid logging in as root where possible.</p>
+    </div>
+  </div>
+
+  <div class="quiz">
+    <h4>🎯 Quick Check</h4>
+    <div class="q">You want to see who just SSH'd into the server. Which file do you read first?</div>
+    <div class="options">
+      <div class="opt" onclick="quizAnswer(this, false)">/var/log/kern.log</div>
+      <div class="opt" onclick="quizAnswer(this, true)">/var/log/auth.log</div>
+      <div class="opt" onclick="quizAnswer(this, false)">/var/log/ufw.log</div>
+      <div class="opt" onclick="quizAnswer(this, false)">/var/log/dpkg.log</div>
+    </div>
+    <div class="feedback"></div>
+  </div>
+</section>
+
+<section class="chapter">
+  <div class="related-terms">
+    <h4>🔗 Related in the vault</h4>
+    <div class="tags">
+      <a href="ssh.html">🔐 SSH</a>
+      <a href="authentication.html">🗝️ Authentication</a>
+      <a href="brute-force.html">🔨 Brute Force</a>
+      <a href="systemd.html">⚙️ systemd</a>
+      <a href="../tryhackme/cybersec-101/linux-fundamentals-part-3.html">🐧 THM: Linux Fundamentals Pt. 3</a>
+    </div>
+  </div>
+</section>
+
+<footer class="site-foot">
+  <p class="coffee-line">Every shell is logged. Every log is evidence. ☕</p>
+</footer>
+
+<script src="../assets/glossary.js"></script>
+<script src="../assets/app.js"></script>
+</body>
+</html>

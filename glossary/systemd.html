@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>systemd — The Process That Starts Everything ☕</title>
+<link rel="stylesheet" href="../assets/styles.css" />
+</head>
+<body data-page-slug="systemd">
+
+<div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
+
+<div class="topbar">
+  <a class="logo" href="../index.html">☕ CYBERSEC.VAULT</a>
+  <nav>
+    <a href="../index.html">Home</a>
+    <a href="../index.html#topics-web">Topics</a>
+    <a href="index.html" class="active">Glossary</a>
+    <a href="../tryhackme/index.html">THM</a>
+  </nav>
+  <div class="search-wrap">
+    <input type="text" class="search" placeholder="Search (press /)..." />
+    <div class="search-results"></div>
+  </div>
+</div>
+
+<div class="breadcrumb">
+  <a href="../index.html">Home</a>
+  <span class="sep">›</span>
+  <a href="index.html">Glossary</a>
+  <span class="sep">›</span>
+  <span>systemd</span>
+</div>
+
+<section class="hero" style="min-height: 45vh;">
+  <div class="hero-content">
+    <span class="coffee-badge">📖 glossary · linux · pid 1</span>
+    <h1 style="font-family: var(--mono);">systemd <span style="color: var(--accent-2);">⚙️</span></h1>
+    <p class="subtitle">The first process Linux starts at boot. Parent of every other process on the system.<br>If your service starts automatically — systemd is why.</p>
+    <div class="tagline">"PID 1 is the ring-bearer. systemd is the ring." 💍</div>
+  </div>
+</section>
+
+<section class="chapter">
+  <div class="chapter-num">Chapter 01 // Definition</div>
+  <h2><span class="emoji">📖</span> What is systemd?</h2>
+  <p class="lead"><strong>systemd</strong> is the init system on modern Linux — the first program the kernel launches after boot, which then starts every other service (SSH, web server, databases, logging...). It's <span class="term" data-term="pid">PID 1</span>.</p>
+
+  <div class="paper">
+    <h4>📝 Think of it like the conductor of an orchestra</h4>
+    <p>When the concert starts, one person walks on stage first — the conductor. Their job isn't to play music; their job is to <em>start, coordinate, and manage</em> every musician. That's systemd. Every service on your Linux box is a musician; systemd decides when they start, what order, and what to do if one goes silent.</p>
+  </div>
+
+  <h3>Key job: managing units</h3>
+  <p>Everything systemd manages is called a <strong>unit</strong>. The most common unit type is a <code class="inline">.service</code> — a definition of how to run a background program.</p>
+  <p>Unit files live in two places:</p>
+  <ul>
+    <li><code class="inline">/lib/systemd/system/</code> — shipped by package installs (don't edit)</li>
+    <li><code class="inline">/etc/systemd/system/</code> — your overrides and custom services (editable)</li>
+  </ul>
+</section>
+
+<div class="divider">the cli</div>
+
+<section class="chapter">
+  <div class="chapter-num">Chapter 02 // systemctl</div>
+  <h2><span class="emoji">🎛️</span> The 5 commands you'll actually use</h2>
+  <p class="lead">You never type "systemd" itself — you talk to it via <code class="inline">systemctl</code>.</p>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <h4>▶️ <code class="inline">systemctl start &lt;service&gt;</code></h4>
+      <p>Start it NOW. Won't survive a reboot unless you also enable.</p>
+    </div>
+    <div class="card">
+      <h4>⏹️ <code class="inline">systemctl stop &lt;service&gt;</code></h4>
+      <p>Stop it NOW. Won't re-disable on boot unless you also disable.</p>
+    </div>
+    <div class="card">
+      <h4>✅ <code class="inline">systemctl enable &lt;service&gt;</code></h4>
+      <p>Make it auto-start every time the system boots. Persists.</p>
+    </div>
+    <div class="card">
+      <h4>❌ <code class="inline">systemctl disable &lt;service&gt;</code></h4>
+      <p>Stop it from auto-starting on boot. Running state unchanged.</p>
+    </div>
+    <div class="card">
+      <h4>ℹ️ <code class="inline">systemctl status &lt;service&gt;</code></h4>
+      <p>Is it running? When did it last start? What's the PID? Recent logs?</p>
+    </div>
+    <div class="card">
+      <h4>🔄 <code class="inline">systemctl restart &lt;service&gt;</code></h4>
+      <p>Stop + start in one command. Use after config changes.</p>
+    </div>
+  </div>
+
+  <div class="callout info">
+    <strong>💡 Enable ≠ Start.</strong> Enable tells systemd <em>"next time we boot, turn this on."</em> It does NOT start it immediately. Common rookie trap. Use <code class="inline">systemctl enable --now &lt;service&gt;</code> to do both in one go.
+  </div>
+
+  <h3>Real example</h3>
+  <div class="code">
+<span class="com"># Make Apache survive reboots AND start it now</span>
+sudo systemctl enable --now apache2
+
+<span class="com"># Check it worked</span>
+systemctl status apache2
+
+<span class="com"># Nuke it from orbit</span>
+sudo systemctl disable --now apache2
+  </div>
+</section>
+
+<div class="divider">the security angle</div>
+
+<section class="chapter">
+  <div class="chapter-num">Chapter 03 // Why pentesters care</div>
+  <h2><span class="emoji">🥷</span> systemd as a priv-esc vector</h2>
+
+  <p class="lead">Any service is a unit file. Any unit file is just text. If you can <em>write</em> a unit file that runs as root, you <em>are</em> root at the next boot (or <code class="inline">systemctl daemon-reload &amp;&amp; systemctl start</code>).</p>
+
+  <div class="callout danger">
+    <strong>🚨 Classic privesc paths via systemd:</strong>
+    <ul style="margin-top: 8px;">
+      <li><strong>World-writable unit file</strong> — someone chmod 777'd <code class="inline">/etc/systemd/system/cleanup.service</code>. Edit the <code class="inline">ExecStart=</code> line to run your shell. Wait for next start → root.</li>
+      <li><strong>Path abuse in ExecStart</strong> — <code class="inline">ExecStart=backup.sh</code> instead of an absolute path. Drop a malicious <code class="inline">backup.sh</code> earlier in PATH.</li>
+      <li><strong>Sudo permission to run systemctl</strong> — <code class="inline">sudo -l</code> shows you can <code class="inline">systemctl start my-thing</code>. Create a user-controlled unit that runs as root.</li>
+      <li><strong>Custom user units</strong> — if low-priv user can register units that get started as root, game over.</li>
+    </ul>
+  </div>
+
+  <h3>Enumeration cheat sheet</h3>
+  <div class="code">
+<span class="com"># List every service systemd knows about</span>
+systemctl list-units --type=service --all
+
+<span class="com"># Find unit files and check their owner/perms</span>
+ls -la /etc/systemd/system/ /lib/systemd/system/ 2&gt;/dev/null
+find /etc/systemd/ -writable -type f 2&gt;/dev/null       <span class="com"># juicy</span>
+
+<span class="com"># View a specific unit file</span>
+systemctl cat ssh.service
+
+<span class="com"># See WHAT started a service (great for chaining)</span>
+systemctl show ssh.service | grep -E "ExecStart|User"
+  </div>
+
+  <div class="brain-power">
+    <div class="label">🧠 Brain Power</div>
+    <div class="question">Why does <code class="inline">ps aux | head</code> always show <code class="inline">PID 1 = /sbin/init</code> or <code class="inline">/lib/systemd/systemd</code>?</div>
+    <button class="reveal-btn" onclick="toggleAnswer(this)">Reveal answer</button>
+    <div class="answer">
+      <p>Because the kernel hands off to exactly ONE process after boot — that process becomes PID 1 and is responsible for everything else. Historically this was <code class="inline">/sbin/init</code> (SysV init); modern distros symlink that to systemd. PID 1 has two special rules: <strong>(1)</strong> it can't be killed by SIGKILL (even root can't kill init — the system would panic), and <strong>(2)</strong> orphaned processes (whose parent died) automatically get re-parented to PID 1.</p>
+    </div>
+  </div>
+</section>
+
+<section class="chapter">
+  <div class="chapter-num">Chapter 04 // systemd vs cron</div>
+  <h2><span class="emoji">⚔️</span> "Should I use a service or a cron job?"</h2>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <h4>⚙️ systemd service</h4>
+      <ul style="font-size: 14px;">
+        <li>Long-running background program (web server, DB)</li>
+        <li>Should auto-restart on crash</li>
+        <li>Needs to start at boot and stay running</li>
+        <li>Has dependencies on other services</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>⏰ <span class="term" data-term="cron">cron</span> job</h4>
+      <ul style="font-size: 14px;">
+        <li>Short task run on a schedule (backup, log rotate)</li>
+        <li>Runs, finishes, exits — not a daemon</li>
+        <li>Only needs to fire at specific times</li>
+        <li>Doesn't need dependency tracking</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="callout info">
+    <strong>💡 Modern twist:</strong> systemd also has <code class="inline">.timer</code> units that replicate cron functionality with better logging, timezone handling, and dependency awareness. Many distros are shifting from cron → systemd timers. But cron is still universally installed, so learn both.
+  </div>
+
+  <div class="quiz">
+    <h4>🎯 Quick Check</h4>
+    <div class="q">You want nginx to start automatically every time the server reboots. Which command?</div>
+    <div class="options">
+      <div class="opt" onclick="quizAnswer(this, false)">systemctl start nginx</div>
+      <div class="opt" onclick="quizAnswer(this, true)">systemctl enable nginx</div>
+      <div class="opt" onclick="quizAnswer(this, false)">systemctl status nginx</div>
+      <div class="opt" onclick="quizAnswer(this, false)">systemctl restart nginx</div>
+    </div>
+    <div class="feedback"></div>
+  </div>
+</section>
+
+<section class="chapter">
+  <div class="related-terms">
+    <h4>🔗 Related in the vault</h4>
+    <div class="tags">
+      <a href="pid.html">🔢 PID</a>
+      <a href="cron.html">⏰ cron / crontab</a>
+      <a href="privilege-escalation.html">⬆️ Privilege Escalation</a>
+      <a href="ssh.html">🔐 SSH</a>
+      <a href="chmod.html">🔧 chmod</a>
+      <a href="../tryhackme/cybersec-101/linux-fundamentals-part-3.html">🐧 THM: Linux Fundamentals Pt. 3</a>
+    </div>
+  </div>
+</section>
+
+<footer class="site-foot">
+  <p class="coffee-line">PID 1 to rule them all. ☕</p>
+</footer>
+
+<script src="../assets/glossary.js"></script>
+<script src="../assets/app.js"></script>
+</body>
+</html>

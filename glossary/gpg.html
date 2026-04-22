@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>GPG — GNU Privacy Guard ☕</title>
+<link rel="stylesheet" href="../assets/styles.css" />
+</head>
+<body data-page-slug="gpg">
+
+<div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
+
+<div class="topbar">
+  <a class="logo" href="../index.html">☕ CYBERSEC.VAULT</a>
+  <nav>
+    <a href="../index.html">Home</a>
+    <a href="../index.html#topics-web">Topics</a>
+    <a href="index.html" class="active">Glossary</a>
+    <a href="../tryhackme/index.html">THM</a>
+  </nav>
+  <div class="search-wrap">
+    <input type="text" class="search" placeholder="Search (press /)..." />
+    <div class="search-results"></div>
+  </div>
+</div>
+
+<div class="breadcrumb">
+  <a href="../index.html">Home</a>
+  <span class="sep">›</span>
+  <a href="index.html">Glossary</a>
+  <span class="sep">›</span>
+  <span>GPG</span>
+</div>
+
+<section class="hero" style="min-height: 45vh;">
+  <div class="hero-content">
+    <span class="coffee-badge">📖 glossary · crypto · trust machine</span>
+    <h1 style="font-family: var(--mono);">GPG <span style="color: var(--accent-2);">🔑</span></h1>
+    <p class="subtitle">GNU Privacy Guard. Public-key cryptography for signing, verifying, and encrypting.<br>It's why <code>apt install</code> doesn't trash your system with malware.</p>
+    <div class="tagline">"Anyone can sign their name. Only I can sign with my key." ✍️</div>
+  </div>
+</section>
+
+<section class="chapter">
+  <div class="chapter-num">Chapter 01 // Definition</div>
+  <h2><span class="emoji">📖</span> What is GPG?</h2>
+  <p class="lead"><strong>GPG</strong> (GNU Privacy Guard) is the free, open-source implementation of the <strong>OpenPGP</strong> standard. It uses public-key cryptography to prove authorship, verify integrity, and encrypt data between people or machines.</p>
+
+  <div class="paper">
+    <h4>📝 Think of it like a wax seal on a medieval letter</h4>
+    <p>Back in the day, kings stamped molten wax with a ring only they possessed. Anyone receiving the letter could verify "yes, this really came from the king" just by looking at the seal. Nobody could forge it without the ring. GPG does the same thing — except the "ring" is a private key (a huge number stored in a file), and the "verify" step is math instead of eyeballs.</p>
+  </div>
+
+  <h3>The two keys</h3>
+  <div class="grid cols-2">
+    <div class="card">
+      <h4>🔐 Private key</h4>
+      <p>NEVER leaves your machine. Protected with a passphrase. Used to <strong>sign</strong> things and <strong>decrypt</strong> things sent to you.</p>
+    </div>
+    <div class="card">
+      <h4>🔓 Public key</h4>
+      <p>Shared openly — on websites, keyservers, email signatures. Used by others to <strong>verify</strong> your signatures and <strong>encrypt</strong> stuff only you can read.</p>
+    </div>
+  </div>
+</section>
+
+<section class="chapter">
+  <div class="chapter-num">Chapter 02 // The two things GPG does</div>
+  <h2><span class="emoji">🔐</span> Signing vs encrypting</h2>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <h4>✍️ Signing = "I made this, untouched"</h4>
+      <p>You use your <strong>private</strong> key to sign. Anyone with your <strong>public</strong> key can verify. A signature doesn't hide the content — it just proves authorship + integrity.</p>
+      <p style="font-size: 13px; color: var(--ink-dim);"><em>Used by: apt repos, Git commits, software releases, emails.</em></p>
+    </div>
+    <div class="card">
+      <h4>🔒 Encrypting = "Only you can read this"</h4>
+      <p>You use the recipient's <strong>public</strong> key to encrypt. Only their <strong>private</strong> key can decrypt. The content becomes unreadable to everyone except the intended reader.</p>
+      <p style="font-size: 13px; color: var(--ink-dim);"><em>Used by: secure email (PGP/Mailvelope), encrypted backups, password manager exports.</em></p>
+    </div>
+  </div>
+
+  <div class="callout info">
+    <strong>💡 Both at once:</strong> Usually you <em>sign then encrypt</em> — so the recipient knows it came from you AND nobody else can read it. GPG can do this in one command with <code class="inline">gpg --sign --encrypt</code>.
+  </div>
+</section>
+
+<div class="divider">where you meet gpg in real life</div>
+
+<section class="chapter">
+  <div class="chapter-num">Chapter 03 // Everyday GPG</div>
+  <h2><span class="emoji">🌍</span> You already use GPG (you just don't know it)</h2>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <h4>📦 <code class="inline">apt install</code> trusts signatures</h4>
+      <p>Every package from Ubuntu's repos is signed with Canonical's GPG key. Your machine stores that public key and refuses anything signed differently — or not signed at all.</p>
+    </div>
+    <div class="card">
+      <h4>🐙 GitHub "Verified" badges</h4>
+      <p>That green "Verified" next to a commit? You GPG-signed the commit with <code class="inline">git commit -S</code>, and GitHub matched the signature to your public key.</p>
+    </div>
+    <div class="card">
+      <h4>📩 Encrypted email (PGP)</h4>
+      <p>Security researchers and journalists use GPG (or its extension, PGP) to send emails only the recipient can read. Think Snowden → journalists.</p>
+    </div>
+    <div class="card">
+      <h4>💾 Software release integrity</h4>
+      <p>Open-source projects publish a <code class="inline">SHA256SUMS</code> file AND a <code class="inline">.sig</code> file. Verify with <code class="inline">gpg --verify SHA256SUMS.sig SHA256SUMS</code> → "Good signature from ..."</p>
+    </div>
+  </div>
+</section>
+
+<section class="chapter">
+  <div class="chapter-num">Chapter 04 // Basic commands</div>
+  <h2><span class="emoji">⌨️</span> The GPG mini-cheatsheet</h2>
+
+  <div class="code">
+<span class="com"># Generate a new keypair</span>
+gpg --full-generate-key
+
+<span class="com"># List your keys</span>
+gpg --list-keys                        <span class="com"># public keys</span>
+gpg --list-secret-keys                 <span class="com"># private keys (sensitive!)</span>
+
+<span class="com"># Export your public key to share</span>
+gpg --export --armor your@email.com &gt; pubkey.asc
+
+<span class="com"># Import someone else's public key</span>
+gpg --import their_pubkey.asc
+
+<span class="com"># Verify a signed file</span>
+gpg --verify file.sig file
+
+<span class="com"># Encrypt a file for a recipient</span>
+gpg --encrypt --recipient their@email.com secret.txt
+
+<span class="com"># Decrypt a file sent to you</span>
+gpg --decrypt secret.txt.gpg
+  </div>
+
+  <div class="callout danger">
+    <strong>🚨 OPSEC:</strong> Your private key + passphrase = your identity. Leak the key file (from <code class="inline">~/.gnupg/</code>) and an attacker can impersonate you. Back it up offline. Use strong passphrases. Revoke immediately if you suspect compromise.
+  </div>
+
+  <div class="quiz">
+    <h4>🎯 Quick Check</h4>
+    <div class="q">Someone sends you a file they encrypted FOR you. Which key do you use to decrypt it?</div>
+    <div class="options">
+      <div class="opt" onclick="quizAnswer(this, false)">Their public key</div>
+      <div class="opt" onclick="quizAnswer(this, false)">Their private key</div>
+      <div class="opt" onclick="quizAnswer(this, false)">Your public key</div>
+      <div class="opt" onclick="quizAnswer(this, true)">Your private key</div>
+    </div>
+    <div class="feedback"></div>
+  </div>
+</section>
+
+<section class="chapter">
+  <div class="related-terms">
+    <h4>🔗 Related in the vault</h4>
+    <div class="tags">
+      <a href="apt.html">📦 apt</a>
+      <a href="cryptographic-failure.html">🔓 Cryptographic Failure</a>
+      <a href="https.html">🔐 HTTPS</a>
+      <a href="ssh.html">🔐 SSH</a>
+      <a href="authentication.html">🗝️ Authentication</a>
+    </div>
+  </div>
+</section>
+
+<footer class="site-foot">
+  <p class="coffee-line">Two keys. Infinite trust. Don't lose the private one. ☕</p>
+</footer>
+
+<script src="../assets/glossary.js"></script>
+<script src="../assets/app.js"></script>
+</body>
+</html>

