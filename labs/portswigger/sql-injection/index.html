@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>SQL Injection Track — PortSwigger Labs ☕</title>
+<link rel="stylesheet" href="../../../assets/styles.css" />
+</head>
+<body data-page-slug="labs-portswigger-sqli-track">
+
+<div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
+
+<div class="topbar">
+  <a class="logo" href="../../../index.html">☕ CYBERSEC.VAULT</a>
+  <nav>
+    <a href="../../../index.html">Home</a>
+    <a href="../../../index.html#topics-web">Topics</a>
+    <a href="../../../glossary/index.html">Glossary</a>
+    <a href="../../../tryhackme/index.html">THM</a>
+    <a href="../../../labs/portswigger/index.html" class="active">Labs</a>
+  </nav>
+  <div class="search-wrap">
+    <input type="text" class="search" placeholder="Search (press /)..." />
+    <div class="search-results"></div>
+  </div>
+</div>
+
+<div class="breadcrumb">
+  <a href="../../../index.html">Home</a>
+  <span class="sep">›</span>
+  <a href="../../../labs/portswigger/index.html">Labs</a>
+  <span class="sep">›</span>
+  <a href="../../../labs/portswigger/index.html">PortSwigger</a>
+  <span class="sep">›</span>
+  <span>SQL Injection</span>
+</div>
+
+<!-- ===================== HERO ===================== -->
+<section class="hero" id="hero">
+  <div class="hero-content">
+    <span class="coffee-badge">☕ Track 01 · the OG injection</span>
+    <h1>💉 SQL Injection Track</h1>
+    <p class="subtitle">3 labs. Apprentice → Practitioner.<br>By the end, you'll bypass logins and dump databases using nothing but a URL bar.</p>
+    <div class="tagline">"The apostrophe is the most dangerous character on the internet."</div>
+    <div class="track-progress" style="margin-top: 18px;">
+      <span>Track progress</span>
+      <span class="dots">
+        <span class="dot" title="Lab 1"></span>
+        <span class="dot" title="Lab 2"></span>
+        <span class="dot" title="Lab 3"></span>
+      </span>
+      <span>0 / 3</span>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== WHAT YOU'LL LEARN ===================== -->
+<section class="chapter" id="learn">
+  <div class="chapter-num">Pre-flight // What this track teaches you</div>
+  <h2><span class="emoji">🎯</span> Skills unlocked after these 3 labs</h2>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <h4>🔍 Spotting injection points</h4>
+      <p>You'll develop the instinct that says "this URL parameter goes straight into a SQL query."</p>
+    </div>
+    <div class="card">
+      <h4>💬 SQL comment syntax</h4>
+      <p>Using <code class="inline">--</code> to nuke the rest of a query. The attacker's delete key.</p>
+    </div>
+    <div class="card">
+      <h4>🔐 Bypassing authentication</h4>
+      <p>Logging in as <strong>administrator</strong> without knowing the password.</p>
+    </div>
+    <div class="card">
+      <h4>🧱 <span class="term" data-term="union-attack">UNION attacks</span></h4>
+      <p>Stitching attacker-controlled rows onto legitimate results. The gateway drug to data exfiltration.</p>
+    </div>
+  </div>
+</section>
+
+<div class="divider">the labs</div>
+
+<!-- ===================== THE LABS ===================== -->
+<section class="chapter" id="labs">
+  <div class="chapter-num">The syllabus</div>
+  <h2><span class="emoji">📚</span> Do these in order</h2>
+  <p class="lead">Each lab builds on the last. Skipping ahead = missing the WHY.</p>
+
+  <div class="track-list">
+    <a class="track-card" href="01-retrieve-hidden-data.html">
+      <span class="num">01</span>
+      <div class="info">
+        <div class="name">
+          SQLi in WHERE clause — retrieve hidden data
+          <span class="diff-badge apprentice" style="margin-left:8px;">Apprentice</span>
+        </div>
+        <div class="blurb">Your first injection. A product-filter URL becomes an all-access pass. You'll learn the <code class="inline">'</code> + <code class="inline">--</code> combo that starts every SQLi career.</div>
+      </div>
+      <div class="meta">
+        <span class="time">~10 min</span>
+      </div>
+    </a>
+
+    <a class="track-card" href="02-login-bypass.html">
+      <span class="num">02</span>
+      <div class="info">
+        <div class="name">
+          SQLi allowing login bypass
+          <span class="diff-badge apprentice" style="margin-left:8px;">Apprentice</span>
+        </div>
+        <div class="blurb">Log in as <strong>administrator</strong> without knowing the password. You'll weaponize the comment trick from Lab 1 inside a login form.</div>
+      </div>
+      <div class="meta">
+        <span class="time">~10 min</span>
+      </div>
+    </a>
+
+    <a class="track-card" href="03-union-column-count.html">
+      <span class="num">03</span>
+      <div class="info">
+        <div class="name">
+          UNION attack — determine number of columns
+          <span class="diff-badge practitioner" style="margin-left:8px;">Practitioner</span>
+        </div>
+        <div class="blurb">Before you can dump data with UNION, you have to know how many columns the original query returns. Two techniques. One that works everywhere.</div>
+      </div>
+      <div class="meta">
+        <span class="time">~15 min</span>
+      </div>
+    </a>
+  </div>
+</section>
+
+<div class="divider">prereqs</div>
+
+<!-- ===================== PREREQS ===================== -->
+<section class="chapter" id="prereq">
+  <div class="chapter-num">Before you start</div>
+  <h2><span class="emoji">⚙️</span> What you need installed</h2>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <h4>✅ Already on your machine</h4>
+      <ul style="margin-left:18px; color: var(--ink-dim); margin-top: 6px;">
+        <li>A browser (Firefox recommended)</li>
+        <li><span class="term" data-term="curl">curl</span> — terminal HTTP client</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>🆕 You need to sign up (free)</h4>
+      <ul style="margin-left:18px; color: var(--ink-dim); margin-top: 6px;">
+        <li><a href="https://portswigger.net/users/register" target="_blank" rel="noopener">PortSwigger account</a></li>
+        <li>Each lab gives you a unique instance URL like <code class="inline">https://0a...web-security-academy.net</code></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="no-burp" style="margin-top: 18px;">
+    <strong>🚫 What you DON'T need:</strong> Burp Suite. Not Community, not Pro. We'll solve all 3 labs using just a browser and curl. If a step in any lab truly benefits from a proxy, we'll explicitly say so.
+  </div>
+</section>
+
+<!-- ===================== RELATED ===================== -->
+<section class="chapter">
+  <div class="related-terms">
+    <h4>🔗 Related in the vault</h4>
+    <div class="tags">
+      <a href="../../../topics/web/sql-injection/index.html">💉 SQL Injection — the topic page</a>
+      <a href="../../../glossary/single-quote.html">🔤 Single Quote</a>
+      <a href="../../../glossary/sql-comment.html">💬 SQL Comment</a>
+      <a href="../../../glossary/parameterized-query.html">🛡️ Parameterized Query</a>
+      <a href="../../../labs/portswigger/index.html">🧪 All PortSwigger tracks</a>
+    </div>
+  </div>
+</section>
+
+<footer class="site-foot">
+  <p class="coffee-line">Ready? Open Lab 01 and let's crack our first database. ☕</p>
+</footer>
+
+<script src="../../../assets/glossary.js"></script>
+<script src="../../../assets/app.js"></script>
+</body>
+</html>

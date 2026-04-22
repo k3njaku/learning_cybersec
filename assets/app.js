@@ -32,6 +32,65 @@ window.SITE_TOPICS = [
   }
 ];
 
+/* ---------- LAB TRACKS + LABS (FreeCodeCamp-for-pentesting) ---------------------------
+   Each TRACK groups labs by vulnerability class (SQLi, XSS, CSRF, etc.).
+   Labs are ordered (position 1..N). Each lab page is a guided walkthrough
+   that avoids Burp Suite in favour of curl + browser DevTools.
+   Only add a lab entry here AFTER you create its HTML page.
+-------------------------------------------------------------------------------------- */
+window.SITE_LABS = {
+  platforms: [
+    {
+      slug: "portswigger",
+      name: "PortSwigger Web Security Academy",
+      icon: "🧪",
+      blurb: "Free, industry-standard labs. Every vuln, a purpose-built broken app.",
+      path: "labs/portswigger/index.html",
+      tracks: [
+        {
+          slug: "sql-injection",
+          name: "SQL Injection",
+          icon: "💉",
+          blurb: "The OG. Bypass logins, dump databases, talk to DBs they don't want you talking to.",
+          path: "labs/portswigger/sql-injection/index.html",
+          labs: [
+            {
+              slug: "01-retrieve-hidden-data",
+              position: 1,
+              name: "SQLi in WHERE clause — retrieve hidden data",
+              difficulty: "apprentice",
+              estMinutes: 10,
+              path: "labs/portswigger/sql-injection/01-retrieve-hidden-data.html",
+              upstreamUrl: "https://portswigger.net/web-security/sql-injection/lab-retrieve-hidden-data",
+              blurb: "Your first injection. Turn a product filter into an all-access pass."
+            },
+            {
+              slug: "02-login-bypass",
+              position: 2,
+              name: "SQLi allowing login bypass",
+              difficulty: "apprentice",
+              estMinutes: 10,
+              path: "labs/portswigger/sql-injection/02-login-bypass.html",
+              upstreamUrl: "https://portswigger.net/web-security/sql-injection/lab-login-bypass",
+              blurb: "Log in as admin. No password. Just vibes and a single quote."
+            },
+            {
+              slug: "03-union-column-count",
+              position: 3,
+              name: "UNION attack — determine number of columns",
+              difficulty: "practitioner",
+              estMinutes: 15,
+              path: "labs/portswigger/sql-injection/03-union-column-count.html",
+              upstreamUrl: "https://portswigger.net/web-security/sql-injection/union-attacks/lab-determine-number-of-columns",
+              blurb: "UNION is a cheat code. But first you have to count the columns."
+            }
+          ]
+        }
+      ]
+    }
+  ]
+};
+
 /* ---------- THM PATHS + ROOMS --------------------------------------------------------
    Each PATH (learning path) has a list of ROOMS you've rebuilt.
    Only add a room entry here AFTER you create the HTML page for it.
@@ -244,6 +303,21 @@ window.markCompleted = function (slug) {
         });
       });
     });
+    // Labs (flattened across platform > track > lab)
+    const LABS = window.SITE_LABS || { platforms: [] };
+    (LABS.platforms || []).forEach(plat => {
+      (plat.tracks || []).forEach(tr => {
+        (tr.labs || []).forEach(lab => {
+          items.push({
+            type: 'lab',
+            name: lab.name,
+            blurb: `Lab · ${plat.name} · ${tr.name} · ${lab.blurb}`,
+            aliases: [lab.slug, tr.slug, plat.slug, 'lab', 'portswigger'].map(a => a.toLowerCase()),
+            href: base + lab.path
+          });
+        });
+      });
+    });
     return items;
   }
 
@@ -262,7 +336,7 @@ window.markCompleted = function (slug) {
       resultsEl.classList.add('open');
       return;
     }
-    const tagLabel = { topic: 'Topic', glossary: 'Term', thm: 'THM' };
+    const tagLabel = { topic: 'Topic', glossary: 'Term', thm: 'THM', lab: 'Lab' };
     resultsEl.innerHTML = matches.map(m => `
       <a href="${m.href}">
         <span class="tag ${m.type}">${tagLabel[m.type] || m.type}</span>

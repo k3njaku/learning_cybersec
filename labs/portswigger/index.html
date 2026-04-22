@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>PortSwigger Labs — Guided, No-Burp Walkthroughs ☕</title>
+<link rel="stylesheet" href="../../assets/styles.css" />
+</head>
+<body data-page-slug="labs-portswigger">
+
+<div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
+
+<div class="topbar">
+  <a class="logo" href="../../index.html">☕ CYBERSEC.VAULT</a>
+  <nav>
+    <a href="../../index.html">Home</a>
+    <a href="../../index.html#topics-web">Topics</a>
+    <a href="../../glossary/index.html">Glossary</a>
+    <a href="../../tryhackme/index.html">THM</a>
+    <a href="../../labs/portswigger/index.html" class="active">Labs</a>
+  </nav>
+  <div class="search-wrap">
+    <input type="text" class="search" placeholder="Search (press /)..." />
+    <div class="search-results"></div>
+  </div>
+</div>
+
+<div class="breadcrumb">
+  <a href="../../index.html">Home</a>
+  <span class="sep">›</span>
+  <span>Labs</span>
+  <span class="sep">›</span>
+  <span>PortSwigger</span>
+</div>
+
+<!-- ===================== HERO ===================== -->
+<section class="hero" id="hero">
+  <div class="hero-content">
+    <span class="coffee-badge">☕ FreeCodeCamp-style. But for hacking.</span>
+    <h1>PortSwigger Labs</h1>
+    <p class="subtitle">The best free web-security labs on the planet.<br>Rebuilt here as <strong>guided walkthroughs</strong> — no Burp Suite required.</p>
+    <div class="tagline">"If the tool is slow, the learning is slow. So we're going fast."</div>
+    <br>
+    <button class="cta-btn" onclick="document.getElementById('why').scrollIntoView()">LET'S GOOOO 🚀</button>
+  </div>
+</section>
+
+<!-- ===================== WHY NO BURP ===================== -->
+<section class="chapter" id="why">
+  <div class="chapter-num">Manifesto // Why no Burp here</div>
+  <h2><span class="emoji">🐢</span> Because Burp Community is SLOW</h2>
+  <p class="lead">Burp Community is a rate-limited, Java-bloated trap designed to nudge you toward Burp Pro. For <em>learning</em>, it gets in the way.</p>
+
+  <div class="paper">
+    <h4>📝 What you actually need to solve these labs</h4>
+    <p>Every PortSwigger lab is just a web app. Web apps speak <span class="highlight">HTTP</span>. Anything that speaks HTTP can attack them. You don't need a proxy with 47 tabs — you need:</p>
+    <ul style="margin: 10px 0 0 20px;">
+      <li>A browser (you have one)</li>
+      <li><span class="term" data-term="curl">curl</span> (already installed on Linux + macOS)</li>
+      <li>Your brain (the real star ⭐)</li>
+    </ul>
+  </div>
+
+  <div class="no-burp">
+    <strong>🚫 The "no Burp" rule:</strong> every step in every lab on this page can be done with the terminal or the browser. We use whichever is <em>faster for that step</em>. ADHD brains like linear, one-thing-at-a-time flows — that's exactly what a terminal gives you.
+  </div>
+</section>
+
+<div class="divider">the arsenal</div>
+
+<!-- ===================== TOOLS ===================== -->
+<section class="chapter" id="tools">
+  <div class="chapter-num">Chapter 01 // Your tiny, sharp toolkit</div>
+  <h2><span class="emoji">🔧</span> Three tools. That's it.</h2>
+
+  <div class="grid cols-3">
+    <div class="card">
+      <h4>🌐 Browser URL bar</h4>
+      <p>For any attack that lives in the URL (most SQLi, reflected XSS, path traversal). Paste, press Enter, read the response. Fastest feedback loop on Earth.</p>
+    </div>
+    <div class="card">
+      <h4>💻 <span class="term" data-term="curl">curl</span> in a terminal</h4>
+      <p>For anything that needs POST requests, custom headers, cookies, or repeated fire. Reproducible, scriptable, zero GUI noise.</p>
+    </div>
+    <div class="card">
+      <h4>🦊 Firefox DevTools</h4>
+      <p>Network tab → right-click a request → "<strong>Edit and Resend</strong>". It's a mini Repeater. Free. Already installed. No proxy cert nonsense.</p>
+    </div>
+  </div>
+
+  <div class="callout info">
+    <strong>☕ Real talk:</strong> if a lab genuinely needs a full proxy, we'll say so. But you'll be surprised how rare that is for Apprentice-level labs.
+  </div>
+</section>
+
+<div class="divider">the tracks</div>
+
+<!-- ===================== TRACKS ===================== -->
+<section class="chapter" id="tracks">
+  <div class="chapter-num">Chapter 02 // Pick your path</div>
+  <h2><span class="emoji">🗺️</span> Tracks</h2>
+  <p class="lead">Each track is an <strong>ordered</strong> list of labs. Do them in order — each one builds on the last.</p>
+
+  <div class="track-list">
+    <a class="track-card" href="sql-injection/index.html">
+      <span class="num">01</span>
+      <div class="info">
+        <div class="name">💉 SQL Injection <span class="diff-badge apprentice" style="margin-left:8px">Apprentice →</span></div>
+        <div class="blurb">Break databases. Bypass logins. UNION attacks. The OG vuln class — and the best place to start.</div>
+      </div>
+      <div class="meta">
+        <span class="time">3 labs · ~35 min</span>
+        <span style="font-size: 11px; color: var(--accent);">✓ Available</span>
+      </div>
+    </a>
+
+    <div class="track-card" style="opacity:0.55; cursor:not-allowed;">
+      <span class="num">02</span>
+      <div class="info">
+        <div class="name">🔥 Cross-Site Scripting (XSS)</div>
+        <div class="blurb">Reflected, stored, DOM-based. Inject JS into other people's browsers.</div>
+      </div>
+      <div class="meta">
+        <span class="time">Coming soon</span>
+      </div>
+    </div>
+
+    <div class="track-card" style="opacity:0.55; cursor:not-allowed;">
+      <span class="num">03</span>
+      <div class="info">
+        <div class="name">🔐 Authentication</div>
+        <div class="blurb">Brute force, 2FA bypass, broken logic. The login form is a goldmine.</div>
+      </div>
+      <div class="meta">
+        <span class="time">Coming soon</span>
+      </div>
+    </div>
+
+    <div class="track-card" style="opacity:0.55; cursor:not-allowed;">
+      <span class="num">04</span>
+      <div class="info">
+        <div class="name">🪪 Access Control &amp; <span class="term" data-term="idor">IDOR</span></div>
+        <div class="blurb">When "/user/123" also shows you /user/124. Bug bounty bread &amp; butter.</div>
+      </div>
+      <div class="meta">
+        <span class="time">Coming soon</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider">how each lab works</div>
+
+<!-- ===================== HOW LABS WORK ===================== -->
+<section class="chapter" id="how">
+  <div class="chapter-num">Chapter 03 // The shape of a lab page</div>
+  <h2><span class="emoji">📐</span> Every lab page, same structure</h2>
+  <p class="lead">Consistency = less cognitive load. Every single lab in this vault has the same chapters in the same order:</p>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <h4>01 · Refresher</h4>
+      <p>Mini full-lesson on the vuln. Analogy, key facts, brain-power question. You can skip if you remember.</p>
+    </div>
+    <div class="card">
+      <h4>02 · Your Mission</h4>
+      <p>The lab goal in plain English. What "solving" actually means.</p>
+    </div>
+    <div class="card">
+      <h4>03 · Tools &amp; Setup</h4>
+      <p>Exactly which tool you'll use (curl / URL bar / DevTools) and why.</p>
+    </div>
+    <div class="card">
+      <h4>04 · Guided Solve</h4>
+      <p>Numbered steps. Each step = <strong>Do this → See this → Here's why</strong>.</p>
+    </div>
+    <div class="card">
+      <h4>05 · Payload Dissected</h4>
+      <p>Character-by-character breakdown of the final injection.</p>
+    </div>
+    <div class="card">
+      <h4>06 · Real-world bounties</h4>
+      <p>Real bug bounty reports using the same technique. Proof this isn't academic.</p>
+    </div>
+    <div class="card">
+      <h4>07 · Retention Quiz</h4>
+      <p>1–2 MCQs. Get it right, confetti. Get it wrong, re-read.</p>
+    </div>
+    <div class="card">
+      <h4>08 · Next Lab</h4>
+      <p>One-click continue. Stay in the flow.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== RELATED ===================== -->
+<section class="chapter">
+  <div class="related-terms">
+    <h4>🔗 Related in the vault</h4>
+    <div class="tags">
+      <a href="../../topics/web/sql-injection/index.html">💉 SQL Injection (topic)</a>
+      <a href="../../glossary/index.html">📖 Glossary A–Z</a>
+      <a href="../../tryhackme/index.html">🎯 TryHackMe rooms</a>
+    </div>
+  </div>
+</section>
+
+<footer class="site-foot">
+  <p class="coffee-line">Labs &gt; slides. Always. ☕</p>
+</footer>
+
+<script src="../../assets/glossary.js"></script>
+<script src="../../assets/app.js"></script>
+</body>
+</html>

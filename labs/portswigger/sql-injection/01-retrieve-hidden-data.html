@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Lab 01 — Retrieve Hidden Data (SQLi) ☕</title>
+<link rel="stylesheet" href="../../../assets/styles.css" />
+</head>
+<body data-page-slug="lab-ps-sqli-01">
+
+<div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
+
+<div class="topbar">
+  <a class="logo" href="../../../index.html">☕ CYBERSEC.VAULT</a>
+  <nav>
+    <a href="../../../index.html">Home</a>
+    <a href="../../../index.html#topics-web">Topics</a>
+    <a href="../../../glossary/index.html">Glossary</a>
+    <a href="../../../tryhackme/index.html">THM</a>
+    <a href="../../../labs/portswigger/index.html" class="active">Labs</a>
+  </nav>
+  <div class="search-wrap">
+    <input type="text" class="search" placeholder="Search (press /)..." />
+    <div class="search-results"></div>
+  </div>
+</div>
+
+<div class="breadcrumb">
+  <a href="../../../index.html">Home</a>
+  <span class="sep">›</span>
+  <a href="../../../labs/portswigger/index.html">Labs</a>
+  <span class="sep">›</span>
+  <a href="../../../labs/portswigger/index.html">PortSwigger</a>
+  <span class="sep">›</span>
+  <a href="index.html">SQL Injection</a>
+  <span class="sep">›</span>
+  <span>Lab 01</span>
+</div>
+
+<!-- ===================== HERO ===================== -->
+<section class="hero" id="hero">
+  <div class="hero-content">
+    <span class="coffee-badge">☕ Lab 01 · Apprentice · your first injection</span>
+    <h1>Retrieve Hidden Data</h1>
+    <p class="subtitle">A shopping site lets you filter products by category.<br>We're going to turn that filter into an <strong>all-access pass</strong> that shows every product — including the ones the store hid from the public.</p>
+    <div class="tagline">"The apostrophe is about to change your life."</div>
+    <div class="track-progress" style="margin-top: 18px;">
+      <span>SQLi track</span>
+      <span class="dots">
+        <span class="dot current" title="Lab 1"></span>
+        <span class="dot" title="Lab 2"></span>
+        <span class="dot" title="Lab 3"></span>
+      </span>
+      <span>1 / 3</span>
+    </div>
+    <div style="margin-top: 14px;">
+      <span class="diff-badge apprentice">Apprentice</span>
+      <span style="font-family: var(--mono); font-size: 12px; color: var(--ink-dim); margin-left: 8px;">⏱ ~10 min · curl + browser</span>
+    </div>
+    <div style="margin-top: 20px;">
+      <a class="cta-btn" href="https://portswigger.net/web-security/sql-injection/lab-retrieve-hidden-data" target="_blank" rel="noopener" style="text-decoration:none;">OPEN LAB ON PORTSWIGGER 🔗</a>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== CHAPTER 01: REFRESHER ===================== -->
+<section class="chapter" id="refresher">
+  <div class="chapter-num">Chapter 01 // Refresher</div>
+  <h2><span class="emoji">🧠</span> SQL injection — the 2-minute recap</h2>
+  <p class="lead">A website is a middleman. You type, the server builds a sentence in <strong>SQL</strong> (the database's language), and the database answers. SQL injection = sneaking your own words into that sentence.</p>
+
+  <div class="paper">
+    <h4>📝 The restaurant analogy</h4>
+    <p>Imagine a waiter (the web app) going to the kitchen (the database) with your order written on a notepad.</p>
+    <p>You say: <span style="font-family: monospace;">"I'll have the chicken."</span></p>
+    <p>Waiter writes down: <span style="font-family: monospace;">SERVE chicken TO customer WHERE table = 5</span></p>
+    <p>Now watch: what if your "order" was <span class="highlight">chicken'; DROP TABLE tables; --</span>?</p>
+    <p>The waiter (not very smart) just copies it: <span style="font-family: monospace;">SERVE chicken'; DROP TABLE tables; -- TO customer WHERE table = 5</span></p>
+    <p>The kitchen reads that whole thing as TWO commands. Serves the chicken. Then drops the tables. 💀</p>
+  </div>
+
+  <h3 style="margin-top: 22px;">🔑 Three facts you need for THIS lab</h3>
+  <div class="grid cols-3">
+    <div class="card">
+      <h4>1. Single quote = string boundary</h4>
+      <p>In SQL, <code class="inline">'</code> marks where text starts and ends. Break that, you break the query. See <span class="term" data-term="single-quote">single quote</span>.</p>
+    </div>
+    <div class="card">
+      <h4>2. <code class="inline">--</code> = comment</h4>
+      <p>Two dashes + a space tell SQL "ignore everything after this." Your delete key for the rest of the query. See <span class="term" data-term="sql-comment">SQL comment</span>.</p>
+    </div>
+    <div class="card">
+      <h4>3. <code class="inline">OR 1=1</code> = always true</h4>
+      <p>1 always equals 1. When you OR this into a WHERE clause, it matches <strong>every row</strong>.</p>
+    </div>
+  </div>
+
+  <div class="brain-power" style="margin-top: 22px;">
+    <div class="label">🧠 Brain Power</div>
+    <div class="question">If a query is <code class="inline">SELECT * FROM products WHERE category = 'Gifts' AND released = 1</code> and you want EVERY product returned (released or not), what single logical thing do you need to change about this query?</div>
+    <button class="reveal-btn" onclick="toggleAnswer(this)">Reveal answer</button>
+    <div class="answer">
+      <p>You need to <strong>cancel the <code class="inline">AND released = 1</code> condition</strong>. Two ways to do it:</p>
+      <p>① OR-in something that's always true → makes the whole WHERE clause true for every row.<br>
+         ② Comment out the <code class="inline">AND released = 1</code> part → the database never evaluates it.</p>
+      <p>This lab uses <strong>option ②</strong>. We'll close the string with <code class="inline">'</code>, then use <code class="inline">--</code> to nuke the rest of the line.</p>
+    </div>
+  </div>
+</section>
+
+<div class="divider">the mission</div>
+
+<!-- ===================== CHAPTER 02: MISSION ===================== -->
+<section class="chapter" id="mission">
+  <div class="chapter-num">Chapter 02 // Your Mission</div>
+  <h2><span class="emoji">🎯</span> What "solving" means</h2>
+  <p class="lead">The lab is a fake shopping site. The home page shows products by category (Gifts, Pets, Tech, etc.). Some products are <strong>unreleased</strong> — hidden from the category view. <span class="highlight">Your job: make the category filter show every product, released or not.</span></p>
+
+  <div class="callout info">
+    <strong>📡 How PortSwigger knows you won:</strong> the lab page polls itself in the background. The moment you cause the app to return unreleased products, the "Lab is solved" banner flips green at the top of the page. No flag to submit.
+  </div>
+</section>
+
+<div class="divider">tools</div>
+
+<!-- ===================== CHAPTER 03: TOOLS ===================== -->
+<section class="chapter" id="tools">
+  <div class="chapter-num">Chapter 03 // Tools &amp; Setup</div>
+  <h2><span class="emoji">🔧</span> What we're using</h2>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <h4>🌐 Browser URL bar (primary)</h4>
+      <p>This entire lab is triggered by a GET request with a URL parameter. We just edit the URL and hit Enter. You get to SEE the rendered product list — instant dopamine.</p>
+    </div>
+    <div class="card">
+      <h4>💻 <span class="term" data-term="curl">curl</span> (backup / verification)</h4>
+      <p>If the page's JS caches weirdly or you want to confirm raw HTTP behaviour, curl is your reality check.</p>
+    </div>
+  </div>
+
+  <div class="no-burp">
+    <strong>🚫 No Burp needed.</strong> The only thing Burp would add here is an extra window and 2GB of RAM usage. Skip it.
+  </div>
+</section>
+
+<div class="divider">the solve</div>
+
+<!-- ===================== CHAPTER 04: GUIDED SOLVE ===================== -->
+<section class="chapter" id="solve">
+  <div class="chapter-num">Chapter 04 // The Guided Solve</div>
+  <h2><span class="emoji">🛠️</span> Step-by-step</h2>
+  <p class="lead">Every step: <strong>DO THIS</strong> → <strong>SEE THIS</strong> → <strong>HERE'S WHY</strong>. If something in "See this" doesn't match, re-check "Do this."</p>
+
+  <!-- STEP 1 -->
+  <div class="step" data-step="1">
+    <h4>Click "Access the lab" on PortSwigger <span class="tool-tag browser">browser</span></h4>
+    <p>You'll get a unique URL that looks like this:</p>
+    <div class="browser-bar">
+      <span class="dots"><span class="d r"></span><span class="d y"></span><span class="d g"></span></span>
+      <span class="lock">🔒</span>
+      <span class="url">https://<strong>0a1b2c3d4e5f</strong>.web-security-academy.net/</span>
+    </div>
+    <p>That bold prefix is YOUR instance's ID — it's different every time. Call this <code class="inline">YOUR_LAB</code> for the rest of this walkthrough.</p>
+    <div class="why"><strong>Why:</strong> every PortSwigger lab spins up a fresh, isolated container. Your instance can't be attacked by others and yours can't attack theirs.</div>
+  </div>
+
+  <!-- STEP 2 -->
+  <div class="step" data-step="2">
+    <h4>Click any category filter on the home page <span class="tool-tag browser">browser</span></h4>
+    <p>Click "Gifts" (or any other category). Watch your URL change to something like:</p>
+    <div class="browser-bar">
+      <span class="dots"><span class="d r"></span><span class="d y"></span><span class="d g"></span></span>
+      <span class="lock">🔒</span>
+      <span class="url">https://YOUR_LAB/filter?<strong>category=Gifts</strong></span>
+    </div>
+    <p>There it is — the <strong>injection point</strong>. That <code class="inline">category=Gifts</code> parameter is almost certainly being dropped straight into a SQL query.</p>
+    <div class="why"><strong>Why:</strong> any time user input appears in the URL and changes the database output, you should <em>smell</em> SQL. This is the smell test every bug hunter runs.</div>
+  </div>
+
+  <!-- STEP 3 -->
+  <div class="step" data-step="3">
+    <h4>Guess the server-side query <span class="tool-tag">theory</span></h4>
+    <p>Based on what we see (a filter that picks one category AND hides unreleased items), the backend query is almost certainly:</p>
+    <div class="code">
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> products <span class="kw">WHERE</span> category = <span class="str">'Gifts'</span> <span class="kw">AND</span> released = <span class="str">1</span>
+    </div>
+    <p>Our plan: make that <code class="inline">AND released = 1</code> disappear. If we can close the string after <code class="inline">Gifts</code> and then <em>comment out the rest of the line</em>, the database will never check <code class="inline">released</code> — and we'll get every product.</p>
+    <div class="why"><strong>Why:</strong> you don't attack blind. You build a mental model of the query first, THEN craft a payload that specifically breaks that model. This is the #1 skill that separates "tried payloads from a list" from "actual SQL injection."</div>
+  </div>
+
+  <!-- STEP 4 -->
+  <div class="step" data-step="4">
+    <h4>Craft the payload <span class="tool-tag">theory</span></h4>
+    <p>We want the final query to become:</p>
+    <div class="code safe">
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> products <span class="kw">WHERE</span> category = <span class="str">'Gifts'--</span><span class="com">' AND released = 1</span>
+    </div>
+    <p>Breakdown of what we inject after <code class="inline">Gifts</code>:</p>
+    <ul style="margin:10px 0 0 22px; color: var(--ink-dim);">
+      <li><code class="inline">'</code> — closes the opening quote started by the developer</li>
+      <li><code class="inline">--</code> (two dashes + a space) — tells SQL "ignore the rest of this line"</li>
+    </ul>
+    <p>Everything after <code class="inline">--</code> (the <code class="inline">AND released = 1</code>) gets treated as a comment. The database just returns all products in the Gifts category — released or not.</p>
+    <div class="why"><strong>Why the space after <code class="inline">--</code>?</strong> Most DB engines (Oracle, Postgres, MSSQL) require a space after the dashes for it to count as a comment. MySQL requires a space OR tab OR newline. When in doubt, add the space — safest across dialects.</div>
+  </div>
+
+  <!-- STEP 5 -->
+  <div class="step" data-step="5">
+    <h4>URL-encode the payload (only the special characters) <span class="tool-tag">theory</span></h4>
+    <p>A URL can't contain a raw space or certain characters — they need to be <a href="https://en.wikipedia.org/wiki/Percent-encoding" target="_blank" rel="noopener">percent-encoded</a>. For our payload:</p>
+
+    <div style="overflow-x:auto; margin: 14px 0;">
+      <table style="width:100%; border-collapse: collapse; font-family: var(--mono); font-size: 13px;">
+        <thead>
+          <tr style="background: var(--panel-2);">
+            <th style="padding:8px 10px; text-align:left; border:1px solid rgba(255,255,255,0.08);">Char</th>
+            <th style="padding:8px 10px; text-align:left; border:1px solid rgba(255,255,255,0.08);">Encoded</th>
+            <th style="padding:8px 10px; text-align:left; border:1px solid rgba(255,255,255,0.08);">Why</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="padding:8px 10px; border:1px solid rgba(255,255,255,0.08); color: var(--accent-2);">'</td>
+            <td style="padding:8px 10px; border:1px solid rgba(255,255,255,0.08);">%27</td>
+            <td style="padding:8px 10px; border:1px solid rgba(255,255,255,0.08); color: var(--ink-dim);">Most browsers accept raw <code class="inline">'</code> in the URL, but %27 is safer in curl / scripts.</td>
+          </tr>
+          <tr>
+            <td style="padding:8px 10px; border:1px solid rgba(255,255,255,0.08); color: var(--accent-2);">(space)</td>
+            <td style="padding:8px 10px; border:1px solid rgba(255,255,255,0.08);">%20 or +</td>
+            <td style="padding:8px 10px; border:1px solid rgba(255,255,255,0.08); color: var(--ink-dim);">URL can't contain literal spaces.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>So our payload becomes: <code class="inline">Gifts'--+</code> (using <code class="inline">+</code> for space) or <code class="inline">Gifts%27--%20</code> (fully encoded). Both work.</p>
+    <div class="why"><strong>Why encode at all?</strong> Sometimes the browser helpfully encodes for you. Sometimes it doesn't. Encoding manually removes ambiguity and makes your payload identical whether you use a browser or curl.</div>
+  </div>
+
+  <!-- STEP 6 -->
+  <div class="step" data-step="6">
+    <h4>Fire the attack (browser) <span class="tool-tag browser">browser</span></h4>
+    <p>Paste this into your address bar (replace <code class="inline">YOUR_LAB</code> with your instance):</p>
+    <div class="browser-bar">
+      <span class="dots"><span class="d r"></span><span class="d y"></span><span class="d g"></span></span>
+      <span class="lock">🔒</span>
+      <span class="url">https://YOUR_LAB/filter?category=<span class="injection">Gifts'--</span></span>
+    </div>
+    <p>Hit Enter. The page reloads and you should see <strong>more products than before</strong> — including ones marked unreleased. At the top of the page, the "Lab is solved" banner turns green. 🎉</p>
+    <div class="why"><strong>Why browser first:</strong> you see the rendered product grid immediately. No parsing HTML, no grep — just eyeballs and dopamine.</div>
+  </div>
+
+  <!-- STEP 7 -->
+  <div class="step" data-step="7">
+    <h4>Verify with curl (optional but sweet) <span class="tool-tag shell">shell</span></h4>
+    <p>In a terminal:</p>
+    <div class="terminal">
+      <div class="tbar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="title">bash · ~/labs</span></div>
+      <div class="tbody"><span class="prompt">$ </span><span class="cmd">curl -sG "https://YOUR_LAB/filter" \
+    --data-urlencode "category=Gifts'-- " | grep -oE '&lt;h3&gt;[^&lt;]+' | head</span>
+<span class="out">&lt;h3&gt;Gift Card
+&lt;h3&gt;Gift Wrap
+&lt;h3&gt;<span class="hl">Discount Codes (unreleased)</span>
+&lt;h3&gt;<span class="hl">Mystery Gift Box (unreleased)</span>
+...</span></div>
+    </div>
+    <p>The <code class="inline">-sG</code> flags mean "silent + convert --data to GET". <code class="inline">--data-urlencode</code> handles the encoding for us. The <code class="inline">grep</code> extracts product names from the HTML.</p>
+    <div class="why"><strong>Why curl matters:</strong> reproducible. If you ever need to prove the bug to someone (bounty report, screenshot, video), you can paste the exact one-liner. Browsers hide way too much.</div>
+  </div>
+
+</section>
+
+<div class="divider">dissection</div>
+
+<!-- ===================== CHAPTER 05: PAYLOAD DISSECTED ===================== -->
+<section class="chapter" id="dissect">
+  <div class="chapter-num">Chapter 05 // Payload Dissected</div>
+  <h2><span class="emoji">🔬</span> The winning string, one character at a time</h2>
+
+  <div class="code">
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> products <span class="kw">WHERE</span> category = <span class="str">'</span><span class="inject">Gifts'-- </span><span class="com">' AND released = 1</span>
+  </div>
+
+  <div class="grid cols-3" style="margin-top: 20px;">
+    <div class="card">
+      <h4><code class="inline" style="color: var(--accent-2);">Gifts</code></h4>
+      <p>Legitimate-looking data. Makes the query succeed so the app doesn't error out. Any real category name works.</p>
+    </div>
+    <div class="card">
+      <h4><code class="inline" style="color: var(--accent-2);">'</code></h4>
+      <p>The killer character. Closes the developer's opening quote early, prematurely ending their string.</p>
+    </div>
+    <div class="card">
+      <h4><code class="inline" style="color: var(--accent-2);">-- </code></h4>
+      <p>Two dashes + space. Says "ignore the rest of this line." The <code class="inline">AND released = 1</code> part never gets evaluated.</p>
+    </div>
+  </div>
+
+  <div class="callout success" style="margin-top: 20px;">
+    <strong>💡 Pattern to memorize:</strong> <code class="inline">value' --</code> is the single most common SQLi payload on Earth. It's in the top 10 of every wordlist, every scanner, every pentest report.
+  </div>
+</section>
+
+<div class="divider">real world</div>
+
+<!-- ===================== CHAPTER 06: REAL WORLD ===================== -->
+<section class="chapter" id="real">
+  <div class="chapter-num">Chapter 06 // Real-world bounties</div>
+  <h2><span class="emoji">💰</span> "But has this actually happened?"</h2>
+  <p class="lead">Yes. Often. With big payouts.</p>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <h4>🏦 Starbucks — $4,000</h4>
+      <p>Researcher Eugene Lim found an SQLi in a Starbucks internal endpoint. Same pattern: a filter parameter got dropped into a WHERE clause. Payload was effectively <code class="inline">' OR '1'='1'-- </code>.</p>
+    </div>
+    <div class="card">
+      <h4>🎮 Various — HackerOne reports</h4>
+      <p>Search <a href="https://hackerone.com/hacktivity?querystring=sql+injection" target="_blank" rel="noopener">hacktivity for "sql injection"</a> — you'll see dozens of reports, many paying $1k–$10k, built on this exact pattern.</p>
+    </div>
+    <div class="card">
+      <h4>🏛️ 2023 MOVEit breach</h4>
+      <p>A single SQLi in Progress Software's MOVEit file-transfer product led to <strong>one of the biggest supply-chain breaches of 2023</strong>. ~2,600+ organisations hit, 85M+ individuals' data leaked. Starts the same way: user-controlled input reaching a query.</p>
+    </div>
+    <div class="card">
+      <h4>🛒 Equifax / Heartland / Sony Pictures</h4>
+      <p>Multiple landmark historical breaches started with SQLi. The technique is 20+ years old and STILL top 10 of <a href="https://owasp.org/www-project-top-ten/" target="_blank" rel="noopener">OWASP</a>.</p>
+    </div>
+  </div>
+
+  <div class="callout">
+    <strong>☕ Mindset shift:</strong> every "where does the user's text end up in a query?" is potential money. Bug bounty is <em>literally</em> this, but on production apps that haven't been pentested.
+  </div>
+</section>
+
+<div class="divider">test yourself</div>
+
+<!-- ===================== CHAPTER 07: QUIZ ===================== -->
+<section class="chapter" id="quiz">
+  <div class="chapter-num">Chapter 07 // Retention Quiz</div>
+  <h2><span class="emoji">🎯</span> Did it stick?</h2>
+
+  <div class="quiz">
+    <h4>🧠 What does the <code class="inline">--</code> do inside our payload?</h4>
+    <div class="q">Pick the <em>most precise</em> answer.</div>
+    <div class="options">
+      <div class="opt" onclick="quizAnswer(this, false)">It deletes the database</div>
+      <div class="opt" onclick="quizAnswer(this, true)">It starts a SQL comment — the database ignores everything after it on that line</div>
+      <div class="opt" onclick="quizAnswer(this, false)">It escapes the single quote so SQL doesn't see it</div>
+      <div class="opt" onclick="quizAnswer(this, false)">It's a subtraction operator that makes the query return zero rows</div>
+    </div>
+    <div class="feedback"></div>
+  </div>
+
+  <div class="quiz" style="margin-top: 24px;">
+    <h4>🧠 Why do we inject the single quote BEFORE the <code class="inline">--</code>?</h4>
+    <div class="q">What's the apostrophe actually doing?</div>
+    <div class="options">
+      <div class="opt" onclick="quizAnswer(this, false)">It's decorative — some scanners expect it</div>
+      <div class="opt" onclick="quizAnswer(this, false)">It makes the database return an error, which helps us</div>
+      <div class="opt" onclick="quizAnswer(this, true)">It closes the string the developer opened, ending their quoted value early</div>
+      <div class="opt" onclick="quizAnswer(this, false)">It starts a new table definition</div>
+    </div>
+    <div class="feedback"></div>
+  </div>
+</section>
+
+<!-- ===================== NEXT LAB ===================== -->
+<section class="chapter" id="next">
+  <div class="lab-nav">
+    <a href="index.html">
+      <span class="dir">← back</span>
+      <span class="title">SQLi Track Overview</span>
+    </a>
+    <a class="next" href="02-login-bypass.html">
+      <span class="dir">Lab 02 →</span>
+      <span class="title">Login Bypass</span>
+    </a>
+  </div>
+</section>
+
+<!-- ===================== RELATED ===================== -->
+<section class="chapter">
+  <div class="related-terms">
+    <h4>🔗 Related in the vault</h4>
+    <div class="tags">
+      <a href="../../../topics/web/sql-injection/index.html">💉 SQL Injection (topic)</a>
+      <a href="../../../glossary/single-quote.html">🔤 Single Quote</a>
+      <a href="../../../glossary/sql-comment.html">💬 SQL Comment</a>
+      <a href="../../../glossary/curl.html">💻 curl</a>
+    </div>
+  </div>
+</section>
+
+<footer class="site-foot">
+  <p class="coffee-line">Your first injection. You'll never browse a filter parameter the same way again. ☕</p>
+</footer>
+
+<script src="../../../assets/glossary.js"></script>
+<script src="../../../assets/app.js"></script>
+</body>
+</html>

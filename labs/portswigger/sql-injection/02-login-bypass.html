@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Lab 02 — SQLi Login Bypass ☕</title>
+<link rel="stylesheet" href="../../../assets/styles.css" />
+</head>
+<body data-page-slug="lab-ps-sqli-02">
+
+<div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
+
+<div class="topbar">
+  <a class="logo" href="../../../index.html">☕ CYBERSEC.VAULT</a>
+  <nav>
+    <a href="../../../index.html">Home</a>
+    <a href="../../../index.html#topics-web">Topics</a>
+    <a href="../../../glossary/index.html">Glossary</a>
+    <a href="../../../tryhackme/index.html">THM</a>
+    <a href="../../../labs/portswigger/index.html" class="active">Labs</a>
+  </nav>
+  <div class="search-wrap">
+    <input type="text" class="search" placeholder="Search (press /)..." />
+    <div class="search-results"></div>
+  </div>
+</div>
+
+<div class="breadcrumb">
+  <a href="../../../index.html">Home</a>
+  <span class="sep">›</span>
+  <a href="../../../labs/portswigger/index.html">Labs</a>
+  <span class="sep">›</span>
+  <a href="../../../labs/portswigger/index.html">PortSwigger</a>
+  <span class="sep">›</span>
+  <a href="index.html">SQL Injection</a>
+  <span class="sep">›</span>
+  <span>Lab 02</span>
+</div>
+
+<!-- ===================== HERO ===================== -->
+<section class="hero" id="hero">
+  <div class="hero-content">
+    <span class="coffee-badge">☕ Lab 02 · Apprentice · auth bypass</span>
+    <h1>Login Bypass via SQLi</h1>
+    <p class="subtitle">The login form TRUSTS what you type. We're about to weaponize that trust.<br>Goal: log in as <strong>administrator</strong> without knowing the password.</p>
+    <div class="tagline">"Who needs a password when you have a comment?"</div>
+    <div class="track-progress" style="margin-top: 18px;">
+      <span>SQLi track</span>
+      <span class="dots">
+        <span class="dot done" title="Lab 1"></span>
+        <span class="dot current" title="Lab 2"></span>
+        <span class="dot" title="Lab 3"></span>
+      </span>
+      <span>2 / 3</span>
+    </div>
+    <div style="margin-top: 14px;">
+      <span class="diff-badge apprentice">Apprentice</span>
+      <span style="font-family: var(--mono); font-size: 12px; color: var(--ink-dim); margin-left: 8px;">⏱ ~10 min · curl + browser</span>
+    </div>
+    <div style="margin-top: 20px;">
+      <a class="cta-btn" href="https://portswigger.net/web-security/sql-injection/lab-login-bypass" target="_blank" rel="noopener" style="text-decoration:none;">OPEN LAB ON PORTSWIGGER 🔗</a>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== CHAPTER 01: REFRESHER ===================== -->
+<section class="chapter" id="refresher">
+  <div class="chapter-num">Chapter 01 // Refresher</div>
+  <h2><span class="emoji">🧠</span> Login forms, but make them vulnerable</h2>
+  <p class="lead">A typical login query looks like this:</p>
+  <div class="code">
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> users <span class="kw">WHERE</span> username = <span class="str">'alice'</span> <span class="kw">AND</span> password = <span class="str">'hunter2'</span>
+  </div>
+  <p style="margin-top: 12px;">If that query returns <strong>one or more rows</strong>, the app thinks "cool, credentials match" and logs you in. If it returns zero rows → rejected.</p>
+
+  <div class="paper">
+    <h4>📝 The bouncer analogy (remix)</h4>
+    <p>You're at a club. The bouncer (the SQL query) has a clipboard and needs to tick TWO boxes: your name AND your password.</p>
+    <p>Normal person says: <span style="font-family: monospace;">Name: alice, Password: hunter2</span> → bouncer checks both → maybe lets in.</p>
+    <p>Attacker says: <span style="font-family: monospace;">Name: administrator'--, Password: literally anything</span></p>
+    <p>Bouncer reads: <span class="highlight">"Name is administrator, uhh there's a comment, guess I'll ignore the password check 🤷"</span> → lets in.</p>
+  </div>
+
+  <div class="brain-power" style="margin-top: 18px;">
+    <div class="label">🧠 Brain Power</div>
+    <div class="question">We used <code class="inline">' --</code> in Lab 1 to comment out <code class="inline">AND released = 1</code>. Why would the same trick work on a login form?</div>
+    <button class="reveal-btn" onclick="toggleAnswer(this)">Reveal answer</button>
+    <div class="answer">
+      <p>Because the login query has the <strong>exact same shape</strong>: a <code class="inline">WHERE</code> with multiple <code class="inline">AND</code>-joined conditions. If we can close the username string and comment out the rest, the <code class="inline">AND password = '...'</code> check gets skipped completely.</p>
+      <p>SQL injection is almost always just recognizing the <em>shape</em> of a query and applying the same 3–4 tricks.</p>
+    </div>
+  </div>
+</section>
+
+<div class="divider">the mission</div>
+
+<!-- ===================== CHAPTER 02: MISSION ===================== -->
+<section class="chapter" id="mission">
+  <div class="chapter-num">Chapter 02 // Your Mission</div>
+  <h2><span class="emoji">🎯</span> What "solving" means</h2>
+  <p class="lead">Log in as the user <strong>administrator</strong>. That's it. No password guessing, no brute force — pure injection. Once you're logged in as admin, the "Lab is solved" banner turns green.</p>
+</section>
+
+<div class="divider">tools</div>
+
+<!-- ===================== CHAPTER 03: TOOLS ===================== -->
+<section class="chapter" id="tools">
+  <div class="chapter-num">Chapter 03 // Tools</div>
+  <h2><span class="emoji">🔧</span> Browser is fine. curl is better.</h2>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <h4>🌐 Browser login form</h4>
+      <p>Works perfectly — just type the payload into the username field. But the POST is "hidden" in a form submit, which makes understanding it less obvious.</p>
+    </div>
+    <div class="card">
+      <h4>💻 <span class="term" data-term="curl">curl</span> (recommended for this one)</h4>
+      <p>You <em>see</em> the HTTP POST. You see the Set-Cookie header that confirms you're logged in. Teaches you how auth actually works.</p>
+    </div>
+  </div>
+
+  <div class="no-burp">
+    <strong>🚫 No Burp.</strong> Yes, even for POSTs. curl does POST requests too (that's what <code class="inline">-d</code> is for).
+  </div>
+</section>
+
+<div class="divider">the solve</div>
+
+<!-- ===================== CHAPTER 04: GUIDED SOLVE ===================== -->
+<section class="chapter" id="solve">
+  <div class="chapter-num">Chapter 04 // The Guided Solve</div>
+  <h2><span class="emoji">🛠️</span> Step-by-step</h2>
+
+  <!-- STEP 1 -->
+  <div class="step" data-step="1">
+    <h4>Open the lab &amp; find the login form <span class="tool-tag browser">browser</span></h4>
+    <p>Click "Access the lab" → click "My account" (top right). You'll see a username + password form.</p>
+    <div class="why"><strong>Why scout first:</strong> you need to see the form to know which parameters to attack. Always reconnaissance before injection.</div>
+  </div>
+
+  <!-- STEP 2 -->
+  <div class="step" data-step="2">
+    <h4>Peek at how the form submits <span class="tool-tag devtools">devtools</span></h4>
+    <p>Open Firefox DevTools (<code class="inline">F12</code>) → Network tab. Submit the form with junk creds (<code class="inline">test / test</code>). In the network panel, click the <code class="inline">login</code> request:</p>
+    <ul style="margin: 10px 0 0 22px; color: var(--ink-dim);">
+      <li>Method: <strong>POST</strong></li>
+      <li>URL: <code class="inline">/login</code></li>
+      <li>Body: <code class="inline">csrf=...&amp;username=test&amp;password=test</code></li>
+    </ul>
+    <p>Note the <code class="inline">csrf</code> token — it's unique per session and the server will reject requests without it.</p>
+    <div class="why"><strong>Why check first:</strong> knowing the exact parameter names (<code class="inline">username</code>, <code class="inline">password</code>, <code class="inline">csrf</code>) means our curl request will match what the server expects.</div>
+  </div>
+
+  <!-- STEP 3 -->
+  <div class="step" data-step="3">
+    <h4>Guess the backend query <span class="tool-tag">theory</span></h4>
+    <p>Almost certainly:</p>
+    <div class="code">
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> users <span class="kw">WHERE</span> username = <span class="str">'</span>[username]<span class="str">'</span> <span class="kw">AND</span> password = <span class="str">'</span>[password]<span class="str">'</span>
+    </div>
+    <p>If that returns a row, you're logged in as whoever the row says. So we want to make the query return the <strong>administrator</strong> row while skipping the password check.</p>
+    <div class="why"><strong>Why theorize:</strong> with this mental model, the payload is obvious. Close the username string, inject a comment, nuke the password check.</div>
+  </div>
+
+  <!-- STEP 4 -->
+  <div class="step" data-step="4">
+    <h4>Craft the payload <span class="tool-tag">theory</span></h4>
+    <p>Submit this username:</p>
+    <div class="code safe">
+administrator'--
+    </div>
+    <p>(A space at the end helps with some DBs — PortSwigger's lab DB accepts both.)</p>
+    <p>Final query becomes:</p>
+    <div class="code safe">
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> users <span class="kw">WHERE</span> username = <span class="str">'administrator'-- </span><span class="com">' AND password = 'whatever'</span>
+    </div>
+    <p>Password field: <strong>doesn't matter</strong>. We're commenting it out. Literally put "x" in there.</p>
+    <div class="why"><strong>Why it works:</strong> the DB only executes up to the <code class="inline">--</code>. It finds the administrator row, sees it's a match, returns it. The app logs you in as admin because that's who the row belongs to.</div>
+  </div>
+
+  <!-- STEP 5 -->
+  <div class="step" data-step="5">
+    <h4>Fire it in the browser <span class="tool-tag browser">browser</span></h4>
+    <p>Back in the browser login form:</p>
+    <ul style="margin: 10px 0 0 22px; color: var(--ink-dim);">
+      <li><strong>Username:</strong> <code class="inline">administrator'--</code></li>
+      <li><strong>Password:</strong> <code class="inline">x</code></li>
+    </ul>
+    <p>Click log in. You'll be redirected to the administrator's "My Account" page. Banner turns green. 🎉</p>
+    <div class="why"><strong>Why browser here:</strong> the CSRF token is auto-attached by the form. Simplest path. curl requires us to grab + forward that token manually.</div>
+  </div>
+
+  <!-- STEP 6 -->
+  <div class="step" data-step="6">
+    <h4>(Optional) reproduce in curl <span class="tool-tag shell">shell</span></h4>
+    <p>For the reproducible version, you need to (a) grab the CSRF token + session cookie from the login page, (b) POST the injection with them attached:</p>
+    <div class="terminal">
+      <div class="tbar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="title">bash · ~/labs</span></div>
+      <div class="tbody"><span class="prompt">$ </span><span class="cmd">LAB="https://YOUR_LAB"
+# 1) Grab login page, save cookies, extract csrf
+CSRF=$(curl -sc cookies.txt "$LAB/login" | grep -oP 'name="csrf" value="\K[^"]+')
+echo "csrf=$CSRF"
+
+# 2) POST the injection, reusing cookies
+curl -sb cookies.txt -c cookies.txt -i "$LAB/login" \
+  --data-urlencode "csrf=$CSRF" \
+  --data-urlencode "username=administrator'-- " \
+  --data-urlencode "password=x" | head -20</span>
+<span class="out">HTTP/2 302
+location: /my-account?id=administrator
+set-cookie: session=<span class="hl">LoggedInAsAdmin...</span>; Secure; HttpOnly; SameSite=None
+...</span></div>
+    </div>
+    <p>The <code class="inline">302</code> redirect to <code class="inline">/my-account?id=administrator</code> is the win. You just logged in as admin from the command line.</p>
+    <div class="why"><strong>Why this matters:</strong> when you start doing real bug bounty, you'll want to automate things. POC-as-a-curl-command is the gold standard for bounty reports.</div>
+  </div>
+</section>
+
+<div class="divider">dissection</div>
+
+<!-- ===================== CHAPTER 05: PAYLOAD DISSECTED ===================== -->
+<section class="chapter" id="dissect">
+  <div class="chapter-num">Chapter 05 // Payload Dissected</div>
+  <h2><span class="emoji">🔬</span> Why "administrator'-- " works</h2>
+
+  <div class="code">
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> users <span class="kw">WHERE</span> username = <span class="str">'</span><span class="inject">administrator'-- </span><span class="com">' AND password = 'x'</span>
+  </div>
+
+  <div class="grid cols-3" style="margin-top: 18px;">
+    <div class="card">
+      <h4><code class="inline" style="color: var(--accent-2);">administrator</code></h4>
+      <p>The username we want to become. This is the actual row we're after in the users table.</p>
+    </div>
+    <div class="card">
+      <h4><code class="inline" style="color: var(--accent-2);">'</code></h4>
+      <p>Closes the opening quote early. Now <code class="inline">username = 'administrator'</code> is a complete, valid condition.</p>
+    </div>
+    <div class="card">
+      <h4><code class="inline" style="color: var(--accent-2);">-- </code></h4>
+      <p>Comment. Everything after this is invisible to the DB — including the entire password check.</p>
+    </div>
+  </div>
+
+  <div class="callout success" style="margin-top: 20px;">
+    <strong>💡 Same trick, new form.</strong> Notice this is the <em>identical</em> payload from Lab 1, applied to a different input. That's the pattern: recognize the query shape, apply the shape-breaking payload.
+  </div>
+</section>
+
+<div class="divider">real world</div>
+
+<!-- ===================== CHAPTER 06: REAL WORLD ===================== -->
+<section class="chapter" id="real">
+  <div class="chapter-num">Chapter 06 // Real-world bounties</div>
+  <h2><span class="emoji">💰</span> Auth bypass in the wild</h2>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <h4>🐦 Twitter (2010)</h4>
+      <p>A famous early SQLi in Twitter's auth flow — researchers showed they could log in as other users by manipulating query parameters. Led to multiple platform fixes.</p>
+    </div>
+    <div class="card">
+      <h4>🏦 Banking / fintech startups</h4>
+      <p>A disturbing number of bug bounty reports on HackerOne show SQLi-based auth bypass in fintech/lending platforms. Payload patterns are essentially what you just did.</p>
+    </div>
+  </div>
+
+  <div class="callout danger">
+    <strong>⚠️ Ethics reminder:</strong> only do this on your own apps, PortSwigger labs, or targets with an explicit bug bounty scope. SQLi on production without authorization = federal crime in most countries.
+  </div>
+</section>
+
+<div class="divider">test yourself</div>
+
+<!-- ===================== CHAPTER 07: QUIZ ===================== -->
+<section class="chapter" id="quiz">
+  <div class="chapter-num">Chapter 07 // Retention Quiz</div>
+  <h2><span class="emoji">🎯</span> Quick check</h2>
+
+  <div class="quiz">
+    <h4>🧠 Why does the password field not matter when we inject <code class="inline">administrator'-- </code> into the username?</h4>
+    <div class="q">Pick the most accurate reason.</div>
+    <div class="options">
+      <div class="opt" onclick="quizAnswer(this, false)">Because the password field is optional in SQL</div>
+      <div class="opt" onclick="quizAnswer(this, false)">Because every user's password is the same in the lab</div>
+      <div class="opt" onclick="quizAnswer(this, true)">Because our <code class="inline">--</code> comments out the <code class="inline">AND password = '...'</code> check entirely</div>
+      <div class="opt" onclick="quizAnswer(this, false)">Because the password field is hashed and hashes cancel out</div>
+    </div>
+    <div class="feedback"></div>
+  </div>
+
+  <div class="quiz" style="margin-top: 24px;">
+    <h4>🧠 If the backend used <code class="inline">WHERE username = '[input]' AND active = 1</code> (no password check), would our payload still log us in?</h4>
+    <div class="q">Think about what our comment actually nukes.</div>
+    <div class="options">
+      <div class="opt" onclick="quizAnswer(this, true)">Yes — the comment nukes the <code class="inline">AND active = 1</code> just the same</div>
+      <div class="opt" onclick="quizAnswer(this, false)">No — the payload only works against password checks specifically</div>
+      <div class="opt" onclick="quizAnswer(this, false)">No — the single quote needs a password field to break</div>
+      <div class="opt" onclick="quizAnswer(this, false)">Only if the administrator row has <code class="inline">active = 1</code></div>
+    </div>
+    <div class="feedback"></div>
+  </div>
+</section>
+
+<!-- ===================== NEXT LAB ===================== -->
+<section class="chapter" id="next">
+  <div class="lab-nav">
+    <a href="01-retrieve-hidden-data.html">
+      <span class="dir">← Lab 01</span>
+      <span class="title">Retrieve Hidden Data</span>
+    </a>
+    <a class="next" href="03-union-column-count.html">
+      <span class="dir">Lab 03 →</span>
+      <span class="title">UNION Attack — Column Count</span>
+    </a>
+  </div>
+</section>
+
+<!-- ===================== RELATED ===================== -->
+<section class="chapter">
+  <div class="related-terms">
+    <h4>🔗 Related in the vault</h4>
+    <div class="tags">
+      <a href="../../../topics/web/sql-injection/index.html">💉 SQL Injection (topic)</a>
+      <a href="../../../glossary/authentication.html">🔐 Authentication</a>
+      <a href="../../../glossary/sql-comment.html">💬 SQL Comment</a>
+      <a href="../../../glossary/curl.html">💻 curl</a>
+    </div>
+  </div>
+</section>
+
+<footer class="site-foot">
+  <p class="coffee-line">You just logged in as admin without a password. Welcome to SQLi. ☕</p>
+</footer>
+
+<script src="../../../assets/glossary.js"></script>
+<script src="../../../assets/app.js"></script>
+</body>
+</html>

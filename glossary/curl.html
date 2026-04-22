@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>curl — The Swiss-Army Knife for HTTP ☕</title>
+<link rel="stylesheet" href="../assets/styles.css" />
+</head>
+<body data-page-slug="curl">
+
+<div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
+
+<div class="topbar">
+  <a class="logo" href="../index.html">☕ CYBERSEC.VAULT</a>
+  <nav>
+    <a href="../index.html">Home</a>
+    <a href="../index.html#topics-web">Topics</a>
+    <a href="index.html" class="active">Glossary</a>
+    <a href="../tryhackme/index.html">THM</a>
+  </nav>
+  <div class="search-wrap">
+    <input type="text" class="search" placeholder="Search (press /)..." />
+    <div class="search-results"></div>
+  </div>
+</div>
+
+<div class="breadcrumb">
+  <a href="../index.html">Home</a>
+  <span class="sep">›</span>
+  <a href="index.html">Glossary</a>
+  <span class="sep">›</span>
+  <span>curl</span>
+</div>
+
+<section class="hero" style="min-height: 45vh;">
+  <div class="hero-content">
+    <span class="coffee-badge">📖 glossary · tooling · the hacker's workhorse</span>
+    <h1 style="font-family: var(--mono);">curl <span style="color: var(--accent-2);">💻</span></h1>
+    <p class="subtitle">A terminal command that speaks HTTP.<br>If you can do it in a browser, you can do it with curl — but scripted, reproducible, and 10x faster.</p>
+    <div class="tagline">"Any web vuln can be proven with one curl command." 🧪</div>
+  </div>
+</section>
+
+<section class="chapter">
+  <div class="chapter-num">Chapter 01 // Definition</div>
+  <h2><span class="emoji">📖</span> What is curl?</h2>
+  <p class="lead"><strong>curl</strong> (Client URL) is a command-line tool that transfers data using URLs. It supports HTTP(S), FTP, SMTP, IMAP, POP3, and ~20 other protocols. For web pentesters, it's the go-to for making raw HTTP requests.</p>
+
+  <div class="paper">
+    <h4>📝 The sniper rifle analogy</h4>
+    <p>A browser is a shotgun — one trigger, 47 invisible actions (cookies, cache, scripts, trackers, redirects, form auto-fills).</p>
+    <p>curl is a sniper rifle — exactly one HTTP request, exactly as you specify. Nothing hidden, nothing auto-magic.</p>
+    <p><span class="highlight">That precision is why every bounty writeup with a POC uses curl.</span></p>
+  </div>
+
+  <h3>The canonical command shape</h3>
+  <div class="code">
+curl <span class="str">[options]</span> <span class="kw">URL</span>
+  </div>
+</section>
+
+<div class="divider">flags to know</div>
+
+<section class="chapter">
+  <div class="chapter-num">Chapter 02 // The 10 flags that cover 90% of usage</div>
+  <h2><span class="emoji">🚩</span> Essential flags</h2>
+
+  <div style="overflow-x:auto;">
+    <table style="width:100%; border-collapse: collapse; font-family: var(--mono); font-size: 13px;">
+      <thead>
+        <tr style="background: var(--panel-2);">
+          <th style="padding:10px; text-align:left; border:1px solid rgba(255,255,255,0.08);">Flag</th>
+          <th style="padding:10px; text-align:left; border:1px solid rgba(255,255,255,0.08);">What it does</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td style="padding:8px 10px; border:1px solid rgba(255,255,255,0.08); color: var(--accent);">-X METHOD</td><td style="padding:8px 10px; border:1px solid rgba(255,255,255,0.08); color: var(--ink-dim);">HTTP method (GET, POST, PUT, DELETE, PATCH)</td></tr>
+        <tr><td style="padding:8px 10px; border:1px solid rgba(255,255,255,0.08); color: var(--accent);">-H 'Header: val'</td><td style="padding:8px 10px; border:1px solid rgba(255,255,255,0.08); color: var(--ink-dim);">Add a custom header. Use repeatedly for multiple headers.</td></tr>
+        <tr><td style="padding:8px 10px; border:1px solid rgba(255,255,255,0.08); color: var(--accent);">-d 'data'</td><td style="padding:8px 10px; border:1px solid rgba(255,255,255,0.08); color: var(--ink-dim);">Request body. Implies POST. Use <code class="inline">-d @file</code> to load from file.</td></tr>
+        <tr><td style="padding:8px 10px; border:1px solid rgba(255,255,255,0.08); color: var(--accent);">--data-urlencode</td><td style="padding:8px 10px; border:1px solid rgba(255,255,255,0.08); color: var(--ink-dim);">Like -d but URL-encodes values. Safer for special chars (', &amp;, =).</td></tr>
+        <tr><td style="padding:8px 10px; border:1px solid rgba(255,255,255,0.08); color: var(--accent);">-i</td><td style="padding:8px 10px; border:1px solid rgba(255,255,255,0.08); color: var(--ink-dim);">Include response headers in output. Critical for auth / redirect debugging.</td></tr>
+        <tr><td style="padding:8px 10px; border:1px solid rgba(255,255,255,0.08); color: var(--accent);">-I</td><td style="padding:8px 10px; border:1px solid rgba(255,255,255,0.08); color: var(--ink-dim);">HEAD request — only response headers, no body.</td></tr>
+        <tr><td style="padding:8px 10px; border:1px solid rgba(255,255,255,0.08); color: var(--accent);">-L</td><td style="padding:8px 10px; border:1px solid rgba(255,255,255,0.08); color: var(--ink-dim);">Follow redirects. Otherwise curl stops at the first 3xx.</td></tr>
+        <tr><td style="padding:8px 10px; border:1px solid rgba(255,255,255,0.08); color: var(--accent);">-s</td><td style="padding:8px 10px; border:1px solid rgba(255,255,255,0.08); color: var(--ink-dim);">Silent — suppress progress bar. Use in scripts.</td></tr>
+        <tr><td style="padding:8px 10px; border:1px solid rgba(255,255,255,0.08); color: var(--accent);">-c / -b FILE</td><td style="padding:8px 10px; border:1px solid rgba(255,255,255,0.08); color: var(--ink-dim);">-c saves cookies, -b sends them. Combine to maintain sessions.</td></tr>
+        <tr><td style="padding:8px 10px; border:1px solid rgba(255,255,255,0.08); color: var(--accent);">-k</td><td style="padding:8px 10px; border:1px solid rgba(255,255,255,0.08); color: var(--ink-dim);">Ignore SSL errors. Useful for self-signed certs in lab setups.</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<div class="divider">recipes</div>
+
+<section class="chapter">
+  <div class="chapter-num">Chapter 03 // Copy-paste recipes</div>
+  <h2><span class="emoji">🍳</span> The recipes you'll actually use</h2>
+
+  <h3>1. Plain GET</h3>
+  <div class="code">
+curl https://example.com/api/users
+  </div>
+
+  <h3>2. GET with a query string (safe encoding)</h3>
+  <div class="code">
+curl -G <span class="str">"https://site.com/search"</span> \
+  --data-urlencode <span class="str">"q=some value with spaces &amp; symbols"</span>
+  </div>
+  <p style="color: var(--ink-dim); font-size: 13px; margin-top:6px;">The <code class="inline">-G</code> converts <code class="inline">--data</code> into a query string instead of a POST body.</p>
+
+  <h3>3. POST JSON (API testing)</h3>
+  <div class="code">
+curl -X POST https://api.site.com/login \
+  -H <span class="str">"Content-Type: application/json"</span> \
+  -d <span class="str">'{"username":"admin","password":"x"}'</span>
+  </div>
+
+  <h3>4. POST form-encoded (login forms)</h3>
+  <div class="code">
+curl -X POST https://site.com/login \
+  --data-urlencode <span class="str">"username=admin"</span> \
+  --data-urlencode <span class="str">"password=hunter2"</span>
+  </div>
+
+  <h3>5. Session-aware requests (cookies)</h3>
+  <div class="code">
+<span class="com"># Step 1: log in, save cookies</span>
+curl -c cookies.txt -X POST site.com/login -d <span class="str">"u=x&amp;p=y"</span>
+
+<span class="com"># Step 2: reuse those cookies on authed endpoints</span>
+curl -b cookies.txt site.com/account
+  </div>
+
+  <h3>6. Send a custom header (auth tokens, bypass WAFs)</h3>
+  <div class="code">
+curl -H <span class="str">"Authorization: Bearer eyJhbGc..."</span> \
+     -H <span class="str">"X-Forwarded-For: 127.0.0.1"</span> \
+     https://api.site.com/admin
+  </div>
+
+  <h3>7. Quick status-code probe (scripting)</h3>
+  <div class="code">
+curl -s -o /dev/null -w <span class="str">"%{http_code}\n"</span> https://site.com/admin
+  </div>
+  <p style="color: var(--ink-dim); font-size: 13px; margin-top:6px;">Prints just the HTTP code. Perfect for bash loops that probe many URLs.</p>
+</section>
+
+<div class="divider">pentest uses</div>
+
+<section class="chapter">
+  <div class="chapter-num">Chapter 04 // curl for hacking</div>
+  <h2><span class="emoji">🥷</span> Why every pentester lives in curl</h2>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <h4>🎯 <span class="term" data-term="sql-injection">SQLi</span> testing</h4>
+      <p>Craft exact payloads with <code class="inline">--data-urlencode</code> — no browser auto-encoding weirdness. Reproduce findings with one line.</p>
+    </div>
+    <div class="card">
+      <h4>🔀 Header injection + spoofing</h4>
+      <p>Set any <code class="inline">Host</code>, <code class="inline">X-Forwarded-For</code>, <code class="inline">Referer</code>, <code class="inline">User-Agent</code>. Test auth bypasses, cache poisoning, SSRF.</p>
+    </div>
+    <div class="card">
+      <h4>🍪 Session replay</h4>
+      <p>Copy a real browser cookie, paste into <code class="inline">-H "Cookie: ..."</code>, replay any request as that user.</p>
+    </div>
+    <div class="card">
+      <h4>🔁 Bulk probing</h4>
+      <p>Bash loops + curl = fast enumeration: test 100 IDs in a loop looking for <span class="term" data-term="idor">IDOR</span>, count columns for a <span class="term" data-term="union-attack">UNION attack</span>, brute-force directories.</p>
+    </div>
+  </div>
+
+  <div class="brain-power">
+    <div class="label">🧠 Brain Power</div>
+    <div class="question">You send a curl POST to a login form with the correct credentials. Response is 302 redirecting to <code class="inline">/dashboard</code>. You curl <code class="inline">/dashboard</code> — get 401 Unauthorized. Why?</div>
+    <button class="reveal-btn" onclick="toggleAnswer(this)">Reveal answer</button>
+    <div class="answer">
+      <p>You forgot the session cookie. The login response set a <code class="inline">Set-Cookie:</code> header, but your next curl call didn't send it back. Two fixes:</p>
+      <p>① Use <code class="inline">-c cookies.txt</code> on the login request + <code class="inline">-b cookies.txt</code> on subsequent requests.<br>
+         ② Use <code class="inline">-L</code> on the login request to auto-follow the redirect (curl maintains cookies across a single invocation's redirect chain).</p>
+    </div>
+  </div>
+</section>
+
+<div class="divider">quiz</div>
+
+<section class="chapter">
+  <div class="quiz">
+    <h4>🎯 Quick Check</h4>
+    <div class="q">Which flag tells curl to include response headers in the output (useful for checking Set-Cookie or redirect Location)?</div>
+    <div class="options">
+      <div class="opt" onclick="quizAnswer(this, false)">-v</div>
+      <div class="opt" onclick="quizAnswer(this, true)">-i</div>
+      <div class="opt" onclick="quizAnswer(this, false)">-H</div>
+      <div class="opt" onclick="quizAnswer(this, false)">-X</div>
+    </div>
+    <div class="feedback"></div>
+  </div>
+</section>
+
+<section class="chapter">
+  <div class="related-terms">
+    <h4>🔗 Related in the vault</h4>
+    <div class="tags">
+      <a href="wget.html">🌐 wget</a>
+      <a href="sql-comment.html">💬 SQL Comment</a>
+      <a href="union-attack.html">🧱 UNION Attack</a>
+      <a href="../labs/portswigger/sql-injection/index.html">💉 SQLi Lab Track</a>
+      <a href="../topics/web/sql-injection/index.html">💉 SQL Injection topic</a>
+    </div>
+  </div>
+</section>
+
+<footer class="site-foot">
+  <p class="coffee-line">One request. Zero GUI. Infinite control. ☕</p>
+</footer>
+
+<script src="../assets/glossary.js"></script>
+<script src="../assets/app.js"></script>
+</body>
+</html>

@@ -18,6 +18,7 @@
     <a href="index.html#topics-web">Topics</a>
     <a href="glossary/index.html">Glossary</a>
     <a href="tryhackme/index.html">THM</a>
+    <a href="labs/portswigger/index.html">Labs</a>
   </nav>
   <div class="search-wrap">
     <input type="text" class="search" placeholder="Search (press /)..." />
@@ -33,8 +34,9 @@
     <p class="subtitle">Built for the path to becoming a <strong style="color: var(--accent);">sick web app pentester</strong>.<br>Bug bounties are the mission. Side quests welcome.</p>
     <div class="tagline">"if it's not interactive, it doesn't count."</div>
     <div style="margin-top: 24px; display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
-      <a href="topics/web/sql-injection/index.html" class="cta-btn">Jump into SQLi 🚀</a>
-      <a href="glossary/index.html" class="cta-btn ghost">Browse Glossary 📖</a>
+      <a href="labs/portswigger/index.html" class="cta-btn">Start PortSwigger Labs 🧪</a>
+      <a href="topics/web/sql-injection/index.html" class="cta-btn ghost">SQLi Theory 💉</a>
+      <a href="glossary/index.html" class="cta-btn ghost">Glossary 📖</a>
     </div>
   </div>
 </section>
@@ -109,6 +111,19 @@
   <div id="thmPreview"></div>
   <div style="text-align: center; margin-top: 20px;">
     <a href="tryhackme/index.html" class="cta-btn ghost">Open THM Hub →</a>
+  </div>
+</section>
+
+<div class="divider">guided labs</div>
+
+<!-- LABS SECTION -->
+<section class="chapter" id="labs-home">
+  <div class="chapter-num">Labs // 🧪 FreeCodeCamp-for-pentesting</div>
+  <h2>🧪 Guided lab walkthroughs</h2>
+  <p class="lead">PortSwigger labs rebuilt as <strong>linear, step-by-step walkthroughs</strong>. No Burp Suite. Just curl + your browser. ADHD-friendly pacing.</p>
+  <div id="labsPreview"></div>
+  <div style="text-align: center; margin-top: 20px;">
+    <a href="labs/portswigger/index.html" class="cta-btn ghost">Open Labs Hub →</a>
   </div>
 </section>
 
@@ -215,6 +230,39 @@
     }).join('');
   })();
 
+  // Labs preview — show platforms with their latest tracks + labs
+  (function () {
+    const container = document.getElementById('labsPreview');
+    const LABS = window.SITE_LABS || { platforms: [] };
+    container.innerHTML = LABS.platforms.map(plat => {
+      const trackCount = (plat.tracks || []).length;
+      const labCount = plat.tracks.reduce((n, t) => n + (t.labs || []).length, 0);
+      const preview = trackCount === 0
+        ? `<p style="color: var(--ink-dim); font-size: 0.95rem; margin-top: 8px;">No tracks built yet.</p>`
+        : `<div class="grid cols-3" style="margin-top: 14px;">${
+            plat.tracks.slice(0, 3).map(t => {
+              const first = (t.labs && t.labs[0]) || null;
+              const href = first ? first.path : t.path;
+              return `
+                <a class="card is-link" href="${href}">
+                  <h4>${t.icon || '🧪'} ${t.name}</h4>
+                  <p style="font-size: 13px;">${t.blurb}</p>
+                  <p style="font-size: 11px; color: var(--accent); font-family: var(--mono); margin-top:6px;">${(t.labs||[]).length} labs · start here →</p>
+                </a>`;
+            }).join('')
+          }</div>`;
+      return `
+        <div class="card" style="margin-bottom: 20px; padding: 24px;">
+          <div style="display:flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+            <h4 style="margin-bottom: 0; font-size: 1.2rem;">${plat.icon} ${plat.name}</h4>
+            <span style="font-family: var(--mono); font-size: 12px; color: var(--ink-mute);">${labCount} lab${labCount === 1 ? '' : 's'} across ${trackCount} track${trackCount === 1 ? '' : 's'}</span>
+          </div>
+          <p style="color: var(--ink-dim); font-size: 0.95rem; margin-top: 4px;">${plat.blurb}</p>
+          ${preview}
+        </div>`;
+    }).join('');
+  })();
+
   // Recently viewed
   (function () {
     const grid = document.getElementById('recentGrid');
@@ -232,6 +280,17 @@
     (window.SITE_THM?.paths || []).forEach(p => {
       (p.rooms || []).forEach(r => { thmBySlug['thm-' + r.slug] = { r, pathName: p.name }; });
     });
+    // Flatten labs: data-page-slug="lab-ps-sqli-01" etc., so we match on path instead.
+    const labsBySlug = {};
+    (window.SITE_LABS?.platforms || []).forEach(plat => {
+      (plat.tracks || []).forEach(tr => {
+        (tr.labs || []).forEach(lab => {
+          // Common slug patterns the pages use
+          labsBySlug['lab-' + plat.slug + '-' + tr.slug.replace(/-injection$/, '-sqli') + '-' + lab.slug.split('-')[0]] = { lab, plat, tr };
+          labsBySlug['lab-ps-sqli-' + lab.slug.split('-')[0]] = { lab, plat, tr }; // explicit form
+        });
+      });
+    });
     grid.innerHTML = visited.map(([slug, ts]) => {
       if (topicsBySlug[slug]) {
         const t = topicsBySlug[slug];
@@ -245,6 +304,13 @@
         return `<a class="card is-link" href="${r.path}">
           <h4>${r.icon || '🎯'} ${r.name}</h4>
           <p style="font-size: 12px;">THM · ${pathName} · ${new Date(ts).toLocaleString()}</p>
+        </a>`;
+      }
+      if (labsBySlug[slug]) {
+        const { lab, plat, tr } = labsBySlug[slug];
+        return `<a class="card is-link" href="${lab.path}">
+          <h4>🧪 ${lab.name}</h4>
+          <p style="font-size: 12px;">Lab · ${plat.name} · ${tr.name} · ${new Date(ts).toLocaleString()}</p>
         </a>`;
       }
       if (G[slug]) {
