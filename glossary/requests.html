@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>requests (Python) — The HTTP Library ☕</title>
+<link rel="stylesheet" href="../assets/styles.css" />
+</head>
+<body data-page-slug="requests">
+
+<div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
+
+<div class="topbar">
+  <a class="logo" href="../index.html">☕ CYBERSEC.VAULT</a>
+  <nav>
+    <a href="../index.html">Home</a>
+    <a href="../index.html#topics-web">Topics</a>
+    <a href="../index.html#topics-python">Python</a>
+    <a href="index.html" class="active">Glossary</a>
+    <a href="../tryhackme/index.html">THM</a>
+  </nav>
+  <div class="search-wrap">
+    <input type="text" class="search" placeholder="Search (press /)..." />
+    <div class="search-results"></div>
+  </div>
+</div>
+
+<div class="breadcrumb">
+  <a href="../index.html">Home</a>
+  <span class="sep">›</span>
+  <a href="index.html">Glossary</a>
+  <span class="sep">›</span>
+  <span>requests</span>
+</div>
+
+<section class="hero" style="min-height: 45vh;">
+  <div class="hero-content">
+    <span class="coffee-badge">📖 glossary · python · the scraper's best friend</span>
+    <h1>requests 🌐</h1>
+    <p class="subtitle">The Python library that turns <em>"talk to a website"</em> into a single line of code.<br>If you write one scraper, you'll type <code class="inline">import requests</code> a thousand times.</p>
+    <div class="tagline">"HTTP for humans."</div>
+  </div>
+</section>
+
+<section class="chapter">
+  <div class="chapter-num">Chapter 01 // Definition</div>
+  <h2><span class="emoji">📖</span> What is requests?</h2>
+  <p class="lead">A third-party Python library that makes HTTP calls stupid-easy. Not built into Python — you pip-install it.</p>
+
+  <div class="paper">
+    <h4>📝 Phone call analogy</h4>
+    <p>Making an HTTP request manually is like building a telephone from wire and a battery just to make a call. <code class="inline">requests</code> is a phone with a dial pad.</p>
+    <p><span class="highlight">You tell it who to call (URL) and what to say (headers/data) — it handles every ugly detail underneath.</span></p>
+  </div>
+
+  <div class="code safe">
+<span class="kw">import</span> requests
+
+r = requests.get(<span class="str">"https://textilepages.com/textile-companies"</span>)
+<span class="kw">print</span>(r.status_code)   <span class="com"># 200</span>
+<span class="kw">print</span>(<span class="kw">len</span>(r.text))      <span class="com"># 145703</span>
+  </div>
+</section>
+
+<div class="divider">why it matters</div>
+
+<section class="chapter">
+  <div class="chapter-num">Chapter 02 // Why it matters</div>
+  <h2><span class="emoji">💥</span> Why pros reach for it first</h2>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <h4>🐍 Beautifully Pythonic</h4>
+      <p>Everything is a method or attribute — no callbacks, no weird async unless you want it. <code class="inline">r.text</code>, <code class="inline">r.json()</code>, <code class="inline">r.status_code</code>. Done.</p>
+    </div>
+    <div class="card">
+      <h4>🍪 Sessions &amp; cookies</h4>
+      <p><code class="inline">requests.Session()</code> persists cookies across calls — crucial for sites behind login walls or CSRF tokens.</p>
+    </div>
+    <div class="card">
+      <h4>🪪 Custom headers trivial</h4>
+      <p>Pass a dict. Rotate User-Agents, add Authorization bearer tokens, set Referer headers. Any HTTP trick fits in one line.</p>
+    </div>
+    <div class="card">
+      <h4>🌐 Universal</h4>
+      <p>The same library works for scraping, for calling REST APIs, for cybersec tools (recon scanners, custom brute-forcers, SSRF payload testers). One skill, many paychecks.</p>
+    </div>
+  </div>
+</section>
+
+<div class="divider">the 5 moves</div>
+
+<section class="chapter">
+  <div class="chapter-num">Chapter 03 // The 5 moves you'll use forever</div>
+  <h2><span class="emoji">🎯</span> Cheat sheet</h2>
+
+  <div class="code">
+<span class="com"># 1. Simple GET</span>
+r = requests.get(<span class="str">"https://example.com"</span>)
+
+<span class="com"># 2. GET with headers (User-Agent, Auth, etc.)</span>
+headers = {<span class="str">"User-Agent"</span>: <span class="str">"Mozilla/5.0 ..."</span>}
+r = requests.get(url, headers=headers)
+
+<span class="com"># 3. GET with query parameters  →  example.com/search?q=python&amp;page=2</span>
+r = requests.get(<span class="str">"https://example.com/search"</span>, params={<span class="str">"q"</span>: <span class="str">"python"</span>, <span class="str">"page"</span>: <span class="str">2</span>})
+
+<span class="com"># 4. POST with form data (login forms, submissions)</span>
+r = requests.post(url, data={<span class="str">"username"</span>: <span class="str">"admin"</span>, <span class="str">"password"</span>: <span class="str">"hunter2"</span>})
+
+<span class="com"># 5. Session (keeps cookies between calls — for logins, multi-step flows)</span>
+s = requests.Session()
+s.post(login_url, data={<span class="str">"u"</span>: <span class="str">"a"</span>, <span class="str">"p"</span>: <span class="str">"b"</span>})
+r = s.get(protected_url)   <span class="com"># session cookie sent automatically</span>
+  </div>
+</section>
+
+<div class="divider">gotchas</div>
+
+<section class="chapter">
+  <div class="chapter-num">Chapter 04 // Stuff that bites you</div>
+  <h2><span class="emoji">⚠️</span> Gotchas</h2>
+
+  <ul>
+    <li>Default UA is <code class="inline">python-requests/x.x.x</code> — sites see that and say "bot." Always override with a realistic <span class="term" data-term="user-agent">User-Agent</span>.</li>
+    <li>No timeout by default → your script can hang forever. Always: <code class="inline">requests.get(url, timeout=10)</code>.</li>
+    <li><code class="inline">r.text</code> vs <code class="inline">r.content</code>: text is decoded to string (good for HTML), content is raw bytes (good for binary — images, PDFs).</li>
+    <li>For JSON APIs, use <code class="inline">r.json()</code> — returns a dict directly, no manual parsing.</li>
+    <li>Not built-in. You MUST <code class="inline">pip install requests</code> inside your active <span class="term" data-term="venv">venv</span>.</li>
+  </ul>
+
+  <div class="quiz">
+    <h4>🎯 Quick Check</h4>
+    <div class="q">Your script calls <code class="inline">requests.get("https://api.example.com/data")</code> — how do you check if the call succeeded before parsing?</div>
+    <div class="options">
+      <div class="opt" onclick="quizAnswer(this, false)">Check if <code class="inline">r.text</code> is empty.</div>
+      <div class="opt" onclick="quizAnswer(this, true)">Check <code class="inline">r.status_code == 200</code> (or use <code class="inline">r.raise_for_status()</code>).</div>
+      <div class="opt" onclick="quizAnswer(this, false)">Time the call with a stopwatch.</div>
+      <div class="opt" onclick="quizAnswer(this, false)">Run it twice and compare.</div>
+    </div>
+    <div class="feedback"></div>
+  </div>
+</section>
+
+<section class="chapter">
+  <div class="related-terms">
+    <h4>🔗 Related in the vault</h4>
+    <div class="tags">
+      <a href="pip.html">📥 pip</a>
+      <a href="venv.html">📦 venv</a>
+      <a href="http-request.html">📨 HTTP Request</a>
+      <a href="http-status-code.html">🚦 HTTP Status Code</a>
+      <a href="user-agent.html">🪪 User-Agent</a>
+      <a href="../topics/python/textile-scraper/index.html">🧵 Textile Scraper (project)</a>
+    </div>
+  </div>
+</section>
+
+<footer class="site-foot">
+  <p class="coffee-line">HTTP for humans. ☕</p>
+</footer>
+
+<script src="../assets/glossary.js"></script>
+<script src="../assets/app.js"></script>
+</body>
+</html>

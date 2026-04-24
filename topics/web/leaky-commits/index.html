@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Leaky Commits — What Else Leaks Besides API Keys ☕</title>
+<link rel="stylesheet" href="../../../assets/styles.css" />
+</head>
+<body data-page-slug="leaky-commits">
+
+<div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
+
+<div class="topbar">
+  <a class="logo" href="../../../index.html">☕ CYBERSEC.VAULT</a>
+  <nav>
+    <a href="../../../index.html">Home</a>
+    <a href="../../../index.html#topics-web" class="active">Topics</a>
+    <a href="../../../glossary/index.html">Glossary</a>
+    <a href="../../../tryhackme/index.html">THM</a>
+  </nav>
+  <div class="search-wrap">
+    <input type="text" class="search" placeholder="Search (press /)..." />
+    <div class="search-results"></div>
+  </div>
+</div>
+
+<div class="breadcrumb">
+  <a href="../../../index.html">Home</a>
+  <span class="sep">›</span>
+  <a href="../../../index.html#topics-web">Topics</a>
+  <span class="sep">›</span>
+  <span>Leaky Commits</span>
+</div>
+
+<!-- ===================== HERO ===================== -->
+<section class="hero" id="hero">
+  <div class="hero-content">
+    <span class="coffee-badge">☕ the stuff your scanner isn't catching</span>
+    <h1>Leaky Commits 🗑️</h1>
+    <p class="subtitle">You're hunting API keys. Good. But attackers hunt <strong>everything else too</strong>.<br>Private keys. Database URLs. Terraform state. Internal hostnames. Schemas. Screenshots.</p>
+    <div class="tagline">"An API key is a door. A leaked <code style="background:rgba(255,255,255,0.15);padding:2px 6px;border-radius:4px;">terraform.tfstate</code> is a floor plan of the entire building."</div>
+    <br>
+    <button class="cta-btn" onclick="document.getElementById('what').scrollIntoView()">SHOW ME THE LOOT 🚀</button>
+    <p style="margin-top: 26px; font-size: 12px; color: var(--ink-dim);">
+      💡 Blue dashed terms like <span class="term" data-term="bug-bounty">bug bounty</span> → hover for preview, click for full page.
+    </p>
+  </div>
+</section>
+
+<!-- ===================== CHAPTER 1: WHAT IS IT ===================== -->
+<section class="chapter" id="what">
+  <div class="chapter-num">Chapter 01 // The Mental Shift</div>
+  <h2><span class="emoji">🎯</span> The burglar-and-recycling-bin analogy</h2>
+  <p class="lead">Picture a burglar casing a house. You think they want the safe, right? The cash? The jewelry?</p>
+
+  <div class="paper">
+    <h4>📝 What a smart burglar ACTUALLY wants</h4>
+    <p>They want the <span class="highlight">recycling bin</span>.</p>
+    <p>Why? Because inside it they find:</p>
+    <p>📬 Envelopes with the homeowner's name (social engineering target)<br>
+    🏦 Bank statements showing balance + branch<br>
+    📦 Amazon boxes showing what tech is inside<br>
+    💊 Medicine packaging revealing a health condition (blackmail angle)<br>
+    ✈️ Boarding pass stubs (they know when you'll be away)</p>
+    <p>None of it is "valuable" on its own. <strong>All of it together is a heist plan.</strong></p>
+  </div>
+
+  <p>GitHub leaks work the same way. Your scanner is looking for the "cash" (API keys). But skilled attackers <em>also</em> want the envelopes — the config files, schemas, hostnames, screenshots, commit messages. Any one of those is a shortcut.</p>
+
+  <div class="brain-power">
+    <div class="label">🧠 Brain Power</div>
+    <div class="question">You're an attacker. You can steal ONE of these two things. Which is more dangerous — a password to the admin panel, OR a complete database schema (table names, column names, relationships)?</div>
+    <button class="reveal-btn" onclick="toggleAnswer(this)">Reveal answer</button>
+    <div class="answer">
+      <p><strong>Trick question — the schema is usually more dangerous over time.</strong></p>
+      <p>A stolen password gets rotated within 24 hours once someone notices. One shot, one kill.</p>
+      <p>A leaked schema lets you craft surgical <span class="term" data-term="sql-injection">SQL injection</span> payloads against EVERY vulnerable input on the site, for YEARS. Even if they patch one SQLi, you know exactly what to dump next time. The schema itself is rarely considered "sensitive" and almost never rotated.</p>
+      <p>👉 Attackers play the long game. Leaks that <em>describe the system</em> are often worth more than leaks that <em>unlock the system</em>.</p>
+    </div>
+  </div>
+</section>
+
+<div class="divider">the 7 tiers of leak loot</div>
+
+<!-- ===================== CHAPTER 2: THE 7 TIERS ===================== -->
+<section class="chapter" id="tiers">
+  <div class="chapter-num">Chapter 02 // The Leak Tiers</div>
+  <h2><span class="emoji">🗂️</span> What actually gets leaked</h2>
+  <p class="lead">Think of leaks as a menu — 7 categories, ranked by how often scanners MISS them.</p>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <h4>🔑 Tier 1 — API Keys & Tokens</h4>
+      <p><code class="inline">sk_live_</code>, <code class="inline">AIza</code>, <code class="inline">AKIA</code>... You already hunt these. <strong>Scanners catch 90%+</strong>.</p>
+    </div>
+    <div class="card">
+      <h4>🗝️ Tier 2 — Non-key Credentials</h4>
+      <p>SSH private keys, DB connection strings, <span class="term" data-term="kubeconfig">kubeconfigs</span>, cloud JSON service accounts. <strong>Catch rate: ~40%</strong>.</p>
+    </div>
+    <div class="card">
+      <h4>🗺️ Tier 3 — Infrastructure Blueprints</h4>
+      <p><span class="term" data-term="tfstate">terraform.tfstate</span>, <span class="term" data-term="env-file">.env files</span>, Ansible inventories, CI/CD configs. <strong>Catch rate: ~10%</strong>. Attackers LOVE this tier.</p>
+    </div>
+    <div class="card">
+      <h4>💾 Tier 4 — Data Leaks</h4>
+      <p>Customer CSVs, test fixtures with real emails, screenshots of admin panels, database dumps. <strong>Catch rate: almost 0%</strong>.</p>
+    </div>
+    <div class="card">
+      <h4>🧬 Tier 5 — Intellectual Property</h4>
+      <p>Source code, DB schemas, algorithms, API docs, Postman collections. <strong>Not "credentials" but gold for targeted attacks</strong>.</p>
+    </div>
+    <div class="card">
+      <h4>😅 Tier 6 — Context Leaks</h4>
+      <p>Commit messages spilling secrets, <code class="inline">.env.example</code> with real values, developer shell histories. <strong>Hilarious. Catastrophic.</strong></p>
+    </div>
+    <div class="card">
+      <h4>🎲 Tier 7 — Weird Stuff</h4>
+      <p>JWTs in tests, Android keystores, browser extension signing keys, VPN configs, OAuth client secrets. <strong>Rare but devastating.</strong></p>
+    </div>
+    <div class="card" style="background: rgba(0, 255, 170, 0.06); border-color: var(--accent);">
+      <h4>☕ The takeaway</h4>
+      <p>Tiers 1-2 are what your scanners find. Tiers 3-6 are where <strong>real pentest alpha</strong> lives.</p>
+    </div>
+  </div>
+</section>
+
+<div class="divider">hands on</div>
+
+<!-- ===================== CHAPTER 3: LEAK INSPECTOR PLAYGROUND ===================== -->
+<section class="chapter" id="try-it">
+  <div class="chapter-num">Chapter 03 // Hands on</div>
+  <h2><span class="emoji">🔬</span> The Leak Inspector</h2>
+  <p class="lead">Click a file type an attacker just found in some public GitHub repo. See what's inside, and what it means for the victim.</p>
+
+  <div class="playground">
+    <div class="playground-header">
+      <h4>🗂️ Pick the leak</h4>
+    </div>
+    <div class="preset-chips" style="margin-bottom: 18px;">
+      <span class="chip" onclick="showLeak('env')">📄 .env</span>
+      <span class="chip" onclick="showLeak('id_rsa')">🗝️ id_rsa</span>
+      <span class="chip" onclick="showLeak('tfstate')">🗺️ terraform.tfstate</span>
+      <span class="chip" onclick="showLeak('kubeconfig')">☸️ kubeconfig</span>
+      <span class="chip" onclick="showLeak('schema')">🧬 schema.sql</span>
+      <span class="chip" onclick="showLeak('bash_history')">📜 .bash_history</span>
+      <span class="chip" onclick="showLeak('screenshot')">📸 admin-screenshot.png</span>
+      <span class="chip evil" onclick="showLeak('commit_msg')">💬 commit message</span>
+    </div>
+
+    <div id="leakFilename" style="font-family: var(--mono); font-size: 12px; color: var(--ink-dim); margin-bottom: 8px;">👆 Pick one above to inspect it</div>
+
+    <div class="query-preview" id="leakContent" style="white-space: pre; overflow-x: auto; min-height: 140px;"></div>
+
+    <div class="result-box" id="leakVerdict" style="margin-top: 14px;"></div>
+  </div>
+</section>
+
+<div class="divider">real-world carnage</div>
+
+<!-- ===================== CHAPTER 4: REAL BREACHES ===================== -->
+<section class="chapter" id="breaches">
+  <div class="chapter-num">Chapter 04 // Receipts</div>
+  <h2><span class="emoji">🔥</span> This actually happens. A lot.</h2>
+  <p class="lead">Real breaches. Real companies. Real numbers. All traced back to "non-key" leaks on GitHub.</p>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <h4>🚗 Uber (2016)</h4>
+      <p>Engineer pushed code to a private GitHub repo with AWS credentials hardcoded. Attacker found it, pulled data for <strong>57 million users + 600,000 drivers</strong>.</p>
+      <p style="color: var(--ink-dim); font-size: 13px;">Uber paid the attackers $100K to stay quiet. FTC later fined them <strong>$148 million</strong>. The CSO was personally indicted.</p>
+    </div>
+    <div class="card">
+      <h4>🚙 Toyota (2022)</h4>
+      <p>Subcontractor pushed code to a <strong>public</strong> GitHub repo containing an access key to a customer data server. The repo sat public for <strong>FIVE YEARS</strong>.</p>
+      <p style="color: var(--ink-dim); font-size: 13px;">296,019 T-Connect customer records exposed — emails + customer management numbers.</p>
+    </div>
+    <div class="card">
+      <h4>⭐ Mercedes-Benz (2024)</h4>
+      <p>Employee accidentally published a GitHub token on GitHub. Researchers (RedHunt Labs) used it to access <strong>"unrestricted" internal source code</strong>, including blueprints, design docs, SSO + SSH keys, database connection strings, and cloud credentials.</p>
+      <p style="color: var(--ink-dim); font-size: 13px;">The token wasn't even the actual secret. It just unlocked the <em>store</em> of secrets.</p>
+    </div>
+    <div class="card">
+      <h4>🏛️ US Department of Defense (2023)</h4>
+      <p>Contractor's public Azure storage bucket was indexed for weeks containing <strong>3 TB of internal military emails</strong>, including ones with security clearance info.</p>
+      <p style="color: var(--ink-dim); font-size: 13px;">Not technically GitHub, but same root cause: "we didn't think anyone would look."</p>
+    </div>
+  </div>
+
+  <div class="callout">
+    <strong>☕ NetworkChuck Moment:</strong> Every one of these started with "oops" and ended with front-page news. Your responsible disclosure work — the thing you're already doing at 10K/month — <em>literally prevents these</em>. You're not just catching keys. You're catching <strong>the next headline</strong>.
+  </div>
+</section>
+
+<div class="divider">how to hunt it</div>
+
+<!-- ===================== CHAPTER 5: THE HUNTING QUERIES ===================== -->
+<section class="chapter" id="hunt">
+  <div class="chapter-num">Chapter 05 // Hunt Like a Pro</div>
+  <h2><span class="emoji">🎯</span> GitHub queries that find gold</h2>
+  <p class="lead">Save these. Chain them with a target domain when you have one. Just run them raw when you're doing mass scanning.</p>
+
+  <h3>💼 The "credentials not-a-key" set</h3>
+  <div class="code">
+<span class="com">// SSH private keys — instant shell on someone's server</span>
+"BEGIN RSA PRIVATE KEY"
+"BEGIN OPENSSH PRIVATE KEY"
+filename:id_rsa
+
+<span class="com">// Database connection strings with passwords baked in</span>
+"jdbc:mysql://" password
+"mongodb+srv://" password
+"postgres://" password
+
+<span class="com">// Config files with secrets</span>
+filename:.env
+filename:.env.production
+filename:wp-config.php
+filename:database.yml password
+filename:web.config connectionString
+  </div>
+
+  <h3>🗺️ The "blueprint" set (Tier 3 gold)</h3>
+  <div class="code">
+<span class="com">// Terraform state = full infrastructure map</span>
+filename:terraform.tfstate
+filename:*.tfvars
+
+<span class="com">// Kubernetes cluster control</span>
+filename:kubeconfig
+"kubectl config" token
+
+<span class="com">// AWS credentials files</span>
+"aws_secret_access_key" filename:credentials
+filename:.aws/credentials
+
+<span class="com">// CI/CD configs revealing pipelines</span>
+filename:.gitlab-ci.yml password
+filename:Jenkinsfile credentials
+  </div>
+
+  <h3>💾 The "raw data" set (Tier 4)</h3>
+  <div class="code">
+<span class="com">// SQL dumps — yes, the entire database</span>
+extension:sql INSERT INTO users
+extension:sql "CREATE TABLE"
+
+<span class="com">// Customer data</span>
+filename:users.csv email
+filename:customers.xlsx
+
+<span class="com">// Editor swap files devs forget about</span>
+filename:.env.swp
+extension:bak password
+  </div>
+
+  <h3>🎯 The "target-first" combo (BEST for pentest)</h3>
+  <p>This is the killer pattern. <strong>Always pair the target with a leak type</strong>:</p>
+  <div class="code safe">
+<span class="com">// Example: client is tjwholesale.pk</span>
+"tjwholesale.pk" filename:.env
+"tjwholesale.pk" shpat_          <span class="com"># Shopify admin token</span>
+"tjwholesale.myshopify.com" api_key
+"tjameel@tjwholesale.pk"         <span class="com"># find their commits</span>
+  </div>
+
+  <div class="callout info">
+    <strong>💡 Pro tip:</strong> Document the queries that returned <strong>ZERO</strong> results too. When you hand a client a pentest report, "I checked these 20 things and found nothing" is more credible than "I didn't find anything." Evidence of absence ≠ absence of evidence.
+  </div>
+</section>
+
+<div class="divider">defense</div>
+
+<!-- ===================== CHAPTER 6: HOW TO PREVENT ===================== -->
+<section class="chapter" id="prevent">
+  <div class="chapter-num">Chapter 06 // The Fix</div>
+  <h2><span class="emoji">🛡️</span> How devs stop this</h2>
+
+  <h3>❌ Broken — the classic oops</h3>
+  <div class="code evil">
+<span class="com"># .env (committed to the repo by accident)</span>
+DATABASE_URL=postgres://admin:hunter2@prod-db.company.com:5432/users
+STRIPE_SECRET=sk_live_51abc...
+AWS_ACCESS_KEY_ID=AKIA...
+
+<span class="com"># .gitignore is empty, or this file isn't in it</span>
+  </div>
+
+  <h3>✅ Fixed — the one-line habit</h3>
+  <div class="code safe">
+<span class="com"># .gitignore — commit this file instead</span>
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+id_rsa*
+terraform.tfstate*
+.aws/
+kubeconfig
+*.sqlite
+*.db
+*.sql.backup
+.bash_history
+  </div>
+
+  <h3>✅ Better — pre-commit hooks</h3>
+  <p>Install <code class="inline">gitleaks</code> or <code class="inline">trufflehog</code> as a pre-commit hook. They block commits that contain secret-shaped content <em>before</em> they land on GitHub:</p>
+  <div class="code safe">
+<span class="com"># install pre-commit + gitleaks</span>
+pip install pre-commit
+brew install gitleaks   <span class="com"># or: go install github.com/gitleaks/gitleaks/v8@latest</span>
+
+<span class="com"># .pre-commit-config.yaml in the repo root</span>
+repos:
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.18.0
+    hooks:
+      - id: gitleaks
+
+<span class="com"># activate</span>
+pre-commit install
+  </div>
+
+  <h3>🚨 Already leaked? Here's the checklist</h3>
+  <div class="callout danger">
+    <strong>Deleting the file from the repo is NOT enough.</strong> Git history is forever. The attacker already cloned it. You must:
+    <ol style="margin-top: 10px; padding-left: 20px;">
+      <li><strong>Rotate the leaked credential immediately</strong> (new key, new password, revoke old)</li>
+      <li><strong>Rewrite git history</strong> with <code class="inline">git filter-repo</code> or BFG Repo-Cleaner</li>
+      <li><strong>Force push</strong> the rewritten history</li>
+      <li><strong>Contact GitHub Support</strong> to purge cached views of the old commit</li>
+      <li><strong>Review logs</strong> for any suspicious activity using the old credential</li>
+      <li><strong>Notify users</strong> if the leak exposed their data (PECA 2016 / GDPR / CCPA depending on jurisdiction)</li>
+    </ol>
+  </div>
+
+  <div class="quiz">
+    <h4>🎯 Quick Check</h4>
+    <div class="q">A developer accidentally committed a file called <code class="inline">terraform.tfstate</code> to a public GitHub repo. A scanner that ONLY looks for API key patterns will probably miss it. Why is it still dangerous?</div>
+    <div class="options">
+      <div class="opt" onclick="quizAnswer(this, false)">It isn't — tfstate files are just infrastructure configs, no secrets.</div>
+      <div class="opt" onclick="quizAnswer(this, true)">It's a full map of their infrastructure — IPs, resource names, sometimes plaintext secrets in outputs — letting an attacker target the real systems directly.</div>
+      <div class="opt" onclick="quizAnswer(this, false)">It's only dangerous if the developer also leaked an SSH key in the same commit.</div>
+      <div class="opt" onclick="quizAnswer(this, false)">Terraform encrypts tfstate by default, so it's safe.</div>
+    </div>
+    <div class="feedback"></div>
+  </div>
+</section>
+
+<!-- ===================== RELATED TERMS ===================== -->
+<section class="chapter">
+  <div class="related-terms">
+    <h4>🔗 Related in the vault</h4>
+    <div class="tags">
+      <a href="../../../glossary/env-file.html">📄 .env file</a>
+      <a href="../../../glossary/tfstate.html">🗺️ terraform.tfstate</a>
+      <a href="../../../glossary/kubeconfig.html">☸️ kubeconfig</a>
+      <a href="../../../glossary/ssh.html">🔐 SSH</a>
+      <a href="../../../glossary/bug-bounty.html">🐛 Bug Bounty</a>
+    </div>
+  </div>
+</section>
+
+<footer class="site-foot">
+  <p class="coffee-line">Scan wide. Hunt deep. The recycling bin always has better stuff than the safe. ☕</p>
+</footer>
+
+<!-- MANDATORY: shared scripts at the bottom, in this order -->
+<script src="../../../assets/glossary.js"></script>
+<script src="../../../assets/app.js"></script>
+<script>
+  /* =========================================================
+     LEAK INSPECTOR — per-page playground
+     ========================================================= */
+
+  const LEAKS = {
+    env: {
+      filename: ".env (committed by accident, 4KB)",
+      content:
+`DATABASE_URL=postgres://admin:Tr0ub4dor@prod-db-01.internal:5432/users
+REDIS_URL=redis://:cache_secret_2024@redis.internal:6379
+STRIPE_SECRET_KEY=sk_live_51HfXX...
+AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE
+AWS_SECRET_ACCESS_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+SMTP_PASSWORD=SuperSecret123
+DJANGO_SECRET_KEY=django-insecure-@+&$hy=...`,
+      verdict: `⚠️  <strong>CATASTROPHIC</strong> — 7 separate credentials in one file.<br>
+                Pivot chain: DB creds → dump all users. Stripe key → refund yourself $∞. AWS keys → spin up crypto miners on their bill. Django SECRET_KEY → forge any user's session cookie. SMTP → send phishing FROM their real email server.`
+    },
+    id_rsa: {
+      filename: "id_rsa (developer's SSH key, 1.7KB)",
+      content:
+`-----BEGIN OPENSSH PRIVATE KEY-----
+b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAABlwAAAAdzc2gtcn
+NhAAAAAwEAAQAAAYEA4X5rZW1vdGV4YW1wbGVfcHJpdmF0ZV9rZXlfY29udGVudF9wbGFj
+ZWhvbGRlcl9mb3JfZGVtb19vbmx5X3RoaXNfaXNfbm90X3JlYWwuLi4KAAABCQAAAQ...
+(... redacted ...)
+-----END OPENSSH PRIVATE KEY-----`,
+      verdict: `🗝️  <strong>INSTANT SHELL</strong>.<br>
+                If the matching .pub key is in any server's <code>~/.ssh/authorized_keys</code>, attacker logs in AS that developer. Bonus: check the repo for <code>~/.ssh/config</code> (lists which servers the key works on). SSH keys rarely have passphrases on dev machines.`
+    },
+    tfstate: {
+      filename: "terraform.tfstate (infra map, 2.3MB)",
+      content:
+`{
+  "version": 4,
+  "resources": [
+    {
+      "type": "aws_db_instance",
+      "name": "prod-customers",
+      "instances": [{
+        "attributes": {
+          "endpoint": "prod-customers.ab123xyz.us-east-1.rds.amazonaws.com:5432",
+          "master_username": "admin",
+          "master_password": "Pr0dDB2024!",     ← yes, plaintext
+          "publicly_accessible": false
+        }
+      }]
+    },
+    {
+      "type": "aws_s3_bucket",
+      "name": "user-uploads",
+      "instances": [{"attributes": {"bucket": "acme-user-uploads-prod"}}]
+    },
+    ... 847 more resources ...
+  ]
+}`,
+      verdict: `🗺️  <strong>THE ENTIRE BLUEPRINT</strong>.<br>
+                Every RDS endpoint. Every S3 bucket name. Every EC2 IP. Every IAM role. Sometimes plaintext passwords in outputs. Attacker now skips recon entirely and goes straight to the valuable resources. This is WHY the "backups" tier matters more than most people realize.`
+    },
+    kubeconfig: {
+      filename: "kubeconfig (Kubernetes cluster access, 5KB)",
+      content:
+`apiVersion: v1
+clusters:
+- cluster:
+    server: https://k8s-prod.acme.internal:6443
+    certificate-authority-data: LS0tLS1CRUdJTi...
+  name: prod-cluster
+users:
+- name: admin
+  user:
+    token: eyJhbGciOiJSUzI1NiIsImtpZCI6Ik...
+contexts:
+- context:
+    cluster: prod-cluster
+    user: admin
+  name: prod`,
+      verdict: `☸️  <strong>KUBERNETES GOD MODE</strong>.<br>
+                <code>kubectl --kubeconfig=leaked get pods -A</code> and you're reading every container's logs, env vars, secrets. Deploy your own pod. Mount host filesystems. Escape to the node. Steal every pod's service account. This one file = every app running on the cluster is yours.`
+    },
+    schema: {
+      filename: "schema.sql (database structure, 28KB)",
+      content:
+`CREATE TABLE users (
+    id SERIAL PRIMARY KEY,
+    email VARCHAR(255) UNIQUE,
+    password_hash VARCHAR(60),        -- bcrypt
+    totp_secret VARCHAR(32),          -- 2FA seed
+    failed_login_count INT DEFAULT 0,
+    ssn_encrypted BYTEA,              -- hmm
+    is_admin BOOLEAN DEFAULT FALSE
+);
+CREATE TABLE payment_methods (
+    id SERIAL PRIMARY KEY,
+    user_id INT REFERENCES users(id),
+    card_last4 VARCHAR(4),
+    card_token VARCHAR(255),          -- Stripe token
+    billing_zip VARCHAR(10)
+);
+CREATE TABLE api_keys (
+    id SERIAL PRIMARY KEY,
+    user_id INT REFERENCES users(id),
+    key_hash VARCHAR(64),
+    permissions JSONB
+);`,
+      verdict: `🧬  <strong>LONG-GAME GOLD</strong>.<br>
+                The attacker doesn't need this to work <em>right now</em>. They save it. When they find ANY SQL injection on this site later, they skip enumeration and jump straight to <code>UNION SELECT email, password_hash FROM users WHERE is_admin=true</code>. Schema leaks age like wine — passwords rotate, schemas don't.`
+    },
+    bash_history: {
+      filename: ".bash_history (dev's shell history, accidentally committed)",
+      content:
+`ssh deploy@prod-web-01.internal
+scp backup.sql.gz deploy@prod-db-01.internal:/tmp/
+mysql -h prod-db-01.internal -u root -pR00tPassword2023 customers
+curl -H "Authorization: Bearer shpat_abc123def456..." https://tjwholesale.myshopify.com/admin/api/
+aws s3 sync ./secrets s3://acme-internal-backups/
+kubectl --kubeconfig=~/prod-kube get pods
+vim ~/.env.production
+git push origin main --force`,
+      verdict: `📜  <strong>EVERY COMMAND THEY EVER TYPED</strong>.<br>
+                Internal hostnames. Service accounts. A plaintext DB password (<code>-pR00tPassword2023</code>). A Shopify admin token. An S3 bucket name for backups. A kubeconfig location. This ONE file is a full reconnaissance report the attacker didn't have to do themselves.`
+    },
+    screenshot: {
+      filename: "admin-dashboard.png (screenshot in repo, 340KB)",
+      content:
+`┌────────────────────────────────────────────────────────┐
+│  ACME ADMIN DASHBOARD   user: admin@acme.com   [⎋]    │
+├────────────────────────────────────────────────────────┤
+│  Total Users: 2,847,013                                │
+│  Revenue Today: $1,247,552                             │
+│                                                        │
+│  [ User Search ]  [ Refund Tool ]  [ Impersonate ]    │
+│  [ Export All   ]  [ Feature Flags ]  [ Audit Log ]   │
+│                                                        │
+│  Dev Login URL: https://internal.acme.com/admin       │
+│  Staging URL:   https://staging-admin.acme.dev        │
+│  Docs Wiki:     https://wiki.acme.internal/admin     │
+└────────────────────────────────────────────────────────┘`,
+      verdict: `📸  <strong>RECON IN ONE IMAGE</strong>.<br>
+                Exposes: the admin email format, internal hostnames, existence of an "impersonate" feature (account takeover gold), staging URL (probably weaker security), internal wiki URL. Devs paste these in README.md for "documentation" all the time. Image OCR bots find them at scale.`
+    },
+    commit_msg: {
+      filename: "git log output (from any clone of the repo)",
+      content:
+`commit 7f8a9b1c (HEAD -> main)
+Author: Bob Dev <bob@acme.com>
+Date:   Tue Apr 15 2026
+
+    temp fix for prod, real password is still hunter2
+    will move to vault next sprint
+
+commit 2d3e4f5a
+Author: Bob Dev <bob@acme.com>
+
+    removing admin backdoor before demo, will re-add after
+
+commit 9a8b7c6d
+Author: Bob Dev <bob@acme.com>
+
+    TODO: ask john why the prod DB password is in code`,
+      verdict: `💬  <strong>THE CODE IS FINE. THE MESSAGES ARE THE LEAK.</strong><br>
+                Commit 1: confirms the password (<code>hunter2</code>) is still valid in prod. Commit 2: admits an admin backdoor exists. Commit 3: confirms hardcoded DB creds somewhere. Bob might have deleted the actual secrets from the code, but <code>git log</code> kept his confession.`
+    }
+  };
+
+  function showLeak(key) {
+    const leak = LEAKS[key];
+    if (!leak) return;
+    document.getElementById('leakFilename').textContent = '📂 ' + leak.filename;
+    document.getElementById('leakContent').textContent = leak.content;
+    document.getElementById('leakVerdict').innerHTML = leak.verdict;
+  }
+</script>
+</body>
+</html>

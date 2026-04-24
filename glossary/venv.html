@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>venv — Virtual Environment ☕</title>
+<link rel="stylesheet" href="../assets/styles.css" />
+</head>
+<body data-page-slug="venv">
+
+<div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
+
+<div class="topbar">
+  <a class="logo" href="../index.html">☕ CYBERSEC.VAULT</a>
+  <nav>
+    <a href="../index.html">Home</a>
+    <a href="../index.html#topics-web">Topics</a>
+    <a href="../index.html#topics-python">Python</a>
+    <a href="index.html" class="active">Glossary</a>
+    <a href="../tryhackme/index.html">THM</a>
+  </nav>
+  <div class="search-wrap">
+    <input type="text" class="search" placeholder="Search (press /)..." />
+    <div class="search-results"></div>
+  </div>
+</div>
+
+<div class="breadcrumb">
+  <a href="../index.html">Home</a>
+  <span class="sep">›</span>
+  <a href="index.html">Glossary</a>
+  <span class="sep">›</span>
+  <span>venv</span>
+</div>
+
+<section class="hero" style="min-height: 45vh;">
+  <div class="hero-content">
+    <span class="coffee-badge">📖 glossary · python · project hygiene</span>
+    <h1>venv 📦</h1>
+    <p class="subtitle">A tiny private Python kitchen for each project.<br>Without it, your laptop becomes a junk drawer of conflicting library versions.</p>
+    <div class="tagline">"One project, one kitchen."</div>
+  </div>
+</section>
+
+<section class="chapter">
+  <div class="chapter-num">Chapter 01 // Definition</div>
+  <h2><span class="emoji">📖</span> What is venv?</h2>
+  <p class="lead">Python's built-in module for creating an isolated Python environment — a folder that contains its own Python interpreter copy and its own installed packages.</p>
+
+  <div class="paper">
+    <h4>📝 The kitchen analogy</h4>
+    <p>Imagine 10 chefs sharing one kitchen. Every chef needs a different set of knives, a different fridge temperature, a different oven settings. <strong>Chaos.</strong></p>
+    <p>A <code class="inline">venv</code> gives each chef (each project) their own kitchen. Install whatever libraries at whatever versions you need. None of it leaks into your other projects or your OS.</p>
+  </div>
+
+  <div class="code">
+<span class="com"># Create a venv called "venv" inside the current folder</span>
+python3 -m venv venv
+
+<span class="com"># Activate it (Linux/macOS)</span>
+<span class="kw">source</span> venv/bin/activate
+
+<span class="com"># Your prompt now shows (venv) — kitchen lights are on</span>
+
+<span class="com"># Install libraries — they go INSIDE this venv only</span>
+pip install requests beautifulsoup4
+
+<span class="com"># Leave the kitchen when you're done</span>
+deactivate
+  </div>
+</section>
+
+<div class="divider">why it matters</div>
+
+<section class="chapter">
+  <div class="chapter-num">Chapter 02 // Why you always do this</div>
+  <h2><span class="emoji">💥</span> The mess without venv</h2>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <h4>💣 Version hell</h4>
+      <p>Project A needs requests 2.25. Project B updates to requests 2.31 and breaks something in A. You spend Saturday debugging. All because of one <code class="inline">pip install</code>.</p>
+    </div>
+    <div class="card">
+      <h4>🧹 Clean deletes</h4>
+      <p>Done with a project? Delete its folder. Everything it ever installed goes with it. No orphan libraries, no system cruft.</p>
+    </div>
+    <div class="card">
+      <h4>📦 Shareable deps</h4>
+      <p><code class="inline">pip freeze &gt; requirements.txt</code> inside a venv produces a clean list of exact versions. Ship that file, anyone can recreate your environment.</p>
+    </div>
+    <div class="card">
+      <h4>🛡️ Ubuntu now forces it</h4>
+      <p>Modern Debian/Ubuntu blocks global <code class="inline">pip install</code> by default (<code class="inline">externally-managed-environment</code>). This is Ubuntu saving you from yourself. Use venv.</p>
+    </div>
+  </div>
+</section>
+
+<section class="chapter">
+  <div class="chapter-num">Chapter 03 // Quick commands</div>
+  <h2><span class="emoji">🎯</span> The 5 you'll actually use</h2>
+
+  <div class="code">
+<span class="com"># Create</span>
+python3 -m venv venv
+
+<span class="com"># Activate (Linux/macOS)</span>
+<span class="kw">source</span> venv/bin/activate
+
+<span class="com"># Activate (Windows PowerShell)</span>
+venv\Scripts\Activate.ps1
+
+<span class="com"># See what's installed in the current venv</span>
+pip list
+
+<span class="com"># Freeze dependencies to a file (for sharing / git)</span>
+pip freeze &gt; requirements.txt
+  </div>
+
+  <div class="quiz">
+    <h4>🎯 Quick Check</h4>
+    <div class="q">You run <code class="inline">pip install requests</code> but forget to activate your venv first. What's the cleanest fix?</div>
+    <div class="options">
+      <div class="opt" onclick="quizAnswer(this, false)">Restart your computer.</div>
+      <div class="opt" onclick="quizAnswer(this, true)">Activate the venv (<code class="inline">source venv/bin/activate</code>), then run <code class="inline">pip install requests</code> again. The install into the venv overrides nothing, and optionally <code class="inline">pip uninstall requests</code> globally to clean up.</div>
+      <div class="opt" onclick="quizAnswer(this, false)">Delete Python and reinstall.</div>
+      <div class="opt" onclick="quizAnswer(this, false)">Use sudo.</div>
+    </div>
+    <div class="feedback"></div>
+  </div>
+</section>
+
+<section class="chapter">
+  <div class="related-terms">
+    <h4>🔗 Related in the vault</h4>
+    <div class="tags">
+      <a href="pip.html">📥 pip</a>
+      <a href="requests.html">🌐 requests</a>
+      <a href="../topics/python/textile-scraper/index.html">🧵 Textile Scraper (project)</a>
+    </div>
+  </div>
+</section>
+
+<footer class="site-foot">
+  <p class="coffee-line">One project, one kitchen. ☕</p>
+</footer>
+
+<script src="../assets/glossary.js"></script>
+<script src="../assets/app.js"></script>
+</body>
+</html>

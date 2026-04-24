@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Ch 01 — Recon: Know Your Prey ☕</title>
+<link rel="stylesheet" href="../../../assets/styles.css" />
+</head>
+<body data-page-slug="textile-scraper-ch01">
+
+<div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
+
+<div class="topbar">
+  <a class="logo" href="../../../index.html">☕ CYBERSEC.VAULT</a>
+  <nav>
+    <a href="../../../index.html">Home</a>
+    <a href="../../../index.html#topics-web">Topics</a>
+    <a href="../../../index.html#topics-python" class="active">Python</a>
+    <a href="../../../glossary/index.html">Glossary</a>
+    <a href="../../../tryhackme/index.html">THM</a>
+  </nav>
+  <div class="search-wrap">
+    <input type="text" class="search" placeholder="Search (press /)..." />
+    <div class="search-results"></div>
+  </div>
+</div>
+
+<div class="breadcrumb">
+  <a href="../../../index.html">Home</a>
+  <span class="sep">›</span>
+  <a href="../../../index.html#topics-python">Python</a>
+  <span class="sep">›</span>
+  <a href="index.html">Textile Scraper</a>
+  <span class="sep">›</span>
+  <span>Ch 01 — Recon</span>
+</div>
+
+<!-- HERO -->
+<section class="hero" id="hero">
+  <div class="hero-content">
+    <span class="coffee-badge">🔍 chapter 01 · ~10 min · no python yet</span>
+    <h1>Recon: Know Your Prey</h1>
+    <p class="subtitle">You don't fire a single line of code until you've looked the target in the eye.<br>This is reconnaissance — it's how pentesters start, it's how scrapers start.</p>
+    <div class="tagline">"Amateurs attack. Pros recon."</div>
+    <br>
+    <a class="cta-btn" href="chapter-02-first-fetch.html">Skip to code →</a>
+    <a class="cta-btn ghost" href="#why">Why recon? 🧠</a>
+  </div>
+</section>
+
+<!-- ========== WHY RECON ========== -->
+<section class="chapter" id="why">
+  <div class="chapter-num">Chapter 01.1 // Why bother</div>
+  <h2><span class="emoji">🕵️</span> Why we don't just write code</h2>
+  <p class="lead">You <em>could</em> just <code class="inline">pip install requests</code> and start hacking away. But you'd waste hours guessing. Recon answers three brutal questions <strong>before</strong> you write a line:</p>
+
+  <div class="grid cols-3">
+    <div class="card">
+      <h4>❓ Can we even reach it?</h4>
+      <p>Is the page public? Does it return 200? Or is it behind a login / paywall / 403 wall?</p>
+    </div>
+    <div class="card">
+      <h4>❓ Is it JS or HTML?</h4>
+      <p>Does the data live in the HTML we download? Or does JavaScript build it in your browser? Huge difference — different tools entirely.</p>
+    </div>
+    <div class="card">
+      <h4>❓ Is anything fighting back?</h4>
+      <p>Cloudflare? WAF? Rate limits? Bot detection? We want to know the enemy before the first shot.</p>
+    </div>
+  </div>
+
+  <div class="paper right">
+    <h4>📝 A burglar's analogy</h4>
+    <p>A bad burglar walks up to a house and yanks the door. A good burglar watches the house for a week first. Notices when the owner leaves. Counts the windows. Spots the camera.</p>
+    <p><span class="highlight">Recon is watching the house.</span> Same exact skill as bug bounty recon — different hat, same mind.</p>
+  </div>
+</section>
+
+<div class="divider">our recon — already done</div>
+
+<!-- ========== THE RECON WE DID ========== -->
+<section class="chapter" id="results">
+  <div class="chapter-num">Chapter 01.2 // The intel</div>
+  <h2><span class="emoji">📡</span> What we already know about textilepages.com</h2>
+  <p class="lead">I ran the recon with you earlier. Here's the full briefing — memorize this table, it's how you'll scope every future target.</p>
+
+  <div style="overflow-x: auto; margin: 20px 0;">
+    <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+      <thead>
+        <tr style="background: rgba(0,255,157,0.08); text-align: left;">
+          <th style="padding: 12px; border-bottom: 2px solid var(--accent); font-family: var(--mono); font-size: 12px;">CHECK</th>
+          <th style="padding: 12px; border-bottom: 2px solid var(--accent); font-family: var(--mono); font-size: 12px;">RESULT</th>
+          <th style="padding: 12px; border-bottom: 2px solid var(--accent); font-family: var(--mono); font-size: 12px;">WHAT IT MEANS</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.05);"><span class="term" data-term="http-status-code">HTTP status</span></td>
+          <td style="padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.05); color: var(--accent); font-family: var(--mono);">200 OK</td>
+          <td style="padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.05);">✅ Page accessible without auth</td>
+        </tr>
+        <tr>
+          <td style="padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.05);">Server header</td>
+          <td style="padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.05); color: var(--warn); font-family: var(--mono);">cloudflare</td>
+          <td style="padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.05);">⚠️ <span class="term" data-term="cloudflare">Cloudflare</span> is in front — but letting us in</td>
+        </tr>
+        <tr>
+          <td style="padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.05);">Content-Type</td>
+          <td style="padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.05); color: var(--accent); font-family: var(--mono);">text/html</td>
+          <td style="padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.05);">✅ Plain HTML, not JSON API or JS-rendered</td>
+        </tr>
+        <tr>
+          <td style="padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.05);">Data in source?</td>
+          <td style="padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.05); color: var(--accent); font-family: var(--mono);">YES</td>
+          <td style="padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.05);">🎯 Company names sit right in the HTML — no Selenium needed</td>
+        </tr>
+        <tr>
+          <td style="padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.05);">Bot check</td>
+          <td style="padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.05); color: var(--accent); font-family: var(--mono);">passes w/ UA</td>
+          <td style="padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.05);">✅ Works with a normal <span class="term" data-term="user-agent">User-Agent</span></td>
+        </tr>
+        <tr>
+          <td style="padding: 10px;">Verdict</td>
+          <td style="padding: 10px; color: var(--accent); font-weight: bold; font-family: var(--mono);">GREEN LIGHT</td>
+          <td style="padding: 10px;">🎯 Perfect first-scraper target.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout success">
+    <strong>☕ Translation:</strong> This site is a gentle giant. Cloudflare is at the door but it's waving us through. The data is in the HTML. We can build v1 with just <span class="term" data-term="requests">requests</span> + BeautifulSoup. No fancy browsers, no JS rendering, no headaches.
+  </div>
+</section>
+
+<div class="divider">the hook</div>
+
+<!-- ========== THE HOOK IN THE HTML ========== -->
+<section class="chapter" id="hook">
+  <div class="chapter-num">Chapter 01.3 // The hook</div>
+  <h2><span class="emoji">🪝</span> Finding the handle</h2>
+  <p class="lead">Every scraper needs a <strong>hook</strong> — a unique pattern in the HTML that marks the exact thing you want. Miss this step and you'll grab 900 wrong elements.</p>
+
+  <p>When I fetched the page, I searched for the company names. Every one is wrapped in <em>exactly</em> this pattern:</p>
+
+  <div class="code">
+<span class="com">&lt;!-- snippet from the page source --&gt;</span>
+&lt;<span class="kw">a</span> href=<span class="str">"https://textilepages.com/ambros-etnerprise"</span> 
+   title=<span class="str">"Ambros Etnerprise"</span> 
+   class=<span class="str">"company-title-primary company-list-view-title text-strong"</span>&gt;
+    Ambros Etnerprise
+&lt;/<span class="kw">a</span>&gt;
+  </div>
+
+  <p style="margin-top: 18px;">That class <code class="inline">company-title-primary</code> is <strong>the hook</strong>. 🎣 Nothing else on the page uses that class. Every single company card has it. That one string is the difference between a working scraper and 4 hours of frustration.</p>
+
+  <div class="brain-power">
+    <div class="label">🧠 Brain Power</div>
+    <div class="question">Why do we use the CSS class as our hook, instead of "find every &lt;a&gt; tag on the page"?</div>
+    <button class="reveal-btn" onclick="toggleAnswer(this)">Reveal answer</button>
+    <div class="answer">
+      <p>Because the page has <strong>hundreds</strong> of <code class="inline">&lt;a&gt;</code> tags — nav links, footer links, product thumbnails, pagination, "Contact" buttons. If you grabbed all of them, you'd have to filter the junk out yourself.</p>
+      <p style="margin-top: 8px;">The class name is the developer's label saying "this is a company title." We <em>steal their label</em> and use it as our filter. Way cleaner, way faster.</p>
+      <p style="margin-top: 8px;">👉 Lesson: <strong>always look for the most specific, most unique pattern that marks your target data.</strong></p>
+    </div>
+  </div>
+</section>
+
+<div class="divider">recon toolkit</div>
+
+<!-- ========== HOW TO DO IT YOURSELF ========== -->
+<section class="chapter" id="toolkit">
+  <div class="chapter-num">Chapter 01.4 // Your recon toolkit</div>
+  <h2><span class="emoji">🧰</span> How to recon any site yourself</h2>
+  <p class="lead">I did this recon for you. Next time, you do it. Three tools, that's it:</p>
+
+  <div class="grid cols-3">
+    <div class="card">
+      <h4>1. 👀 The Browser</h4>
+      <p>Right-click → <strong>View Page Source</strong>. If you see the data in there, it's HTML-rendered (easy). If you don't, it's JS-rendered (harder).</p>
+    </div>
+    <div class="card">
+      <h4>2. 🔬 DevTools</h4>
+      <p>Right-click → <strong>Inspect</strong> an element. See its HTML tag + class + ID. That's where you find your hook.</p>
+    </div>
+    <div class="card">
+      <h4>3. 🐚 curl</h4>
+      <p>Terminal. <code class="inline">curl -I url</code> shows response headers. <code class="inline">curl url</code> shows raw HTML — what <em>your script</em> will see.</p>
+    </div>
+  </div>
+
+  <h3 style="margin-top: 30px;">💻 Try it right now</h3>
+  <p>Run these three commands in your terminal. They're the same ones I used for recon:</p>
+
+  <div class="code">
+<span class="com"># 1. Check if the page is reachable + what server is behind it</span>
+curl -I https://textilepages.com/textile-companies
+
+<span class="com"># 2. Pretend to be a real browser (User-Agent helps bypass basic bot checks)</span>
+curl -s -A <span class="str">"Mozilla/5.0"</span> https://textilepages.com/textile-companies | head -50
+
+<span class="com"># 3. Search the HTML for our hook — does "company-title-primary" appear?</span>
+curl -s -A <span class="str">"Mozilla/5.0"</span> https://textilepages.com/textile-companies | grep -c <span class="str">"company-title-primary"</span>
+  </div>
+
+  <div class="callout info" style="margin-top: 20px;">
+    <strong>🧠 What <code class="inline">grep -c</code> does:</strong> counts how many lines contain the pattern. If that number matches "how many companies you see on the page," your hook is solid. If it's 0, the class name might be wrong (or loaded by JS). If it's way higher, the class appears in places other than company titles.
+  </div>
+
+  <div class="brain-power">
+    <div class="label">🧠 Brain Power</div>
+    <div class="question">Run the third <code class="inline">curl | grep -c</code> command. You'll likely see a number like <strong>20</strong>. Count the companies on <a href="https://textilepages.com/textile-companies" target="_blank" rel="noopener">the actual page</a>. Does it match?</div>
+    <button class="reveal-btn" onclick="toggleAnswer(this)">Reveal answer</button>
+    <div class="answer">
+      <p>You should see ~20 (or whatever the "per-page" count is on textilepages). If it matches → your hook is <strong>perfect</strong>. Every card gets grabbed exactly once.</p>
+      <p style="margin-top: 8px;">This is how pros verify a selector before writing any parsing code. Two seconds, saves two hours.</p>
+    </div>
+  </div>
+</section>
+
+<div class="divider">retention quiz</div>
+
+<!-- QUIZ -->
+<section class="chapter" id="quiz">
+  <div class="chapter-num">Chapter 01.5 // Check yourself</div>
+  <h2><span class="emoji">🎯</span> Quick check</h2>
+
+  <div class="quiz">
+    <h4>🎯 Question 1</h4>
+    <div class="q">You fetched a target page with curl and looked at the HTML. The product prices you want to scrape are <strong>nowhere in the HTML source</strong>. What's most likely going on?</div>
+    <div class="options">
+      <div class="opt" onclick="quizAnswer(this, false)">The website is broken.</div>
+      <div class="opt" onclick="quizAnswer(this, true)">The prices are rendered by JavaScript after the page loads — you'll need a browser automation tool (Selenium/Playwright) or find the underlying API.</div>
+      <div class="opt" onclick="quizAnswer(this, false)">You need to pay for the data.</div>
+      <div class="opt" onclick="quizAnswer(this, false)">Your internet is slow.</div>
+    </div>
+    <div class="feedback"></div>
+  </div>
+
+  <div class="quiz" style="margin-top: 24px;">
+    <h4>🎯 Question 2</h4>
+    <div class="q">What is the "hook" in scraping recon?</div>
+    <div class="options">
+      <div class="opt" onclick="quizAnswer(this, false)">The URL of the page.</div>
+      <div class="opt" onclick="quizAnswer(this, false)">The password for the site.</div>
+      <div class="opt" onclick="quizAnswer(this, true)">A unique, specific HTML pattern (usually a class or ID) that marks the exact data you want — used later to filter parsed HTML.</div>
+      <div class="opt" onclick="quizAnswer(this, false)">A Python library.</div>
+    </div>
+    <div class="feedback"></div>
+  </div>
+
+  <div class="quiz" style="margin-top: 24px;">
+    <h4>🎯 Question 3</h4>
+    <div class="q">A site returns HTTP 200 OK but its Server header says <code class="inline">cloudflare</code>. Can you still scrape it with basic tools?</div>
+    <div class="options">
+      <div class="opt" onclick="quizAnswer(this, false)">No, never.</div>
+      <div class="opt" onclick="quizAnswer(this, true)">Often yes — Cloudflare is only blocking if you get a 403, a "Checking your browser…" page, or a CAPTCHA. A 200 + real HTML means you're through. A normal User-Agent usually seals the deal.</div>
+      <div class="opt" onclick="quizAnswer(this, false)">You need to hack Cloudflare first.</div>
+      <div class="opt" onclick="quizAnswer(this, false)">Only with paid proxies.</div>
+    </div>
+    <div class="feedback"></div>
+  </div>
+</section>
+
+<!-- NEXT -->
+<section class="chapter">
+  <div class="callout success" style="text-align: center; padding: 30px;">
+    <h3 style="margin-top: 0;">🎉 Recon complete.</h3>
+    <p>You know the target, you found the hook, you know what tools to use.<br>Time to write Python.</p>
+    <a class="cta-btn" href="chapter-02-first-fetch.html" style="margin-top: 16px;">Chapter 02 — First Blood 🩸 →</a>
+  </div>
+</section>
+
+<!-- RELATED -->
+<section class="chapter">
+  <div class="related-terms">
+    <h4>🔗 Related in the vault</h4>
+    <div class="tags">
+      <a href="index.html">🧵 Textile Scraper (hub)</a>
+      <a href="../../../glossary/http-status-code.html">🚦 HTTP Status Code</a>
+      <a href="../../../glossary/user-agent.html">🪪 User-Agent</a>
+      <a href="../../../glossary/cloudflare.html">☁️ Cloudflare</a>
+      <a href="../../../glossary/requests.html">🌐 requests</a>
+    </div>
+  </div>
+</section>
+
+<footer class="site-foot">
+  <p class="coffee-line">Watch the house before you rob it. ☕</p>
+</footer>
+
+<script src="../../../assets/glossary.js"></script>
+<script src="../../../assets/app.js"></script>
+</body>
+</html>

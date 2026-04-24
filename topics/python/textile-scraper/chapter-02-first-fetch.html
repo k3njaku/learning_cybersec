@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Ch 02 — First Blood: Fetching the Page ☕</title>
+<link rel="stylesheet" href="../../../assets/styles.css" />
+</head>
+<body data-page-slug="textile-scraper-ch02">
+
+<div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
+
+<div class="topbar">
+  <a class="logo" href="../../../index.html">☕ CYBERSEC.VAULT</a>
+  <nav>
+    <a href="../../../index.html">Home</a>
+    <a href="../../../index.html#topics-web">Topics</a>
+    <a href="../../../index.html#topics-python" class="active">Python</a>
+    <a href="../../../glossary/index.html">Glossary</a>
+    <a href="../../../tryhackme/index.html">THM</a>
+  </nav>
+  <div class="search-wrap">
+    <input type="text" class="search" placeholder="Search (press /)..." />
+    <div class="search-results"></div>
+  </div>
+</div>
+
+<div class="breadcrumb">
+  <a href="../../../index.html">Home</a>
+  <span class="sep">›</span>
+  <a href="../../../index.html#topics-python">Python</a>
+  <span class="sep">›</span>
+  <a href="index.html">Textile Scraper</a>
+  <span class="sep">›</span>
+  <span>Ch 02 — First Blood</span>
+</div>
+
+<!-- HERO -->
+<section class="hero" id="hero">
+  <div class="hero-content">
+    <span class="coffee-badge">🩸 chapter 02 · ~15 min · real code</span>
+    <h1>First Blood: Fetching the Page</h1>
+    <p class="subtitle">Set up the kitchen. Install the tools. Write 10 lines of Python that download a real website.<br>By the end of this chapter, your script will print the textilepages.com HTML to your screen. <strong>First dopamine hit.</strong> 🎯</p>
+    <div class="tagline">"A scraper is just a very, very polite HTTP request."</div>
+    <br>
+    <button class="cta-btn" onclick="document.getElementById('step1').scrollIntoView({behavior:'smooth'})">START 🚀</button>
+  </div>
+</section>
+
+<!-- ========== MENTAL MODEL ========== -->
+<section class="chapter" id="concept">
+  <div class="chapter-num">Chapter 02.1 // Mental model</div>
+  <h2><span class="emoji">🧠</span> What a "fetch" actually is</h2>
+  <p class="lead">Forget "scraping" for a second. You're just making the <strong>exact same request</strong> that your browser makes — except from a Python script instead of Chrome.</p>
+
+  <div class="paper">
+    <h4>📝 Mailing a letter analogy</h4>
+    <p>A browser is a mail carrier. You type a URL, it writes a letter to that server saying <em>"please send me the /textile-companies page"</em>, mails it, and brings the response back.</p>
+    <p>Python's <span class="term" data-term="requests">requests</span> library is your personal mail carrier. Same letters, same delivery, same response. It just doesn't bother rendering the page for you — it hands you the raw envelope.</p>
+    <p><span class="highlight">That "raw envelope" contents = the HTML source you saw in recon.</span></p>
+  </div>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <h4>📤 What we send</h4>
+      <p style="font-family: var(--mono); font-size: 12px;">GET /textile-companies HTTP/1.1<br>Host: textilepages.com<br>User-Agent: Mozilla/5.0 ...</p>
+      <p style="margin-top: 10px;">A little text blob that says "hey, give me this page." That's a request.</p>
+    </div>
+    <div class="card">
+      <h4>📥 What we get back</h4>
+      <p style="font-family: var(--mono); font-size: 12px;">HTTP/1.1 200 OK<br>Server: cloudflare<br>Content-Type: text/html<br><br>&lt;html&gt;...145 KB of HTML...&lt;/html&gt;</p>
+      <p style="margin-top: 10px;">A <span class="term" data-term="http-status-code">status code</span>, some headers, and the page's HTML body. That's a response.</p>
+    </div>
+  </div>
+</section>
+
+<div class="divider">setup the kitchen</div>
+
+<!-- ========== SETUP ========== -->
+<section class="chapter" id="step1">
+  <div class="chapter-num">Chapter 02.2 // Setup</div>
+  <h2><span class="emoji">📦</span> Step 1 — Kitchen setup (venv + pip)</h2>
+  <p class="lead">Before we cook, we set up a clean kitchen. In Python, that means a <strong>virtual environment</strong>.</p>
+
+  <div class="paper right">
+    <h4>📝 Why venv?</h4>
+    <p>Every Python project is a kitchen. Without <span class="term" data-term="venv">venv</span>, you'd dump every project's knives into one drawer — chaos. Project A needs <code class="inline">requests 2.25</code>, Project B needs <code class="inline">requests 2.31</code>, now they break each other.</p>
+    <p><span class="highlight">venv = a private kitchen per project.</span> Pros NEVER skip this.</p>
+  </div>
+
+  <h3>🐚 Run these in your terminal — one at a time</h3>
+
+  <div class="code">
+<span class="com"># Go to your working folder (the "forge")</span>
+<span class="kw">cd</span> ~/Documents/DataScrapingLabs/textile-scraper
+
+<span class="com"># Activate the venv you created last time (the "kitchen")</span>
+<span class="kw">source</span> venv/bin/activate
+
+<span class="com"># Your prompt should now show (venv) at the start — that's the kitchen lights turning on</span>
+
+<span class="com"># Install the 3 tools we need from Python's app store (pip)</span>
+<span class="kw">pip</span> install requests beautifulsoup4 lxml
+  </div>
+
+  <div class="grid cols-3" style="margin-top: 22px;">
+    <div class="card">
+      <h4>🌐 requests</h4>
+      <p>The HTTP library. Makes GET / POST requests. The mail carrier.</p>
+    </div>
+    <div class="card">
+      <h4>🥣 beautifulsoup4</h4>
+      <p>HTML parser. We'll use this in Ch 03. Installing now so we're ready.</p>
+    </div>
+    <div class="card">
+      <h4>⚡ lxml</h4>
+      <p>A fast C-based parsing engine BeautifulSoup uses under the hood. Optional but recommended.</p>
+    </div>
+  </div>
+
+  <div class="callout info" style="margin-top: 20px;">
+    <strong>🧠 Bash ninja trick:</strong> <code class="inline">pip list</code> after installing — shows every package in your current venv. <code class="inline">which python</code> tells you which Python you're using. If it says <code class="inline">.../venv/bin/python</code>, you're in the right kitchen. ✅
+  </div>
+
+  <div class="brain-power">
+    <div class="label">🧠 Brain Power</div>
+    <div class="question">If you forget to run <code class="inline">source venv/bin/activate</code> and then run <code class="inline">pip install requests</code> — what goes wrong?</div>
+    <button class="reveal-btn" onclick="toggleAnswer(this)">Reveal answer</button>
+    <div class="answer">
+      <p>It installs <code class="inline">requests</code> to your <strong>global / system Python</strong> instead of the project's venv. On modern Ubuntu, this usually errors out with <code class="inline">externally-managed-environment</code> — which is actually helpful, it's Ubuntu saving you from yourself.</p>
+      <p style="margin-top: 8px;">If you <em>do</em> succeed installing globally, weirder bugs appear later: your script might work on your machine but break on another, or two projects' dependencies might conflict.</p>
+      <p style="margin-top: 8px;">👉 Rule: <strong>activate first, pip install second.</strong> Always.</p>
+    </div>
+  </div>
+</section>
+
+<div class="divider">write the code</div>
+
+<!-- ========== WRITE THE FIRST SCRIPT ========== -->
+<section class="chapter" id="step2">
+  <div class="chapter-num">Chapter 02.3 // Write the code</div>
+  <h2><span class="emoji">✍️</span> Step 2 — Your first scraper</h2>
+  <p class="lead">Open <code class="inline">~/Documents/DataScrapingLabs/textile-scraper/scraper.py</code> in VS Code. <strong>Type this — don't paste.</strong> Your fingers need to learn the shape.</p>
+
+  <div class="code safe">
+<span class="com"># scraper.py — first fetch</span>
+<span class="com"># Downloads textilepages.com and prints the first 500 characters of HTML.</span>
+
+<span class="kw">import</span> requests
+
+<span class="com"># The target URL — this is where we did recon in Ch 01.</span>
+URL = <span class="str">"https://textilepages.com/textile-companies"</span>
+
+<span class="com"># A realistic User-Agent so Cloudflare treats us like a real browser, not a bot.</span>
+HEADERS = {
+    <span class="str">"User-Agent"</span>: <span class="str">"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "</span>
+                  <span class="str">"(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"</span>
+}
+
+<span class="com"># Send the request and grab the response.</span>
+response = requests.get(URL, headers=HEADERS)
+
+<span class="com"># Print basic info about what came back.</span>
+<span class="kw">print</span>(<span class="str">"Status:"</span>, response.status_code)
+<span class="kw">print</span>(<span class="str">"Size  :"</span>, <span class="kw">len</span>(response.text), <span class="str">"chars"</span>)
+<span class="kw">print</span>(<span class="str">"--- first 500 chars of HTML ---"</span>)
+<span class="kw">print</span>(response.text[:<span class="str">500</span>])
+  </div>
+
+  <h3 style="margin-top: 26px;">Then run it:</h3>
+
+  <div class="code">
+<span class="com"># Still inside your activated venv (you should see (venv) in prompt)</span>
+python3 scraper.py
+  </div>
+
+  <h3 style="margin-top: 30px;">🎉 Expected output (roughly)</h3>
+  <div class="code">
+Status: 200
+Size  : 145703 chars
+--- first 500 chars of HTML ---
+&lt;!DOCTYPE html&gt;
+&lt;html lang="en"&gt;
+&lt;head&gt;
+
+    &lt;title&gt; List of textile companies - Textile directory ...
+    &lt;meta name="description" content=" Textile companies directory ...
+  </div>
+
+  <div class="callout success">
+    <strong>☕ You just scraped a website.</strong> Your Python script reached across the internet, asked Cloudflare for a page, and got 145,000 characters of HTML back. That's the entire mechanic of scraping in 9 lines of code. Everything from here is just refinement.
+  </div>
+</section>
+
+<div class="divider">decode the code</div>
+
+<!-- ========== LINE BY LINE ========== -->
+<section class="chapter" id="explain">
+  <div class="chapter-num">Chapter 02.4 // Decode it</div>
+  <h2><span class="emoji">🔬</span> Line by line — every piece explained</h2>
+  <p class="lead">This is where you turn "it works" into "I understand it."</p>
+
+  <div class="grid cols-2" style="gap: 20px;">
+    <div class="card">
+      <h4><code class="inline">import requests</code></h4>
+      <p>Pulls in the <span class="term" data-term="requests">requests</span> library you installed with pip. Without this line, Python doesn't know what <code class="inline">requests</code> means. Imports = "bring this tool into this file."</p>
+    </div>
+    <div class="card">
+      <h4><code class="inline">URL = "..."</code></h4>
+      <p>A <strong>variable</strong>. A named box you can put stuff in and reuse. We put the target URL in a box so we can refer to it by name. ALL CAPS is a Python convention for "this is a constant — don't change it."</p>
+    </div>
+    <div class="card">
+      <h4><code class="inline">HEADERS = { ... }</code></h4>
+      <p>A <strong>dictionary</strong> — a box that holds key-value pairs. Here: one key (<code class="inline">"User-Agent"</code>) mapped to one value (the browser string). HTTP headers are literally just key-value pairs; Python dicts mirror them perfectly.</p>
+    </div>
+    <div class="card">
+      <h4><code class="inline">requests.get(URL, headers=HEADERS)</code></h4>
+      <p>The star of the show. Sends an HTTP GET request to URL, with those headers attached. Returns a <strong>Response object</strong> — a Python object that holds everything that came back.</p>
+    </div>
+    <div class="card">
+      <h4><code class="inline">response.status_code</code></h4>
+      <p>The <span class="term" data-term="http-status-code">HTTP status</span> as an integer. 200 = good. 404 = not found. 403 = blocked. 500 = server exploded. Your first line of defense: always check this.</p>
+    </div>
+    <div class="card">
+      <h4><code class="inline">response.text</code></h4>
+      <p>The raw HTML body of the response, as a Python string. 145,000 characters of markup. Next chapter, we'll slice it up with BeautifulSoup.</p>
+    </div>
+    <div class="card">
+      <h4><code class="inline">len(response.text)</code></h4>
+      <p><code class="inline">len()</code> is a built-in function that returns the length of a thing — strings, lists, anything "countable." Here: how many characters are in the HTML.</p>
+    </div>
+    <div class="card">
+      <h4><code class="inline">response.text[:500]</code></h4>
+      <p>A <strong>slice</strong> — the first 500 characters of the string. <code class="inline">[start:end]</code> notation. We're just sampling so we don't flood the terminal with 145K chars.</p>
+    </div>
+  </div>
+
+  <div class="brain-power" style="margin-top: 26px;">
+    <div class="label">🧠 Brain Power</div>
+    <div class="question">Change the last line to <code class="inline">print(response.text[:5000])</code> and run again. What's different? Why does that matter for building our scraper?</div>
+    <button class="reveal-btn" onclick="toggleAnswer(this)">Reveal answer</button>
+    <div class="answer">
+      <p>You'll see way more HTML — including, if you scroll through, some of the <code class="inline">company-title-primary</code> hooks we identified in Ch 01.</p>
+      <p style="margin-top: 8px;">Why it matters: this <em>proves</em> the data we need is in <code class="inline">response.text</code>. It's a plain Python string. Our job from here is just "find the right substrings and pull them out." That's all BeautifulSoup is doing — smart string extraction with HTML awareness.</p>
+      <p style="margin-top: 8px;">👉 <strong>The HTML is just a big string. The scraper is just careful slicing.</strong></p>
+    </div>
+  </div>
+</section>
+
+<div class="divider">what broke?</div>
+
+<!-- ========== TROUBLESHOOTING ========== -->
+<section class="chapter" id="trouble">
+  <div class="chapter-num">Chapter 02.5 // When it breaks</div>
+  <h2><span class="emoji">💥</span> If something goes wrong</h2>
+  <p class="lead">Python errors look scary but they're very honest. Here's the greatest hits:</p>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <h4>❌ <code class="inline">ModuleNotFoundError: No module named 'requests'</code></h4>
+      <p><strong>Meaning:</strong> Python can't find the <code class="inline">requests</code> library.<br><strong>Fix:</strong> You probably ran the script without activating venv. Run <code class="inline">source venv/bin/activate</code> first, then <code class="inline">pip install requests</code>.</p>
+    </div>
+    <div class="card">
+      <h4>❌ <code class="inline">Status: 403</code></h4>
+      <p><strong>Meaning:</strong> Cloudflare blocked you.<br><strong>Fix:</strong> Check your User-Agent string. Make sure HEADERS is being passed to <code class="inline">requests.get()</code>. Without a proper UA, you look like a bot.</p>
+    </div>
+    <div class="card">
+      <h4>❌ <code class="inline">ConnectionError</code> / <code class="inline">Timeout</code></h4>
+      <p><strong>Meaning:</strong> Network hiccup, or site is down.<br><strong>Fix:</strong> Retry. Add <code class="inline">timeout=10</code> to your <code class="inline">requests.get()</code> so it doesn't hang forever.</p>
+    </div>
+    <div class="card">
+      <h4>❌ <code class="inline">IndentationError</code></h4>
+      <p><strong>Meaning:</strong> Python is strict about indentation. You probably mixed tabs and spaces.<br><strong>Fix:</strong> Retype the indented lines. VS Code's bottom-right shows "Spaces: 4" — keep it consistent.</p>
+    </div>
+  </div>
+</section>
+
+<div class="divider">retention quiz</div>
+
+<!-- QUIZ -->
+<section class="chapter" id="quiz">
+  <div class="chapter-num">Chapter 02.6 // Check yourself</div>
+  <h2><span class="emoji">🎯</span> Quick check</h2>
+
+  <div class="quiz">
+    <h4>🎯 Question 1</h4>
+    <div class="q">What is <code class="inline">response.text</code> in our script?</div>
+    <div class="options">
+      <div class="opt" onclick="quizAnswer(this, false)">A file saved on disk.</div>
+      <div class="opt" onclick="quizAnswer(this, true)">A Python string containing the raw HTML of the page.</div>
+      <div class="opt" onclick="quizAnswer(this, false)">A list of company names.</div>
+      <div class="opt" onclick="quizAnswer(this, false)">A URL.</div>
+    </div>
+    <div class="feedback"></div>
+  </div>
+
+  <div class="quiz" style="margin-top: 24px;">
+    <h4>🎯 Question 2</h4>
+    <div class="q">Why do we set a <code class="inline">User-Agent</code> header?</div>
+    <div class="options">
+      <div class="opt" onclick="quizAnswer(this, false)">It's required by Python.</div>
+      <div class="opt" onclick="quizAnswer(this, false)">It makes requests faster.</div>
+      <div class="opt" onclick="quizAnswer(this, true)">By default, <code class="inline">requests</code> sends a User-Agent like <code class="inline">python-requests/2.31.0</code> — which screams "I am a bot." A browser-like User-Agent blends in.</div>
+      <div class="opt" onclick="quizAnswer(this, false)">It decrypts the response.</div>
+    </div>
+    <div class="feedback"></div>
+  </div>
+
+  <div class="quiz" style="margin-top: 24px;">
+    <h4>🎯 Question 3</h4>
+    <div class="q">In Python, what does <code class="inline">URL = "https://..."</code> do?</div>
+    <div class="options">
+      <div class="opt" onclick="quizAnswer(this, false)">Downloads the URL.</div>
+      <div class="opt" onclick="quizAnswer(this, true)">Creates a variable named URL and stores a string in it — a named box we can reuse later.</div>
+      <div class="opt" onclick="quizAnswer(this, false)">Opens the URL in your browser.</div>
+      <div class="opt" onclick="quizAnswer(this, false)">Sends an HTTP request.</div>
+    </div>
+    <div class="feedback"></div>
+  </div>
+
+  <div class="quiz" style="margin-top: 24px;">
+    <h4>🎯 Question 4</h4>
+    <div class="q">Your friend runs the exact same script and gets <code class="inline">ModuleNotFoundError: No module named 'requests'</code>. What's the most likely cause?</div>
+    <div class="options">
+      <div class="opt" onclick="quizAnswer(this, false)">Their internet is broken.</div>
+      <div class="opt" onclick="quizAnswer(this, false)">The script has a typo.</div>
+      <div class="opt" onclick="quizAnswer(this, true)">They didn't activate the venv (or didn't pip install requests inside it).</div>
+      <div class="opt" onclick="quizAnswer(this, false)">Python 3 isn't installed.</div>
+    </div>
+    <div class="feedback"></div>
+  </div>
+</section>
+
+<!-- NEXT -->
+<section class="chapter">
+  <div class="callout success" style="text-align: center; padding: 30px;">
+    <h3 style="margin-top: 0;">🩸 First blood drawn.</h3>
+    <p>You wrote real Python. You made an HTTP request. You printed a real website to your screen.<br>Next: we stop drinking from the fire hose and <strong>extract just the company names</strong> using BeautifulSoup.</p>
+    <a class="cta-btn" style="margin-top: 16px; opacity: 0.55; pointer-events: none;" href="#">Chapter 03 — Parse the HTML (coming) 🔪 →</a>
+    <p style="font-size: 12px; color: var(--ink-dim); margin-top: 10px;">👉 Say "next chapter" in chat once you've run the code and you're ready.</p>
+  </div>
+</section>
+
+<!-- RELATED -->
+<section class="chapter">
+  <div class="related-terms">
+    <h4>🔗 Related in the vault</h4>
+    <div class="tags">
+      <a href="index.html">🧵 Textile Scraper (hub)</a>
+      <a href="chapter-01-recon.html">🔍 Ch 01 — Recon</a>
+      <a href="../../../glossary/requests.html">🌐 requests</a>
+      <a href="../../../glossary/venv.html">📦 venv</a>
+      <a href="../../../glossary/pip.html">📥 pip</a>
+      <a href="../../../glossary/user-agent.html">🪪 User-Agent</a>
+      <a href="../../../glossary/http-status-code.html">🚦 HTTP Status Code</a>
+    </div>
+  </div>
+</section>
+
+<footer class="site-foot">
+  <p class="coffee-line">Nine lines of Python. One working scraper. ☕</p>
+</footer>
+
+<script src="../../../assets/glossary.js"></script>
+<script src="../../../assets/app.js"></script>
+</body>
+</html>

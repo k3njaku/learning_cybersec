@@ -16,6 +16,7 @@
   <nav>
     <a href="index.html" class="active">Home</a>
     <a href="index.html#topics-web">Topics</a>
+    <a href="index.html#topics-python">Python</a>
     <a href="glossary/index.html">Glossary</a>
     <a href="tryhackme/index.html">THM</a>
     <a href="labs/portswigger/index.html">Labs</a>
@@ -86,6 +87,17 @@
   </div>
 </section>
 
+<!-- LANE: PYTHON / WEAPONS LAB -->
+<section class="chapter" id="topics-python">
+  <div class="chapter-num">Weapons Lab // 🐍 Python Projects</div>
+  <h2>🕷️ Python as a Weapon</h2>
+  <p class="lead">Project-driven Python — every chapter ships working code. Used for scraping gigs AND cybersec scripting. No boring syntax drills.</p>
+
+  <div class="grid cols-2" id="topicsGridPython">
+    <!-- Populated by script. -->
+  </div>
+</section>
+
 <!-- SECONDARY: MISC / RANDOM ITCHES -->
 <section class="chapter" id="topics-misc">
   <div class="chapter-num">Side Quests // 🎲 Random Itches</div>
@@ -97,7 +109,7 @@
   </div>
 
   <div class="callout info" style="margin-top: 30px;">
-    <strong>☕ How to add a new topic:</strong> paste a URL, notes, video transcript, or lab description in chat. I'll auto-detect whether it's web-pentest or misc, and build it into the right lane.
+    <strong>☕ How to add a new topic:</strong> paste a URL, notes, video transcript, or lab description in chat. I'll auto-detect whether it's web-pentest, python, or misc, and build it into the right lane.
   </div>
 </section>
 
@@ -162,9 +174,11 @@
         <div style="font-size: 11px; color: var(--ink-mute); font-family: var(--mono); margin-top: 4px;">${Math.round(t.progress * 100)}% of chapters explored</div>
       </a>`;
 
+    const pyGrid = document.getElementById('topicsGridPython');
     const topics = window.SITE_TOPICS || [];
     const web = topics.filter(t => t.lane === 'web' || !t.lane);
     const misc = topics.filter(t => t.lane === 'misc');
+    const python = topics.filter(t => t.lane === 'python');
 
     // --- WEB LANE ---
     webGrid.innerHTML = web.map(cardHTML).join('');
@@ -190,6 +204,28 @@
         <h4>🔐 Authentication / Access Control</h4>
         <p>Broken auth, IDOR, JWT flaws, privilege escalation. High bounty impact.</p>
       </div>`;
+
+    // --- PYTHON LANE ---
+    if (python.length === 0) {
+      pyGrid.innerHTML = `
+        <div class="card" style="opacity: 0.6; grid-column: 1/-1;">
+          <h4>🐍 No Python projects yet</h4>
+          <p>Each project page teaches Python in context — scraping, automation, cybersec scripts.</p>
+        </div>`;
+    } else {
+      pyGrid.innerHTML = python.map(cardHTML).join('');
+      pyGrid.innerHTML += `
+        <div class="card" style="opacity: 0.5;">
+          <div class="card-badge warn">COMING</div>
+          <h4>🔐 Password Hasher Mini-Tool</h4>
+          <p>Tiny CLI that hashes + verifies passwords. Teaches functions, libraries, bcrypt basics.</p>
+        </div>
+        <div class="card" style="opacity: 0.5;">
+          <div class="card-badge warn">COMING</div>
+          <h4>🛰️ Mini Port Scanner</h4>
+          <p>Your own baby nmap. Teaches sockets, loops, threading — classic cybersec crossover.</p>
+        </div>`;
+    }
 
     // --- MISC LANE ---
     if (misc.length === 0) {

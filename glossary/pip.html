@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>pip — Python Package Installer ☕</title>
+<link rel="stylesheet" href="../assets/styles.css" />
+</head>
+<body data-page-slug="pip">
+
+<div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
+
+<div class="topbar">
+  <a class="logo" href="../index.html">☕ CYBERSEC.VAULT</a>
+  <nav>
+    <a href="../index.html">Home</a>
+    <a href="../index.html#topics-web">Topics</a>
+    <a href="../index.html#topics-python">Python</a>
+    <a href="index.html" class="active">Glossary</a>
+    <a href="../tryhackme/index.html">THM</a>
+  </nav>
+  <div class="search-wrap">
+    <input type="text" class="search" placeholder="Search (press /)..." />
+    <div class="search-results"></div>
+  </div>
+</div>
+
+<div class="breadcrumb">
+  <a href="../index.html">Home</a>
+  <span class="sep">›</span>
+  <a href="index.html">Glossary</a>
+  <span class="sep">›</span>
+  <span>pip</span>
+</div>
+
+<section class="hero" style="min-height: 45vh;">
+  <div class="hero-content">
+    <span class="coffee-badge">📖 glossary · python · package manager</span>
+    <h1>pip 📥</h1>
+    <p class="subtitle">Python's App Store. One command puts any of 500,000+ libraries on your machine.<br><strong>The second command you run in every Python project</strong> — right after activating your venv.</p>
+    <div class="tagline">"pip install &lt;thing&gt; → thing is yours."</div>
+  </div>
+</section>
+
+<section class="chapter">
+  <div class="chapter-num">Chapter 01 // Definition</div>
+  <h2><span class="emoji">📖</span> What is pip?</h2>
+  <p class="lead">Python's official package installer. It talks to the Python Package Index (PyPI — <code class="inline">pypi.org</code>) and downloads/installs any published library.</p>
+
+  <div class="paper">
+    <h4>📝 App Store analogy</h4>
+    <p>PyPI = the App Store. <code class="inline">pip</code> = the button that installs. Hit the button, the app shows up in your phone (Python).</p>
+    <p><span class="highlight">You'll use it forever. Every Python dev uses it daily.</span></p>
+  </div>
+</section>
+
+<div class="divider">the commands</div>
+
+<section class="chapter">
+  <div class="chapter-num">Chapter 02 // The verbs</div>
+  <h2><span class="emoji">🎯</span> Commands you'll use 99% of the time</h2>
+
+  <div class="code">
+<span class="com"># Install a single package</span>
+pip install requests
+
+<span class="com"># Install multiple at once</span>
+pip install requests beautifulsoup4 lxml
+
+<span class="com"># Install a specific version</span>
+pip install requests==2.31.0
+
+<span class="com"># Install from a requirements file (shared dependencies)</span>
+pip install -r requirements.txt
+
+<span class="com"># What's installed in my current (venv) environment?</span>
+pip list
+
+<span class="com"># Upgrade a package</span>
+pip install --upgrade requests
+
+<span class="com"># Remove a package</span>
+pip uninstall requests
+
+<span class="com"># Export current packages to a file (for git / teammates)</span>
+pip freeze &gt; requirements.txt
+  </div>
+</section>
+
+<div class="divider">rules</div>
+
+<section class="chapter">
+  <div class="chapter-num">Chapter 03 // The rules</div>
+  <h2><span class="emoji">🛡️</span> Habits that save pain</h2>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <h4>✅ Always activate venv first</h4>
+      <p>Then <code class="inline">pip install</code> puts stuff in the right place. No venv → global Python → future conflicts.</p>
+    </div>
+    <div class="card">
+      <h4>✅ Pin versions for projects you ship</h4>
+      <p><code class="inline">pip freeze &gt; requirements.txt</code>. Now anyone (or future-you) can run <code class="inline">pip install -r requirements.txt</code> and get the exact same environment.</p>
+    </div>
+    <div class="card">
+      <h4>🚫 Don't use sudo pip</h4>
+      <p>Installing as root into the system Python is a classic way to brick your OS's Python tools. If you see an <code class="inline">externally-managed-environment</code> error — that's the signal to use a venv.</p>
+    </div>
+    <div class="card">
+      <h4>🕵️ Watch for typosquats</h4>
+      <p>Attackers publish packages like <code class="inline">requessts</code> (extra s) hoping you misspell. Double-check the name before installing.</p>
+    </div>
+  </div>
+
+  <div class="quiz">
+    <h4>🎯 Quick Check</h4>
+    <div class="q">You clone a Python project from GitHub that has a <code class="inline">requirements.txt</code> — what's the magic command to set up its dependencies?</div>
+    <div class="options">
+      <div class="opt" onclick="quizAnswer(this, false)"><code class="inline">pip download requirements.txt</code></div>
+      <div class="opt" onclick="quizAnswer(this, false)"><code class="inline">python3 requirements.txt</code></div>
+      <div class="opt" onclick="quizAnswer(this, true)">Activate your venv, then <code class="inline">pip install -r requirements.txt</code></div>
+      <div class="opt" onclick="quizAnswer(this, false)"><code class="inline">pip freeze requirements.txt</code></div>
+    </div>
+    <div class="feedback"></div>
+  </div>
+</section>
+
+<section class="chapter">
+  <div class="related-terms">
+    <h4>🔗 Related in the vault</h4>
+    <div class="tags">
+      <a href="venv.html">📦 venv</a>
+      <a href="requests.html">🌐 requests</a>
+      <a href="../topics/python/textile-scraper/index.html">🧵 Textile Scraper (project)</a>
+    </div>
+  </div>
+</section>
+
+<footer class="site-foot">
+  <p class="coffee-line">pip install &lt;dreams&gt; ☕</p>
+</footer>
+
+<script src="../assets/glossary.js"></script>
+<script src="../assets/app.js"></script>
+</body>
+</html>

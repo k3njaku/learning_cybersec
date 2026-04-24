@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Textile Scraper — Build a Real Lead Scraper in Python ☕</title>
+<link rel="stylesheet" href="../../../assets/styles.css" />
+</head>
+<body data-page-slug="textile-scraper">
+
+<div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
+
+<div class="topbar">
+  <a class="logo" href="../../../index.html">☕ CYBERSEC.VAULT</a>
+  <nav>
+    <a href="../../../index.html">Home</a>
+    <a href="../../../index.html#topics-web">Topics</a>
+    <a href="../../../index.html#topics-python" class="active">Python</a>
+    <a href="../../../glossary/index.html">Glossary</a>
+    <a href="../../../tryhackme/index.html">THM</a>
+  </nav>
+  <div class="search-wrap">
+    <input type="text" class="search" placeholder="Search (press /)..." />
+    <div class="search-results"></div>
+  </div>
+</div>
+
+<div class="breadcrumb">
+  <a href="../../../index.html">Home</a>
+  <span class="sep">›</span>
+  <a href="../../../index.html#topics-python">Python</a>
+  <span class="sep">›</span>
+  <span>Textile Scraper</span>
+</div>
+
+<!-- HERO -->
+<section class="hero" id="hero">
+  <div class="hero-content">
+    <span class="coffee-badge">🕷️ real project · real data · real paychecks</span>
+    <h1>Textile Scraper 🧵</h1>
+    <p class="subtitle">Your first real Python project. Scrapes <strong>textilepages.com</strong> for company leads → clean CSV → send invoices.<br>You'll learn Python <em>because you need it to finish the job</em>, not because a textbook said so.</p>
+    <div class="tagline">"Ship ugly code on day one. Make it pretty on day ten."</div>
+    <br>
+    <button class="cta-btn" onclick="document.getElementById('ch1-card').scrollIntoView({behavior:'smooth'})">START CH 01 🚀</button>
+    <a class="cta-btn ghost" href="https://textilepages.com/textile-companies" target="_blank" rel="noopener">See the target 🎯</a>
+    <p style="margin-top: 26px; font-size: 12px; color: var(--ink-dim);">
+      💡 Your code lives at <code class="inline">~/Documents/DataScrapingLabs/textile-scraper/</code>. These pages are the playbook.
+    </p>
+  </div>
+</section>
+
+<!-- ========== CHAPTER: THE MISSION ========== -->
+<section class="chapter" id="mission">
+  <div class="chapter-num">The Mission // 🎯 What we're building</div>
+  <h2><span class="emoji">🧵</span> The Goal</h2>
+  <p class="lead">Turn a website full of company listings into a clean spreadsheet of leads you can actually sell. Real gig. Real data.</p>
+
+  <div class="paper">
+    <h4>📝 Imagine a vending machine...</h4>
+    <p>Right now, textilepages.com is a vending machine full of snacks (leads). To get one, you have to put in a coin (click), grab the snack (copy the name), paste it in a spreadsheet, go back, repeat. For 1,000 snacks.</p>
+    <p><span class="highlight">A scraper is a robot arm that does this 1,000 times per minute while you drink coffee.</span></p>
+    <p>Python is how we program the arm.</p>
+  </div>
+
+  <div class="grid cols-3" style="margin-top: 26px;">
+    <div class="card">
+      <div class="card-badge">v1</div>
+      <h4>Page 1 only</h4>
+      <p>Scrape every company name + profile URL from the first page. Save to CSV. That's it.</p>
+    </div>
+    <div class="card">
+      <div class="card-badge warn">v2</div>
+      <h4>All pages</h4>
+      <p>Follow pagination. Loop through every page until there are none left. Thousands of leads.</p>
+    </div>
+    <div class="card">
+      <div class="card-badge warn">v3</div>
+      <h4>Enrich the leads</h4>
+      <p>Visit each company profile page, grab country, category, product images, contact hints.</p>
+    </div>
+  </div>
+</section>
+
+<div class="divider">what you'll learn</div>
+
+<!-- ========== CHAPTER: WHAT YOU LEARN ========== -->
+<section class="chapter" id="learn">
+  <div class="chapter-num">The Loot // 🎒 What you walk away with</div>
+  <h2><span class="emoji">🧠</span> Python skills — learned in context</h2>
+  <p class="lead">These aren't abstract lessons. Every one shows up because <strong>we need it to finish the job.</strong></p>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <h4>🐍 Core Python</h4>
+      <p>Variables, strings, lists, dicts, loops, functions, imports, conditionals. The starter pack.</p>
+    </div>
+    <div class="card">
+      <h4>📦 Virtual envs &amp; pip</h4>
+      <p>How pros isolate projects. <span class="term" data-term="venv">venv</span> + <span class="term" data-term="pip">pip install</span>. Non-negotiable for real work.</p>
+    </div>
+    <div class="card">
+      <h4>🌐 HTTP &amp; requests</h4>
+      <p>What a browser <em>actually</em> sends. <span class="term" data-term="http-request">Requests</span>, <span class="term" data-term="http-status-code">status codes</span>, <span class="term" data-term="user-agent">user agents</span>, cookies.</p>
+    </div>
+    <div class="card">
+      <h4>🔍 HTML parsing</h4>
+      <p>BeautifulSoup. CSS selectors. How to grab just the right piece of a huge page.</p>
+    </div>
+    <div class="card">
+      <h4>💾 File I/O + CSV</h4>
+      <p>Write data to disk like a grown-up. CSV that opens cleanly in Excel / Google Sheets.</p>
+    </div>
+    <div class="card">
+      <h4>💥 Error handling</h4>
+      <p>When the internet has a bad day, your script doesn't die. <code class="inline">try / except</code> survival skills.</p>
+    </div>
+  </div>
+
+  <div class="callout info" style="margin-top: 26px;">
+    <strong>☕ Cybersec crossover:</strong> Scraping = reconnaissance. The skills on this page are <em>exactly</em> what you use for recon phases of bug bounty and pentests. You're not learning two things — you're learning one thing with two paychecks.
+  </div>
+</section>
+
+<div class="divider">the chapters</div>
+
+<!-- ========== CHAPTERS LIST ========== -->
+<section class="chapter" id="chapters">
+  <div class="chapter-num">Roadmap // 🗺️ Chapter by chapter</div>
+  <h2><span class="emoji">📚</span> The chapters</h2>
+  <p class="lead">Each chapter = one bite-sized mission. Read it → do the step on your machine → come back → next chapter.</p>
+
+  <div class="grid cols-2" style="margin-top: 20px;">
+
+    <a class="card is-link" href="chapter-01-recon.html" id="ch1-card">
+      <div class="card-badge">READY</div>
+      <h4>🔍 Ch 01 — Recon: Know Your Prey</h4>
+      <p>Before writing a line of code, we stalk the target. HTTP status, headers, anti-bot check, finding the "hook" in the HTML. <strong>Every pentester's first move.</strong></p>
+      <div style="font-family: var(--mono); font-size: 11px; color: var(--ink-mute); margin-top: 10px;">
+        <span style="margin-right: 8px;">#http</span>
+        <span style="margin-right: 8px;">#recon</span>
+        <span style="margin-right: 8px;">#curl</span>
+        <span style="margin-right: 8px;">#devtools</span>
+      </div>
+    </a>
+
+    <a class="card is-link" href="chapter-02-first-fetch.html">
+      <div class="card-badge">READY</div>
+      <h4>🩸 Ch 02 — First Blood: Fetching the Page</h4>
+      <p>Set up <span class="term" data-term="venv">venv</span>, install <span class="term" data-term="requests">requests</span>, download the page with Python. Your first working scraper — even if it just prints HTML. Dopamine. 🎯</p>
+      <div style="font-family: var(--mono); font-size: 11px; color: var(--ink-mute); margin-top: 10px;">
+        <span style="margin-right: 8px;">#variables</span>
+        <span style="margin-right: 8px;">#functions</span>
+        <span style="margin-right: 8px;">#requests</span>
+        <span style="margin-right: 8px;">#imports</span>
+      </div>
+    </a>
+
+    <div class="card" style="opacity: 0.55;">
+      <div class="card-badge warn">COMING</div>
+      <h4>🔪 Ch 03 — Parse the HTML</h4>
+      <p>Meet BeautifulSoup. Grab the company names + profile links using that <code class="inline">company-title-primary</code> hook we spotted.</p>
+    </div>
+
+    <div class="card" style="opacity: 0.55;">
+      <div class="card-badge warn">COMING</div>
+      <h4>🔁 Ch 04 — The Loop</h4>
+      <p>One company? Easy. <em>Every</em> company? Loop Wizard enters. <code class="inline">for</code> loops, lists, printing all 20 leads.</p>
+    </div>
+
+    <div class="card" style="opacity: 0.55;">
+      <div class="card-badge warn">COMING</div>
+      <h4>💾 Ch 05 — Save to CSV</h4>
+      <p>Your leads in a spreadsheet you can open in Excel. The deliverable. The invoice moment.</p>
+    </div>
+
+    <div class="card" style="opacity: 0.55;">
+      <div class="card-badge warn">COMING</div>
+      <h4>🌐 Ch 06 — Pagination</h4>
+      <p>Scrape ALL pages, not just the first one. <code class="inline">while</code> loops, URL patterns, stopping conditions.</p>
+    </div>
+
+    <div class="card" style="opacity: 0.55;">
+      <div class="card-badge warn">COMING</div>
+      <h4>💥 Ch 07 — Error handling</h4>
+      <p>What happens when the internet blinks? <code class="inline">try/except</code>, retries, polite rate limits.</p>
+    </div>
+
+    <div class="card" style="opacity: 0.55;">
+      <div class="card-badge warn">COMING</div>
+      <h4>🎭 Ch 08 — Anti-bot evasion</h4>
+      <p>Rotate user agents, add delays, session cookies. Cybersec-flavored moves for when a target fights back.</p>
+    </div>
+
+  </div>
+</section>
+
+<div class="divider">where your code lives</div>
+
+<!-- ========== CHAPTER: FILESYSTEM ========== -->
+<section class="chapter" id="files">
+  <div class="chapter-num">Setup // 📂 Two folders, two purposes</div>
+  <h2><span class="emoji">🗂️</span> Where things live</h2>
+  <p class="lead">Keep the playbook (this vault) separate from the working code. Cleaner brain, cleaner git history.</p>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <h4>📖 The Playbook (you're here)</h4>
+      <p style="font-family: var(--mono); font-size: 12px; color: var(--ink-dim);">~/Documents/learning_cybersec/<br>└── topics/python/textile-scraper/</p>
+      <p style="margin-top: 10px;">Read here, think here, quiz yourself here.</p>
+    </div>
+    <div class="card">
+      <h4>⚒️ The Forge (your code)</h4>
+      <p style="font-family: var(--mono); font-size: 12px; color: var(--ink-dim);">~/Documents/DataScrapingLabs/<br>└── textile-scraper/<br>&nbsp;&nbsp;&nbsp;&nbsp;├── venv/<br>&nbsp;&nbsp;&nbsp;&nbsp;└── scraper.py</p>
+      <p style="margin-top: 10px;">Write code here, run code here, break code here.</p>
+    </div>
+  </div>
+</section>
+
+<!-- RELATED -->
+<section class="chapter">
+  <div class="related-terms">
+    <h4>🔗 Related in the vault</h4>
+    <div class="tags">
+      <a href="../../../glossary/requests.html">🌐 requests</a>
+      <a href="../../../glossary/venv.html">📦 venv</a>
+      <a href="../../../glossary/pip.html">📥 pip</a>
+      <a href="../../../glossary/user-agent.html">🪪 User-Agent</a>
+      <a href="../../../glossary/http-status-code.html">🚦 HTTP Status Code</a>
+      <a href="../../../glossary/cloudflare.html">☁️ Cloudflare</a>
+    </div>
+  </div>
+</section>
+
+<footer class="site-foot">
+  <p class="coffee-line">Ship ugly. Then ship good. ☕</p>
+</footer>
+
+<script src="../../../assets/glossary.js"></script>
+<script src="../../../assets/app.js"></script>
+</body>
+</html>

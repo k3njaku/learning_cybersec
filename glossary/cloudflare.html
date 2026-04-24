@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Cloudflare — The Internet's Bouncer ☕</title>
+<link rel="stylesheet" href="../assets/styles.css" />
+</head>
+<body data-page-slug="cloudflare">
+
+<div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
+
+<div class="topbar">
+  <a class="logo" href="../index.html">☕ CYBERSEC.VAULT</a>
+  <nav>
+    <a href="../index.html">Home</a>
+    <a href="../index.html#topics-web">Topics</a>
+    <a href="../index.html#topics-python">Python</a>
+    <a href="index.html" class="active">Glossary</a>
+    <a href="../tryhackme/index.html">THM</a>
+  </nav>
+  <div class="search-wrap">
+    <input type="text" class="search" placeholder="Search (press /)..." />
+    <div class="search-results"></div>
+  </div>
+</div>
+
+<div class="breadcrumb">
+  <a href="../index.html">Home</a>
+  <span class="sep">›</span>
+  <a href="index.html">Glossary</a>
+  <span class="sep">›</span>
+  <span>Cloudflare</span>
+</div>
+
+<section class="hero" style="min-height: 45vh;">
+  <div class="hero-content">
+    <span class="coffee-badge">📖 glossary · infrastructure · often friend, sometimes foe</span>
+    <h1>Cloudflare ☁️</h1>
+    <p class="subtitle">A massive CDN + DDoS shield + WAF sitting in front of ~20% of the web.<br>When you scrape or pentest, you meet Cloudflare before you meet the actual server.</p>
+    <div class="tagline">"The internet has a bouncer. His name is Cloudflare."</div>
+  </div>
+</section>
+
+<section class="chapter">
+  <div class="chapter-num">Chapter 01 // Definition</div>
+  <h2><span class="emoji">📖</span> What is Cloudflare?</h2>
+  <p class="lead">A reverse-proxy service. Your traffic goes to Cloudflare's network first, which decides what to do with it, then (maybe) forwards it to the actual origin server.</p>
+
+  <div class="paper">
+    <h4>📝 Nightclub analogy</h4>
+    <p>The origin server is the VIP room. You (the user) want in. Cloudflare is the bouncer at the door checking every visitor:</p>
+    <ul>
+      <li>Looks like a bot? → CAPTCHA or block.</li>
+      <li>Looks fine? → Cache the previous response and hand it to you (fast).</li>
+      <li>Weird / cached out? → Forward to the origin and bring back the answer.</li>
+    </ul>
+    <p><span class="highlight">Good for the website: speed, DDoS protection, blocking obvious bots. Good for you as a visitor too — usually invisible.</span></p>
+  </div>
+</section>
+
+<div class="divider">how to spot it</div>
+
+<section class="chapter">
+  <div class="chapter-num">Chapter 02 // Recon signals</div>
+  <h2><span class="emoji">🔍</span> How to tell a site is behind Cloudflare</h2>
+
+  <ul>
+    <li>Response header <code class="inline">server: cloudflare</code></li>
+    <li>Response header <code class="inline">cf-ray: &lt;hash&gt;-&lt;datacenter&gt;</code> (unique ID per request)</li>
+    <li>Response header <code class="inline">cf-cache-status:</code> (HIT / MISS / DYNAMIC)</li>
+    <li>Cookies like <code class="inline">__cf_bm</code> (bot management), <code class="inline">cf_clearance</code> (JS challenge solved)</li>
+    <li>"Checking your browser before accessing…" interstitial page</li>
+    <li><code class="inline">403</code> with a CF-branded error page</li>
+  </ul>
+
+  <div class="code">
+<span class="com"># Quick check from the terminal:</span>
+curl -sI https://example.com | grep -i cf
+  </div>
+</section>
+
+<div class="divider">friend or foe?</div>
+
+<section class="chapter">
+  <div class="chapter-num">Chapter 03 // Impact on scraping / pentesting</div>
+  <h2><span class="emoji">⚖️</span> When it matters, how much it matters</h2>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <h4>😌 Lazy-mode Cloudflare</h4>
+      <p>Just a CDN in front — no bot-management enabled. You'll see <code class="inline">server: cloudflare</code> but a normal User-Agent walks right in (like textilepages.com did for us). Basic <span class="term" data-term="requests">requests</span> code works.</p>
+    </div>
+    <div class="card">
+      <h4>🛡️ Bot Fight Mode / Managed Challenge</h4>
+      <p>Serves a JS challenge. Your Python script gets HTML that says "Checking your browser…" — not the real page. Need browser automation (Selenium/Playwright) or services like FlareSolverr / cloudscraper.</p>
+    </div>
+    <div class="card">
+      <h4>🧩 CAPTCHA mode</h4>
+      <p>Turnstile (Cloudflare's CAPTCHA). Hardest to bypass. Options: solve manually + reuse <code class="inline">cf_clearance</code> cookie, use anti-CAPTCHA services, or give up / find an API.</p>
+    </div>
+    <div class="card">
+      <h4>🔎 Origin discovery (pentest)</h4>
+      <p>If you can find the origin server's real IP (via Shodan, Censys, historical DNS, SSL cert transparency logs), you bypass Cloudflare entirely and hit the origin directly. Classic recon move.</p>
+    </div>
+  </div>
+
+  <div class="callout info" style="margin-top: 24px;">
+    <strong>☕ Rule of thumb:</strong> if your request returns real HTML with a 200, Cloudflare is letting you through. If you get a 403, a 503 with a JS challenge, or a "Just a moment…" page, you're being checked. Diagnose with <code class="inline">curl -v</code> first.
+  </div>
+
+  <div class="quiz">
+    <h4>🎯 Quick Check</h4>
+    <div class="q">Your scraper gets <code class="inline">200 OK</code> but the body is a short HTML page that says "Checking your browser…" — what's happening?</div>
+    <div class="options">
+      <div class="opt" onclick="quizAnswer(this, false)">The server is still loading.</div>
+      <div class="opt" onclick="quizAnswer(this, true)">Cloudflare served a JavaScript challenge page instead of the real content. Your script needs to solve the JS (via a headless browser or a tool like FlareSolverr) and reuse the resulting <code class="inline">cf_clearance</code> cookie.</div>
+      <div class="opt" onclick="quizAnswer(this, false)">You hit rate limits.</div>
+      <div class="opt" onclick="quizAnswer(this, false)">Your User-Agent is too long.</div>
+    </div>
+    <div class="feedback"></div>
+  </div>
+</section>
+
+<section class="chapter">
+  <div class="related-terms">
+    <h4>🔗 Related in the vault</h4>
+    <div class="tags">
+      <a href="user-agent.html">🪪 User-Agent</a>
+      <a href="http-status-code.html">🚦 HTTP Status Code</a>
+      <a href="waf.html">🛡️ WAF</a>
+      <a href="requests.html">🌐 requests</a>
+    </div>
+  </div>
+</section>
+
+<footer class="site-foot">
+  <p class="coffee-line">The internet's bouncer. Respectable, beatable, always present. ☕</p>
+</footer>
+
+<script src="../assets/glossary.js"></script>
+<script src="../assets/app.js"></script>
+</body>
+</html>

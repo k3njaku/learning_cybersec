@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>HTTP Request — The Letter To The Server ☕</title>
+<link rel="stylesheet" href="../assets/styles.css" />
+</head>
+<body data-page-slug="http-request">
+
+<div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
+
+<div class="topbar">
+  <a class="logo" href="../index.html">☕ CYBERSEC.VAULT</a>
+  <nav>
+    <a href="../index.html">Home</a>
+    <a href="../index.html#topics-web">Topics</a>
+    <a href="../index.html#topics-python">Python</a>
+    <a href="index.html" class="active">Glossary</a>
+    <a href="../tryhackme/index.html">THM</a>
+  </nav>
+  <div class="search-wrap">
+    <input type="text" class="search" placeholder="Search (press /)..." />
+    <div class="search-results"></div>
+  </div>
+</div>
+
+<div class="breadcrumb">
+  <a href="../index.html">Home</a>
+  <span class="sep">›</span>
+  <a href="index.html">Glossary</a>
+  <span class="sep">›</span>
+  <span>HTTP Request</span>
+</div>
+
+<section class="hero" style="min-height: 45vh;">
+  <div class="hero-content">
+    <span class="coffee-badge">📖 glossary · http · fundamental</span>
+    <h1>HTTP Request 📨</h1>
+    <p class="subtitle">The letter your browser writes to a server every time you visit a page.<br>Once you see its shape, every scraping and pentest trick makes sense.</p>
+    <div class="tagline">"Dear server, please send me /textile-companies. Thx, Chrome."</div>
+  </div>
+</section>
+
+<section class="chapter">
+  <div class="chapter-num">Chapter 01 // The anatomy</div>
+  <h2><span class="emoji">🫀</span> What's in a request</h2>
+
+  <div class="code">
+<span class="kw">GET</span> /textile-companies HTTP/1.1           <span class="com">← method + path + version</span>
+Host: textilepages.com                      <span class="com">← which site on this server</span>
+User-Agent: Mozilla/5.0 ...                 <span class="com">← who I am</span>
+Accept: text/html,application/xhtml+xml      <span class="com">← what I can handle</span>
+Accept-Language: en-US,en;q=0.9
+Cookie: session_id=abc123                   <span class="com">← anything stored from before</span>
+                                            <span class="com">← blank line</span>
+                                            <span class="com">← (optional) body, only for POST/PUT etc.</span>
+  </div>
+
+  <div class="paper right">
+    <h4>📝 The 3 layers</h4>
+    <p>1. <strong>Request line</strong> — verb, path, protocol version</p>
+    <p>2. <strong>Headers</strong> — key: value pairs (who, what, where, cookies...)</p>
+    <p>3. <strong>Body</strong> — optional, for POST / PUT / PATCH (form data, JSON, files)</p>
+    <p><span class="highlight">Every tool — browser, curl, Python requests, Postman — builds this exact same structure.</span></p>
+  </div>
+</section>
+
+<div class="divider">the verbs</div>
+
+<section class="chapter">
+  <div class="chapter-num">Chapter 02 // HTTP methods</div>
+  <h2><span class="emoji">🎯</span> The verbs you'll actually use</h2>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <h4>📥 GET</h4>
+      <p>"Give me this resource." Safe, idempotent. Browsers default. Scrapers live here.</p>
+    </div>
+    <div class="card">
+      <h4>📤 POST</h4>
+      <p>"Create / submit this." Login forms, contact forms, creating new DB entries.</p>
+    </div>
+    <div class="card">
+      <h4>✏️ PUT / PATCH</h4>
+      <p>PUT = replace whole resource. PATCH = partial update. Mostly in REST APIs.</p>
+    </div>
+    <div class="card">
+      <h4>🗑️ DELETE</h4>
+      <p>"Remove this resource." REST APIs. Bug bounty gold when access control is broken.</p>
+    </div>
+    <div class="card">
+      <h4>🧪 OPTIONS</h4>
+      <p>"What methods are allowed here?" CORS preflight requests.</p>
+    </div>
+    <div class="card">
+      <h4>👤 HEAD</h4>
+      <p>Like GET but returns only headers (no body). Great for "does this URL exist?" checks without downloading KBs.</p>
+    </div>
+  </div>
+</section>
+
+<section class="chapter">
+  <div class="chapter-num">Chapter 03 // See them live</div>
+  <h2><span class="emoji">👀</span> How to watch HTTP in the wild</h2>
+
+  <ul>
+    <li><strong>DevTools Network tab</strong> (F12 in any browser) — every request your browser makes is logged with headers, method, status, size, timing.</li>
+    <li><strong>curl -v &lt;url&gt;</strong> — verbose mode prints the full request and response on the terminal.</li>
+    <li><strong>Burp Suite / ZAP</strong> — intercept, modify, replay. The pentester's scalpel.</li>
+    <li><strong>Python + <span class="term" data-term="requests">requests</span></strong> — you build them yourself, line by line.</li>
+  </ul>
+
+  <div class="quiz">
+    <h4>🎯 Quick Check</h4>
+    <div class="q">You want to log into a website via script — which HTTP method typically handles the form submission?</div>
+    <div class="options">
+      <div class="opt" onclick="quizAnswer(this, false)">GET</div>
+      <div class="opt" onclick="quizAnswer(this, true)">POST (with the credentials in the request body)</div>
+      <div class="opt" onclick="quizAnswer(this, false)">DELETE</div>
+      <div class="opt" onclick="quizAnswer(this, false)">HEAD</div>
+    </div>
+    <div class="feedback"></div>
+  </div>
+</section>
+
+<section class="chapter">
+  <div class="related-terms">
+    <h4>🔗 Related in the vault</h4>
+    <div class="tags">
+      <a href="http-status-code.html">🚦 HTTP Status Code</a>
+      <a href="requests.html">🌐 requests</a>
+      <a href="user-agent.html">🪪 User-Agent</a>
+    </div>
+  </div>
+</section>
+
+<footer class="site-foot">
+  <p class="coffee-line">Every website is just letters flying back and forth. ☕</p>
+</footer>
+
+<script src="../assets/glossary.js"></script>
+<script src="../assets/app.js"></script>
+</body>
+</html>

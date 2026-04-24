@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>User-Agent — Your HTTP Fingerprint ☕</title>
+<link rel="stylesheet" href="../assets/styles.css" />
+</head>
+<body data-page-slug="user-agent">
+
+<div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
+
+<div class="topbar">
+  <a class="logo" href="../index.html">☕ CYBERSEC.VAULT</a>
+  <nav>
+    <a href="../index.html">Home</a>
+    <a href="../index.html#topics-web">Topics</a>
+    <a href="../index.html#topics-python">Python</a>
+    <a href="index.html" class="active">Glossary</a>
+    <a href="../tryhackme/index.html">THM</a>
+  </nav>
+  <div class="search-wrap">
+    <input type="text" class="search" placeholder="Search (press /)..." />
+    <div class="search-results"></div>
+  </div>
+</div>
+
+<div class="breadcrumb">
+  <a href="../index.html">Home</a>
+  <span class="sep">›</span>
+  <a href="index.html">Glossary</a>
+  <span class="sep">›</span>
+  <span>User-Agent</span>
+</div>
+
+<section class="hero" style="min-height: 45vh;">
+  <div class="hero-content">
+    <span class="coffee-badge">📖 glossary · http · fingerprint</span>
+    <h1>User-Agent 🪪</h1>
+    <p class="subtitle">A text string where your HTTP client introduces itself.<br>Set it wrong, and you get 403'd. Set it well, and you walk right in.</p>
+    <div class="tagline">"Hi, I'm Chrome 120, please let me in."</div>
+  </div>
+</section>
+
+<section class="chapter">
+  <div class="chapter-num">Chapter 01 // Definition</div>
+  <h2><span class="emoji">📖</span> What is a User-Agent?</h2>
+  <p class="lead">An HTTP request header where the client declares what software it is.</p>
+
+  <div class="paper">
+    <h4>📝 Bouncer analogy</h4>
+    <p>Every visitor to a website is asked by the bouncer: <em>"Who are you?"</em> Your browser answers with a User-Agent string:</p>
+    <p style="font-family: monospace; background: #f5e9c8; color: #000; padding: 4px 8px; display: inline-block; border-radius: 3px;">Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36</p>
+    <p style="margin-top: 10px;">Translation: "I'm Chrome 120 running on Linux." Looks weird, but that's 30 years of browser evolution fossilized into one line.</p>
+    <p><span class="highlight">Python's requests library, if you don't override, answers: "I'm python-requests/2.31.0." Bouncer raises an eyebrow.</span></p>
+  </div>
+</section>
+
+<div class="divider">why it matters</div>
+
+<section class="chapter">
+  <div class="chapter-num">Chapter 02 // Why it matters</div>
+  <h2><span class="emoji">💥</span> Scraping / pentest implications</h2>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <h4>🚫 The instant 403</h4>
+      <p>Many sites + WAFs (Cloudflare, Akamai, AWS WAF) block default <code class="inline">python-requests</code> UAs on sight. It's the lowest-hanging bot signal.</p>
+    </div>
+    <div class="card">
+      <h4>🪪 Easy bypass</h4>
+      <p>Setting <code class="inline">User-Agent: Mozilla/5.0 ...</code> gets through most basic bot checks. A one-line header = instant access.</p>
+    </div>
+    <div class="card">
+      <h4>🎭 Fingerprinting</h4>
+      <p>Advanced WAFs combine UA + TLS fingerprint + JS execution to detect bots. A real UA alone isn't always enough — but it's always the first step.</p>
+    </div>
+    <div class="card">
+      <h4>🔀 Rotation</h4>
+      <p>For big scraping jobs, rotate UAs across requests. Cycle Chrome / Firefox / Safari / mobile variants. Each request looks like a different person.</p>
+    </div>
+  </div>
+</section>
+
+<section class="chapter">
+  <div class="chapter-num">Chapter 03 // Code</div>
+  <h2><span class="emoji">🎯</span> How to set it in Python</h2>
+
+  <div class="code safe">
+<span class="kw">import</span> requests
+
+UA = <span class="str">"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "</span> \
+     <span class="str">"(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"</span>
+
+r = requests.get(<span class="str">"https://textilepages.com/textile-companies"</span>,
+                 headers={<span class="str">"User-Agent"</span>: UA})
+
+<span class="kw">print</span>(r.status_code)   <span class="com"># 200 ← rather than 403</span>
+  </div>
+
+  <div class="callout info" style="margin-top: 20px;">
+    <strong>☕ Find your own UA:</strong> open your browser, visit <a href="https://httpbin.org/user-agent" target="_blank" rel="noopener">httpbin.org/user-agent</a>. It echoes back whatever your current browser sends. Copy-paste it into your scraper.
+  </div>
+
+  <div class="quiz">
+    <h4>🎯 Quick Check</h4>
+    <div class="q">Your Python scraper works via <code class="inline">curl -A "Mozilla/5.0 ..." &lt;url&gt;</code> but fails with <code class="inline">requests.get(url)</code> returning 403. Why?</div>
+    <div class="options">
+      <div class="opt" onclick="quizAnswer(this, false)">Python is slower than curl.</div>
+      <div class="opt" onclick="quizAnswer(this, false)">Cloudflare blocks Linux.</div>
+      <div class="opt" onclick="quizAnswer(this, true)">You passed a fake UA to curl, but the Python call is using the default <code class="inline">python-requests/...</code> UA. Add a <code class="inline">headers={"User-Agent": "Mozilla/5.0 ..."}</code> dict to your request.</div>
+      <div class="opt" onclick="quizAnswer(this, false)">Your Python version is outdated.</div>
+    </div>
+    <div class="feedback"></div>
+  </div>
+</section>
+
+<section class="chapter">
+  <div class="related-terms">
+    <h4>🔗 Related in the vault</h4>
+    <div class="tags">
+      <a href="requests.html">🌐 requests</a>
+      <a href="http-request.html">📨 HTTP Request</a>
+      <a href="cloudflare.html">☁️ Cloudflare</a>
+      <a href="waf.html">🛡️ WAF</a>
+    </div>
+  </div>
+</section>
+
+<footer class="site-foot">
+  <p class="coffee-line">First impression = your User-Agent. ☕</p>
+</footer>
+
+<script src="../assets/glossary.js"></script>
+<script src="../assets/app.js"></script>
+</body>
+</html>

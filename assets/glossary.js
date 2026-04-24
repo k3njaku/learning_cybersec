@@ -62,6 +62,15 @@ window.GLOSSARY = {
     page: "bug-bounty.html",
     related: ["ethical-hacking", "cve", "disclosure"]
   },
+  "cloudflare": {
+    name: "Cloudflare",
+    aliases: ["cf", "cloudflare-protected"],
+    category: "Infrastructure",
+    blurb: "Massive CDN + DDoS shield sitting in front of ~20% of the web. Sometimes friend, sometimes enemy.",
+    short: "A content delivery network (CDN) and reverse proxy that sits between users and websites. It caches content, blocks DDoS, and runs bot-detection / WAF rules. For scrapers + pentesters, it's the first 'wall' you often meet. A target behind Cloudflare might still serve you plain HTML (200 OK) if its rules are lax — or it might throw JS challenges, CAPTCHAs, or 403s. Recognisable by the <code>server: cloudflare</code> header and <code>cf-ray</code> response header.",
+    page: "cloudflare.html",
+    related: ["user-agent", "waf", "http-status-code"]
+  },
 
   /* ---------- C ---------- */
   "apt": {
@@ -111,6 +120,24 @@ window.GLOSSARY = {
     related: ["linux-permissions", "chmod", "privilege-escalation"]
   },
 
+  "http-request": {
+    name: "HTTP Request",
+    aliases: ["http-get", "http-post", "request"],
+    category: "Web Fundamentals",
+    blurb: "The tiny text message your browser sends to a server to ask for a page.",
+    short: "A message from a client (browser, Python script, curl) to a server. It includes a method (GET, POST, PUT, DELETE…), a path (/textile-companies), headers (User-Agent, Accept, Cookie…) and optionally a body. In Python, the <code>requests</code> library builds these for you. Understanding the shape of a request is the difference between a scraper that works and one that gets 403'd.",
+    page: "http-request.html",
+    related: ["http-status-code", "user-agent", "requests"]
+  },
+  "http-status-code": {
+    name: "HTTP Status Code",
+    aliases: ["status-code", "http-status", "response-code"],
+    category: "Web Fundamentals",
+    blurb: "The 3-digit number a server uses to tell you 'here you go / you're lost / you're blocked / I'm on fire.'",
+    short: "A standardised integer a server returns with every response. 1xx = info, 2xx = success (200 OK is the friend), 3xx = redirect (301, 302), 4xx = your fault (403 forbidden, 404 not found, 429 too many requests), 5xx = server's fault (500, 502, 503). A scraper's very first sanity check is <code>response.status_code == 200</code>. If it's not, the rest of your parsing logic is pointless.",
+    page: "http-status-code.html",
+    related: ["http-request", "requests", "cloudflare"]
+  },
   "curl": {
     name: "curl",
     aliases: ["curl-command", "libcurl"],
@@ -141,6 +168,15 @@ window.GLOSSARY = {
     short: "Converting characters into a different representation (e.g., %27 for ' in URLs, &#x53; for S in HTML/XML). Used legitimately to move data safely — and used by attackers to bypass input filters.",
     page: "encoding.html",
     related: ["obfuscation", "waf"]
+  },
+  "env-file": {
+    name: ".env File",
+    aliases: ["dotenv", "env file", ".env.production", ".env.local"],
+    category: "Leak Type",
+    blurb: "Plain-text config file devs use for secrets locally — then accidentally commit to GitHub.",
+    short: "A file (conventionally named <code>.env</code>) holding environment variables in KEY=VALUE format. Python/Node/PHP/Ruby all support loading it at startup so devs don't hardcode secrets in source. Problem: it's a plain text file next to the code, and if the <code>.gitignore</code> is missing or incomplete, it gets pushed to GitHub. One leaked <code>.env</code> usually contains 5–15 separate credentials (DB, Stripe, AWS, SMTP, etc.) — making it one of the highest-ROI leak types for attackers and for responsible-disclosure researchers.",
+    page: "env-file.html",
+    related: ["leaky-commits", "bug-bounty", "tfstate", "kubeconfig"]
   },
 
   /* ---------- G ---------- */
@@ -195,6 +231,15 @@ window.GLOSSARY = {
     page: "linux-permissions.html",
     related: ["chmod", "su", "privilege-escalation"]
   },
+  "kubeconfig": {
+    name: "kubeconfig",
+    aliases: ["kube-config", "kubectl config", "k8s config"],
+    category: "Leak Type",
+    blurb: "A single YAML file that is FULL admin access to a Kubernetes cluster.",
+    short: "The configuration file used by <code>kubectl</code> to connect to one or more Kubernetes clusters. Contains cluster API server URLs, certificate authority data, and — critically — authentication tokens or client certs. If leaked publicly, an attacker runs <code>kubectl --kubeconfig=leaked get pods -A</code> and gains full control: read every pod's env vars and secrets, deploy malicious pods, escape to the host node. Common leak path: devs commit their entire <code>~/.kube/</code> folder by accident.",
+    page: "kubeconfig.html",
+    related: ["leaky-commits", "env-file", "privilege-escalation"]
+  },
 
   /* ---------- M ---------- */
   "man-page": {
@@ -237,6 +282,15 @@ window.GLOSSARY = {
     page: "parameterized-query.html",
     related: ["sql-injection", "orm", "input-validation"]
   },
+  "pip": {
+    name: "pip",
+    aliases: ["pip install", "python-package-manager"],
+    category: "Python",
+    blurb: "Python's app store. <code>pip install requests</code> and boom — the library lives on your machine.",
+    short: "Python's package installer. It talks to the Python Package Index (PyPI — pypi.org) to download and install libraries. Core verbs: <code>pip install &lt;pkg&gt;</code>, <code>pip uninstall &lt;pkg&gt;</code>, <code>pip list</code>, <code>pip freeze &gt; requirements.txt</code>. Always use it INSIDE an activated venv to avoid polluting your system Python.",
+    page: "pip.html",
+    related: ["venv", "requests", "python-variable"]
+  },
   "payload": {
     name: "Payload",
     aliases: ["payloads", "malicious-payload"],
@@ -275,6 +329,15 @@ window.GLOSSARY = {
     short: "Arbitrary Code Execution achieved over a network (i.e., without physical access). Usually the top severity finding. Often follows a chain of lesser vulns that get escalated.",
     page: "arbitrary-code-exec.html#rce",
     related: ["arbitrary-code-execution", "reverse-shell", "sql-injection"]
+  },
+  "requests": {
+    name: "requests (Python library)",
+    aliases: ["python-requests", "requests.get", "python requests library"],
+    category: "Python",
+    blurb: "The Python library that makes HTTP so easy it feels illegal. The de-facto way to fetch web pages.",
+    short: "A third-party Python library (installed with <code>pip install requests</code>) that wraps HTTP in a beginner-friendly API. Core verbs: <code>requests.get(url)</code>, <code>requests.post(url, data=...)</code>. Returns a Response object with <code>.status_code</code>, <code>.text</code> (HTML/string body), <code>.json()</code> (parsed JSON), <code>.headers</code>, and <code>.cookies</code>. Used by every serious Python scraper and tons of cybersec tooling. Not in the standard library — pip-install it.",
+    page: "requests.html",
+    related: ["pip", "venv", "http-request", "http-status-code", "user-agent"]
   },
   "reverse-shell": {
     name: "Reverse Shell",
@@ -377,8 +440,35 @@ window.GLOSSARY = {
     page: "systemd.html",
     related: ["pid", "cron", "privilege-escalation"]
   },
+  "tfstate": {
+    name: "terraform.tfstate",
+    aliases: ["terraform state", "tfstate file", "terraform.tfstate.backup"],
+    category: "Leak Type",
+    blurb: "The file Terraform uses to remember what infrastructure it created. Basically a map of your cloud.",
+    short: "A plain-JSON file (usually named <code>terraform.tfstate</code>) that Terraform maintains locally to track which cloud resources it has created, their IDs, IPs, and output values. When leaked publicly, an attacker skips all reconnaissance — they now know every S3 bucket name, every RDS endpoint, every EC2 IP, every IAM role ARN. Worse, outputs sometimes contain plaintext secrets (database passwords, API keys). Best practice is to store tfstate remotely (S3 + KMS, Terraform Cloud) with restricted access — never on a laptop that syncs with git.",
+    page: "tfstate.html",
+    related: ["leaky-commits", "env-file", "kubeconfig"]
+  },
 
   /* ---------- U ---------- */
+  "user-agent": {
+    name: "User-Agent",
+    aliases: ["ua", "user agent", "ua-header"],
+    category: "Web Fundamentals",
+    blurb: "An HTTP header where a client introduces itself — 'hi, I'm Chrome 120 on Linux.'",
+    short: "A request header that identifies the client software making the request. A real browser sends something like <code>Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36</code>. Python's <code>requests</code> library defaults to <code>python-requests/2.31.0</code> which screams 'I am a bot.' Many sites (and WAFs like Cloudflare) check this header — setting a browser-like UA is scraping 101. Advanced: rotate UAs across requests to avoid fingerprinting.",
+    page: "user-agent.html",
+    related: ["requests", "cloudflare", "http-request", "waf"]
+  },
+  "venv": {
+    name: "venv (Virtual Environment)",
+    aliases: ["virtualenv", "virtual environment", "python venv"],
+    category: "Python",
+    blurb: "A private Python sandbox per project. Different projects, different library versions, no chaos.",
+    short: "Python's built-in tool for creating isolated environments. <code>python3 -m venv venv</code> creates a folder with its own Python + pip + packages. <code>source venv/bin/activate</code> turns it on (Linux/Mac); <code>venv\\Scripts\\activate</code> on Windows. Without it, every project installs into your system Python — leading to version conflicts and a broken machine. Modern Ubuntu/Debian even block pip-installing globally to force this habit. Pros ALWAYS venv. Pros NEVER skip it.",
+    page: "venv.html",
+    related: ["pip", "requests", "python-variable"]
+  },
   "union-attack": {
     name: "UNION Attack",
     aliases: ["union-select", "union-based-sqli"],

@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>.env File — The Most-Leaked Secret Container ☕</title>
+<link rel="stylesheet" href="../assets/styles.css" />
+</head>
+<body data-page-slug="env-file">
+
+<div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
+
+<div class="topbar">
+  <a class="logo" href="../index.html">☕ CYBERSEC.VAULT</a>
+  <nav>
+    <a href="../index.html">Home</a>
+    <a href="../index.html#topics-web">Topics</a>
+    <a href="index.html" class="active">Glossary</a>
+    <a href="../tryhackme/index.html">THM</a>
+  </nav>
+  <div class="search-wrap">
+    <input type="text" class="search" placeholder="Search (press /)..." />
+    <div class="search-results"></div>
+  </div>
+</div>
+
+<div class="breadcrumb">
+  <a href="../index.html">Home</a>
+  <span class="sep">›</span>
+  <a href="index.html">Glossary</a>
+  <span class="sep">›</span>
+  <span>.env File</span>
+</div>
+
+<section class="hero" style="min-height: 45vh;">
+  <div class="hero-content">
+    <span class="coffee-badge">📖 glossary · Leak Type · ⚠️ high risk</span>
+    <h1>📄 .env File</h1>
+    <p class="subtitle">Where devs keep their secrets during development.<br>Also where devs accidentally upload them to the world.</p>
+    <div class="tagline">"One .env leak = 5–15 stolen credentials in a single file."</div>
+  </div>
+</section>
+
+<section class="chapter">
+  <div class="chapter-num">Chapter 01 // Definition</div>
+  <h2><span class="emoji">📖</span> What is a .env file?</h2>
+  <p class="lead">A plain-text file, usually named literally <code class="inline">.env</code>, sitting in the root of a project. Each line is <code class="inline">KEY=VALUE</code>. That's it. No encryption, no structure, no magic.</p>
+
+  <div class="paper">
+    <h4>📝 Think of it as a sticky note</h4>
+    <p>Imagine your <span class="highlight">dev setup</span> is a laptop with sticky notes around the monitor. Each note says something like:</p>
+    <p style="font-family: monospace;">📝 Database password: hunter2<br>📝 Stripe key: sk_live_xyz<br>📝 AWS key: AKIA...</p>
+    <p>They're <em>super convenient</em> — the laptop apps read them at startup and "just work." But if someone photographs your monitor, every secret is exposed at once.</p>
+    <p>A <code>.env</code> file is that monitor wall. <code>git push</code> is the photograph.</p>
+  </div>
+
+  <p>In code, libraries like <code class="inline">python-dotenv</code>, <code class="inline">dotenv</code> (Node), or <code class="inline">Dotenv</code> (Ruby) load the file at startup and drop each pair into the process's environment variables. Your app reads them with <code class="inline">os.getenv("STRIPE_KEY")</code> — clean, no hardcoding.</p>
+</section>
+
+<div class="divider">why it matters</div>
+
+<section class="chapter">
+  <div class="chapter-num">Chapter 02 // The leak math</div>
+  <h2><span class="emoji">💥</span> Why .env files are the most valuable leak</h2>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <h4>💰 Density</h4>
+      <p>A single <code>.env</code> typically has 5–15 credentials. Finding ONE file = finding many keys at once.</p>
+    </div>
+    <div class="card">
+      <h4>🎯 Related creds</h4>
+      <p>All credentials belong to the SAME app. DB creds + API keys + SMTP in one bundle = full takeover chain.</p>
+    </div>
+    <div class="card">
+      <h4>🤷 Low detection</h4>
+      <p>Individual keys may dodge <span class="term" data-term="bug-bounty">bug bounty</span> scanners. An <code>.env</code> announces itself by filename.</p>
+    </div>
+    <div class="card">
+      <h4>📂 Easy to hunt</h4>
+      <p>GitHub query: <code>filename:.env DB_PASSWORD</code>. Millions of results. Humans can't triage them all — that's the gap.</p>
+    </div>
+  </div>
+</section>
+
+<div class="divider">real world</div>
+
+<section class="chapter">
+  <div class="chapter-num">Chapter 03 // Seen in the wild</div>
+  <h2><span class="emoji">📰</span> Actual .env-caused breaches</h2>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <h4>🏪 Shopify merchants (ongoing)</h4>
+      <p>Thousands of third-party Shopify app developers commit <code>.env</code> files with <code>SHOPIFY_API_SECRET</code>, giving attackers full access to every merchant that installed the app.</p>
+    </div>
+    <div class="card">
+      <h4>🎮 Grand Theft Auto VI (2022)</h4>
+      <p>The Rockstar leak started with an attacker finding developer credentials in a Slack message, then pivoting through a dev <code>.env</code> to pull <strong>90 videos + source code</strong>.</p>
+    </div>
+    <div class="card">
+      <h4>💳 Toyota (2023)</h4>
+      <p>A public GitHub repo exposed <code>.env</code>-style configs including a Google Cloud access key for <strong>10 years</strong>. 260,000 customer records leaked.</p>
+    </div>
+    <div class="card">
+      <h4>🪙 Kyber Network (2023)</h4>
+      <p>A DeFi exchange lost <strong>$265K</strong> after an attacker found Google Tag Manager credentials in a leaked config, then injected malicious JS into the site.</p>
+    </div>
+  </div>
+</section>
+
+<section class="chapter">
+  <div class="chapter-num">Chapter 04 // How to not leak one</h2>
+  <h2><span class="emoji">🛡️</span> The prevention cheat sheet</h2>
+
+  <ul>
+    <li><strong>Add to .gitignore FIRST</strong> (before you create the .env):
+      <div class="code safe" style="margin-top: 8px;">
+.env
+.env.*
+!.env.example</div>
+    </li>
+    <li><strong>Use <code>.env.example</code></strong> with placeholder values, commit THAT. New devs copy it to <code>.env</code> and fill in real values locally.</li>
+    <li><strong>Install <code class="inline">gitleaks</code> as a pre-commit hook</strong> — it blocks commits containing secret-shaped strings.</li>
+    <li><strong>Use a secret manager in production</strong> — AWS Secrets Manager, HashiCorp Vault, Doppler. <code>.env</code> is for local dev only.</li>
+    <li><strong>Audit existing repos:</strong> <code class="inline">git log --all --full-history -- .env</code> to see if <code>.env</code> was ever committed in history.</li>
+    <li><strong>If you leaked one:</strong> rotate every single credential in it, rewrite git history with <code class="inline">git filter-repo</code>, force push, contact GitHub Support to purge caches.</li>
+  </ul>
+
+  <div class="quiz">
+    <h4>🎯 Quick Check</h4>
+    <div class="q">A developer commits a <code>.env</code> to a public repo, notices 10 minutes later, and deletes it in a new commit. Is the secret safe now?</div>
+    <div class="options">
+      <div class="opt" onclick="quizAnswer(this, false)">Yes — the file is gone from the current version.</div>
+      <div class="opt" onclick="quizAnswer(this, false)">Yes, as long as they make the repo private afterwards.</div>
+      <div class="opt" onclick="quizAnswer(this, true)">No — git history keeps the old commit. Anyone who cloned or a scanner that indexed the repo already has the secret. Every credential in the .env must be rotated.</div>
+      <div class="opt" onclick="quizAnswer(this, false)">No — but only if the repo had more than 100 stars.</div>
+    </div>
+    <div class="feedback"></div>
+  </div>
+</section>
+
+<section class="chapter">
+  <div class="related-terms">
+    <h4>🔗 Related in the vault</h4>
+    <div class="tags">
+      <a href="tfstate.html">🗺️ terraform.tfstate</a>
+      <a href="kubeconfig.html">☸️ kubeconfig</a>
+      <a href="bug-bounty.html">🐛 Bug Bounty</a>
+      <a href="../topics/web/leaky-commits/index.html">🗑️ Leaky Commits (topic)</a>
+    </div>
+  </div>
+</section>
+
+<footer class="site-foot">
+  <p class="coffee-line">One file. Fifteen secrets. Zero excuses. Use .gitignore. ☕</p>
+</footer>
+
+<script src="../assets/glossary.js"></script>
+<script src="../assets/app.js"></script>
+</body>
+</html>

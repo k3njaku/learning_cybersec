@@ -11,8 +11,9 @@
 
 /* ---------- SITE MAP (topics only — glossary is pulled from window.GLOSSARY) ----------
    LANES:
-     'web'  = web app pentesting (PRIMARY LANE — bug bounty territory)
-     'misc' = random itch-scratching (networking, crypto, OS internals, etc.)
+     'web'    = web app pentesting (PRIMARY LANE — bug bounty territory)
+     'misc'   = random itch-scratching (networking, crypto, OS internals, etc.)
+     'python' = Python as a weapon (scraping gigs, cybersec scripting, automation)
    Add new topics here when you create a new topics/<lane>/<slug>/index.html page.
 -------------------------------------------------------------------------------------- */
 window.SITE_TOPICS = [
@@ -29,6 +30,31 @@ window.SITE_TOPICS = [
     ],
     progress: 0.3, // 0..1 — we update this as you check off chapters
     tags: ["OWASP Top 10", "Injection", "Database"]
+  },
+  {
+    slug: "leaky-commits",
+    lane: "web",
+    name: "Leaky Commits",
+    icon: "🗑️",
+    blurb: "Beyond API keys — what else devs leak on GitHub and why attackers love it.",
+    path: "topics/web/leaky-commits/index.html",
+    subpages: [],
+    progress: 1.0,
+    tags: ["OSINT", "Recon", "GitHub", "Bug Bounty"]
+  },
+  {
+    slug: "textile-scraper",
+    lane: "python",
+    name: "Project: Textile Scraper 🧵",
+    icon: "🕷️",
+    blurb: "Build a real scraper for textilepages.com. Learn Python AS you hunt leads.",
+    path: "topics/python/textile-scraper/index.html",
+    subpages: [
+      { name: "Ch 01 — Recon: Know Your Prey", path: "topics/python/textile-scraper/chapter-01-recon.html" },
+      { name: "Ch 02 — First Blood: Fetching the Page", path: "topics/python/textile-scraper/chapter-02-first-fetch.html" }
+    ],
+    progress: 0.15,
+    tags: ["Python", "Scraping", "Lead Gen", "requests", "BeautifulSoup"]
   }
 ];
 

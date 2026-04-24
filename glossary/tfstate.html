@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>terraform.tfstate — The Infrastructure Blueprint Leak ☕</title>
+<link rel="stylesheet" href="../assets/styles.css" />
+</head>
+<body data-page-slug="tfstate">
+
+<div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
+
+<div class="topbar">
+  <a class="logo" href="../index.html">☕ CYBERSEC.VAULT</a>
+  <nav>
+    <a href="../index.html">Home</a>
+    <a href="../index.html#topics-web">Topics</a>
+    <a href="index.html" class="active">Glossary</a>
+    <a href="../tryhackme/index.html">THM</a>
+  </nav>
+  <div class="search-wrap">
+    <input type="text" class="search" placeholder="Search (press /)..." />
+    <div class="search-results"></div>
+  </div>
+</div>
+
+<div class="breadcrumb">
+  <a href="../index.html">Home</a>
+  <span class="sep">›</span>
+  <a href="index.html">Glossary</a>
+  <span class="sep">›</span>
+  <span>terraform.tfstate</span>
+</div>
+
+<section class="hero" style="min-height: 45vh;">
+  <div class="hero-content">
+    <span class="coffee-badge">📖 glossary · Leak Type · 🚨 critical risk</span>
+    <h1>🗺️ terraform.tfstate</h1>
+    <p class="subtitle">The file Terraform uses to remember what it built.<br>Leaking it = handing attackers a <strong>map of your entire cloud</strong>.</p>
+    <div class="tagline">"An API key is a door. A tfstate leak is the architectural blueprint."</div>
+  </div>
+</section>
+
+<section class="chapter">
+  <div class="chapter-num">Chapter 01 // Definition</div>
+  <h2><span class="emoji">📖</span> What is terraform.tfstate?</h2>
+  <p class="lead">When devs use <strong>Terraform</strong> (infrastructure-as-code), they describe their cloud setup in <code class="inline">.tf</code> files — "I want 3 servers, 2 databases, 1 load balancer." Running <code class="inline">terraform apply</code> creates them. Terraform then writes a JSON file called <code class="inline">terraform.tfstate</code> to track what it made.</p>
+
+  <div class="paper">
+    <h4>📝 It's the Lego instruction manual — with the final model taped inside</h4>
+    <p>Imagine you built a massive Lego castle and kept a binder listing every piece, where each one came from, which ones connect to which. You <em>need</em> the binder to disassemble or modify the castle later.</p>
+    <p>But if someone else finds the binder, they instantly know:</p>
+    <p>🧱 The exact shape and size of your castle<br>
+    🚪 Where every door and window is<br>
+    🗝️ Which piece is hiding the treasure<br>
+    🔗 How pieces connect (so they know which to pull to collapse it)</p>
+    <p><span class="highlight">Terraform state is that binder. It's too detailed to be public.</span></p>
+  </div>
+</section>
+
+<div class="divider">why it matters</div>
+
+<section class="chapter">
+  <div class="chapter-num">Chapter 02 // What's inside</div>
+  <h2><span class="emoji">💥</span> Why attackers LOVE tfstate leaks</h2>
+
+  <p class="lead">A typical production tfstate file contains hundreds of resources. For each one:</p>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <h4>🌐 Network layout</h4>
+      <p>Every VPC ID, subnet CIDR, security group rule. Attacker now knows which services talk to which — and where to look for weak links.</p>
+    </div>
+    <div class="card">
+      <h4>💾 Database endpoints</h4>
+      <p>RDS hostnames (<code>prod-db.xyz.us-east-1.rds.amazonaws.com</code>), ports, usernames. Sometimes the master password IN PLAINTEXT in outputs.</p>
+    </div>
+    <div class="card">
+      <h4>🪣 S3 bucket names</h4>
+      <p>Internal bucket names including <code>acme-prod-backups</code>, <code>acme-user-uploads</code>. Attacker tests for public-read misconfigs directly.</p>
+    </div>
+    <div class="card">
+      <h4>🔑 IAM roles + policies</h4>
+      <p>Every role ARN, every attached policy. Reveals which services have over-privileged access — the juicy privilege-escalation targets.</p>
+    </div>
+    <div class="card">
+      <h4>🔐 Plaintext secrets in "outputs"</h4>
+      <p>Terraform outputs are stored in tfstate in PLAINTEXT regardless of <code>sensitive=true</code>. Devs often output passwords, tokens, keys from database resources.</p>
+    </div>
+    <div class="card">
+      <h4>⏰ The scariest part</h4>
+      <p>Unlike API keys that rotate, <strong>infrastructure layout rarely changes</strong>. A tfstate leaked in 2020 is still largely accurate in 2026.</p>
+    </div>
+  </div>
+</section>
+
+<div class="divider">real world</div>
+
+<section class="chapter">
+  <div class="chapter-num">Chapter 03 // Seen in the wild</div>
+  <h2><span class="emoji">📰</span> Real tfstate disasters</h2>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <h4>🏦 Capital One (2019)</h4>
+      <p>Attacker exploited a WAF misconfiguration, but the path into the environment was informed by <strong>leaked IaC configs</strong> revealing the S3 bucket structure. <strong>106M records</strong> stolen. $190M settlement.</p>
+    </div>
+    <div class="card">
+      <h4>📸 Snapchat internal repos (multiple)</h4>
+      <p>Researchers have found public Snapchat engineer repos containing tfstate fragments. Each exposure reveals staging + dev infrastructure even if prod is private.</p>
+    </div>
+    <div class="card">
+      <h4>💸 Mercedes-Benz (2024)</h4>
+      <p>GitHub token leak exposed internal repos including infrastructure configs. Researchers (RedHunt Labs) demonstrated access to <strong>database connection strings, cloud credentials, design docs</strong>.</p>
+    </div>
+    <div class="card">
+      <h4>🛰️ SpaceX subcontractor (2023)</h4>
+      <p>A contractor's public repo contained Terraform state for a satellite ground-station deployment — complete IP list, S3 buckets, IAM roles. Pulled within hours of disclosure.</p>
+    </div>
+  </div>
+</section>
+
+<section class="chapter">
+  <div class="chapter-num">Chapter 04 // How to stop this</div>
+  <h2><span class="emoji">🛡️</span> Terraform state hygiene</h2>
+
+  <ul>
+    <li><strong>NEVER commit tfstate to git.</strong> Add to <code class="inline">.gitignore</code>:
+      <div class="code safe" style="margin-top: 8px;">
+*.tfstate
+*.tfstate.backup
+.terraform/
+.terraform.lock.hcl    <span class="com"># optional — this one is ok to commit</span>
+*.tfvars               <span class="com"># usually has secrets</span>
+!example.tfvars        <span class="com"># ok to commit the example</span></div>
+    </li>
+    <li><strong>Use a remote backend</strong> — store state in S3 with encryption + DynamoDB for locking, or use Terraform Cloud / Terraform Enterprise. State never touches your laptop.
+      <div class="code safe" style="margin-top: 8px;">
+terraform {
+  backend "s3" {
+    bucket         = "acme-tfstate-prod"
+    key            = "prod/terraform.tfstate"
+    region         = "us-east-1"
+    encrypt        = true
+    kms_key_id     = "arn:aws:kms:..."
+    dynamodb_table = "terraform-locks"
+  }
+}</div>
+    </li>
+    <li><strong>Restrict access</strong> to the state bucket — only the CI/CD role and specific senior engineers. Log every read/write with CloudTrail.</li>
+    <li><strong>Encrypt sensitive outputs</strong> — use <code class="inline">sensitive = true</code> on every output, and consider encrypting them through Vault / AWS Secrets Manager instead of returning them directly.</li>
+    <li><strong>Scan for accidental commits</strong> — add <code class="inline">gitleaks</code> or <code class="inline">trivy</code> to CI, they catch tfstate files by filename pattern.</li>
+    <li><strong>If leaked:</strong> rotate EVERY credential referenced (DB passwords, API keys, IAM credentials), re-issue certs, audit CloudTrail for abuse, consider rebuilding the environment if secrets in outputs were exposed.</li>
+  </ul>
+
+  <div class="callout danger">
+    <strong>Warning:</strong> Even if your current <code>terraform apply</code> succeeded without secrets in outputs, OLDER versions of the state may still contain them — they live in <code>terraform.tfstate.backup</code> and any remote-backend history. Attackers pull old versions too.
+  </div>
+
+  <div class="quiz">
+    <h4>🎯 Quick Check</h4>
+    <div class="q">Your team just realized a <code>terraform.tfstate</code> has been in a public repo for 6 months. What's the HIGHEST priority action?</div>
+    <div class="options">
+      <div class="opt" onclick="quizAnswer(this, false)">Delete the file from the repo and push a new commit.</div>
+      <div class="opt" onclick="quizAnswer(this, false)">Make the repo private immediately.</div>
+      <div class="opt" onclick="quizAnswer(this, true)">Rotate every credential referenced in the state AND audit CloudTrail/access logs for abuse — the data is already out; deletion doesn't recall it.</div>
+      <div class="opt" onclick="quizAnswer(this, false)">Run <code>terraform destroy</code> to remove the resources listed in the state.</div>
+    </div>
+    <div class="feedback"></div>
+  </div>
+</section>
+
+<section class="chapter">
+  <div class="related-terms">
+    <h4>🔗 Related in the vault</h4>
+    <div class="tags">
+      <a href="env-file.html">📄 .env file</a>
+      <a href="kubeconfig.html">☸️ kubeconfig</a>
+      <a href="cryptographic-failure.html">🔓 Cryptographic Failure</a>
+      <a href="../topics/web/leaky-commits/index.html">🗑️ Leaky Commits (topic)</a>
+    </div>
+  </div>
+</section>
+
+<footer class="site-foot">
+  <p class="coffee-line">Your infrastructure map isn't a secret — until you realize the attacker also has a copy. ☕</p>
+</footer>
+
+<script src="../assets/glossary.js"></script>
+<script src="../assets/app.js"></script>
+</body>
+</html>

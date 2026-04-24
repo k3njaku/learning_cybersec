@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>HTTP Status Code — The Server's 3-Digit Mood ☕</title>
+<link rel="stylesheet" href="../assets/styles.css" />
+</head>
+<body data-page-slug="http-status-code">
+
+<div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
+
+<div class="topbar">
+  <a class="logo" href="../index.html">☕ CYBERSEC.VAULT</a>
+  <nav>
+    <a href="../index.html">Home</a>
+    <a href="../index.html#topics-web">Topics</a>
+    <a href="../index.html#topics-python">Python</a>
+    <a href="index.html" class="active">Glossary</a>
+    <a href="../tryhackme/index.html">THM</a>
+  </nav>
+  <div class="search-wrap">
+    <input type="text" class="search" placeholder="Search (press /)..." />
+    <div class="search-results"></div>
+  </div>
+</div>
+
+<div class="breadcrumb">
+  <a href="../index.html">Home</a>
+  <span class="sep">›</span>
+  <a href="index.html">Glossary</a>
+  <span class="sep">›</span>
+  <span>HTTP Status Code</span>
+</div>
+
+<section class="hero" style="min-height: 45vh;">
+  <div class="hero-content">
+    <span class="coffee-badge">📖 glossary · http · the basics</span>
+    <h1>HTTP Status Code 🚦</h1>
+    <p class="subtitle">A 3-digit number the server sends with every response to tell you what happened.<br>Every scraper, every pentester, every web developer reads these like mood rings.</p>
+    <div class="tagline">"200 means 'yes.' 403 means 'no, go away.' 500 means 'I'm on fire.'"</div>
+  </div>
+</section>
+
+<section class="chapter">
+  <div class="chapter-num">Chapter 01 // The 5 families</div>
+  <h2><span class="emoji">📖</span> Status codes by first digit</h2>
+
+  <div class="grid cols-2" style="margin-top: 20px;">
+    <div class="card">
+      <h4>1️⃣ 1xx — Informational</h4>
+      <p>"Hold on, still thinking." You rarely see these. Example: 101 Switching Protocols (for WebSockets).</p>
+    </div>
+    <div class="card">
+      <h4>2️⃣ 2xx — Success ✅</h4>
+      <p><strong>200 OK</strong> (here you go), 201 Created (new resource), 204 No Content (done, no body). 200 is your happy place.</p>
+    </div>
+    <div class="card">
+      <h4>3️⃣ 3xx — Redirect 🔀</h4>
+      <p>301 Moved Permanently, 302 Found, 307 Temporary Redirect. Server says "the thing you want is somewhere else." Requests follows them by default.</p>
+    </div>
+    <div class="card">
+      <h4>4️⃣ 4xx — YOUR fault ❌</h4>
+      <p><strong>400</strong> bad request, <strong>401</strong> unauthorized, <strong>403</strong> forbidden, <strong>404</strong> not found, <strong>429</strong> too many requests. Scrapers see these a lot.</p>
+    </div>
+    <div class="card">
+      <h4>5️⃣ 5xx — SERVER'S fault 🔥</h4>
+      <p>500 Internal Server Error, 502 Bad Gateway, 503 Service Unavailable, 504 Gateway Timeout. Retry later — it's not you.</p>
+    </div>
+    <div class="card">
+      <h4>🕵️ The coffee joke</h4>
+      <p>418 I'm a teapot. Real code. RFC 2324. Servers return this when... they're teapots. Honestly.</p>
+    </div>
+  </div>
+</section>
+
+<div class="divider">scraper handbook</div>
+
+<section class="chapter">
+  <div class="chapter-num">Chapter 02 // What each code means for YOU</div>
+  <h2><span class="emoji">🎯</span> Scraper/pentester handbook</h2>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <h4>✅ 200 OK</h4>
+      <p>You got it. Parse the body. Proceed.</p>
+    </div>
+    <div class="card">
+      <h4>🔀 301 / 302</h4>
+      <p>Page moved. <code class="inline">requests</code> auto-follows by default. Check <code class="inline">r.url</code> to see the final destination.</p>
+    </div>
+    <div class="card">
+      <h4>🚫 403 Forbidden</h4>
+      <p>You're blocked. Most common causes in scraping: (1) bad / missing User-Agent, (2) WAF / Cloudflare rule, (3) missing cookies / session, (4) IP on a blocklist.</p>
+    </div>
+    <div class="card">
+      <h4>🔍 404 Not Found</h4>
+      <p>Typo in URL, or resource deleted. Not a bot signal. Fix the URL.</p>
+    </div>
+    <div class="card">
+      <h4>⏳ 429 Too Many Requests</h4>
+      <p>Rate limit. Slow down (<code class="inline">time.sleep()</code>), rotate IPs / UAs, respect <code class="inline">Retry-After</code> header. Classic scraper wall.</p>
+    </div>
+    <div class="card">
+      <h4>🔥 5xx</h4>
+      <p>Server problem. Retry with backoff. If it persists → site might be genuinely down.</p>
+    </div>
+  </div>
+</section>
+
+<section class="chapter">
+  <div class="chapter-num">Chapter 03 // Code</div>
+  <h2><span class="emoji">🧑‍💻</span> Checking it in Python</h2>
+
+  <div class="code safe">
+<span class="kw">import</span> requests
+
+r = requests.get(url, headers=headers, timeout=<span class="str">10</span>)
+
+<span class="kw">if</span> r.status_code == <span class="str">200</span>:
+    <span class="kw">print</span>(<span class="str">"Got it"</span>)
+<span class="kw">elif</span> r.status_code == <span class="str">429</span>:
+    <span class="kw">print</span>(<span class="str">"Slow down. Retry-After:"</span>, r.headers.get(<span class="str">"Retry-After"</span>))
+<span class="kw">elif</span> r.status_code &gt;= <span class="str">500</span>:
+    <span class="kw">print</span>(<span class="str">"Server broke, try again later"</span>)
+<span class="kw">else</span>:
+    <span class="kw">print</span>(<span class="str">"Unexpected:"</span>, r.status_code)
+  </div>
+
+  <div class="quiz">
+    <h4>🎯 Quick Check</h4>
+    <div class="q">Your scraper hits 30 URLs quickly and starts getting <code class="inline">429</code> responses. What's happening and what's the right fix?</div>
+    <div class="options">
+      <div class="opt" onclick="quizAnswer(this, false)">The site is down. Wait an hour.</div>
+      <div class="opt" onclick="quizAnswer(this, true)">You're rate-limited. Add delays (<code class="inline">time.sleep</code>), respect <code class="inline">Retry-After</code>, and consider exponential backoff. Also: are you hitting the same server too fast?</div>
+      <div class="opt" onclick="quizAnswer(this, false)">You got banned forever.</div>
+      <div class="opt" onclick="quizAnswer(this, false)">Switch to HTTPS.</div>
+    </div>
+    <div class="feedback"></div>
+  </div>
+</section>
+
+<section class="chapter">
+  <div class="related-terms">
+    <h4>🔗 Related in the vault</h4>
+    <div class="tags">
+      <a href="http-request.html">📨 HTTP Request</a>
+      <a href="requests.html">🌐 requests</a>
+      <a href="user-agent.html">🪪 User-Agent</a>
+      <a href="cloudflare.html">☁️ Cloudflare</a>
+    </div>
+  </div>
+</section>
+
+<footer class="site-foot">
+  <p class="coffee-line">The first number to read, always. ☕</p>
+</footer>
+
+<script src="../assets/glossary.js"></script>
+<script src="../assets/app.js"></script>
+</body>
+</html>
