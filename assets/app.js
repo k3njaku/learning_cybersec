@@ -38,9 +38,11 @@ window.SITE_TOPICS = [
     icon: "🗑️",
     blurb: "Beyond API keys — what else devs leak on GitHub and why attackers love it.",
     path: "topics/web/leaky-commits/index.html",
-    subpages: [],
+    subpages: [
+      { name: "🎯 Red Team Walkthrough — 15 leak types", path: "topics/web/leaky-commits/red-team-walkthrough.html" }
+    ],
     progress: 1.0,
-    tags: ["OSINT", "Recon", "GitHub", "Bug Bounty"]
+    tags: ["OSINT", "Recon", "GitHub", "Bug Bounty", "Red Team"]
   },
   {
     slug: "textile-scraper",

