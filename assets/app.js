@@ -208,6 +208,16 @@ window.SITE_THM = {
           tags: ["web", "owasp", "idor", "fundamentals", "bug-bounty"]
         },
         {
+          slug: "windows-fundamentals-1",
+          name: "Windows Fundamentals 1",
+          icon: "🪟",
+          blurb: "Windows editions, the desktop, NTFS, user accounts, UAC, Settings vs Control Panel, Task Manager.",
+          path: "tryhackme/cybersec-101/windows-fundamentals-1.html",
+          thmUrl: "https://tryhackme.com/room/windowsfundamentals1xbx",
+          completed: false,
+          tags: ["windows", "ntfs", "uac", "fundamentals", "desktop"]
+        },
+        {
           slug: "linux-fundamentals-part-3",
           name: "Linux Fundamentals Part 3",
           icon: "🐧",

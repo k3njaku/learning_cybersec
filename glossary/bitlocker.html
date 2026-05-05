@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>BitLocker — Full Disk Encryption ☕</title>
+<link rel="stylesheet" href="../assets/styles.css" />
+</head>
+<body data-page-slug="bitlocker">
+
+<div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
+
+<div class="topbar">
+  <a class="logo" href="../index.html">☕ CYBERSEC.VAULT</a>
+  <nav>
+    <a href="../index.html">Home</a>
+    <a href="../index.html#topics-web">Topics</a>
+    <a href="../index.html#topics-python">Python</a>
+    <a href="index.html" class="active">Glossary</a>
+    <a href="../tryhackme/index.html">THM</a>
+    <a href="../htb-academy/index.html">HTB</a>
+    <a href="../labs/portswigger/index.html">Labs</a>
+  </nav>
+  <div class="search-wrap">
+    <input type="text" class="search" placeholder="Search (press /)..." />
+    <div class="search-results"></div>
+  </div>
+</div>
+
+<div class="breadcrumb">
+  <a href="../index.html">Home</a>
+  <span class="sep">›</span>
+  <a href="index.html">Glossary</a>
+  <span class="sep">›</span>
+  <span>BitLocker</span>
+</div>
+
+<!-- HERO -->
+<section class="hero" style="min-height: 45vh;">
+  <div class="hero-content">
+    <span class="coffee-badge">📖 glossary · windows security · the vault door</span>
+    <h1>BitLocker <span style="color: var(--accent-2);">🔒</span></h1>
+    <p class="subtitle">Microsoft's full-disk encryption — turns your drive into an unreadable brick<br>for anyone who doesn't have the key. Pro &amp; Enterprise only.</p>
+    <div class="tagline">"Steal my laptop. I dare you. That SSD is a $200 paperweight without my TPM." 💪</div>
+  </div>
+</section>
+
+<!-- WHAT IS IT -->
+<section class="chapter">
+  <div class="chapter-num">Chapter 01 // Definition</div>
+  <h2><span class="emoji">📖</span> What is BitLocker?</h2>
+  <p class="lead">BitLocker is a <strong>full-volume encryption</strong> feature built into Windows Pro, Enterprise, and Education editions (sorry, Home users — you get nothing). It encrypts entire drives using AES-128 or AES-256, protecting your data at rest from physical theft.</p>
+
+  <div class="paper">
+    <h4>📝 BitLocker is like a safe built into your laptop — if someone steals it, they can't open the safe without the combination (TPM/password). But while you're using it, the safe door is wide open.</h4>
+    <p>Imagine your hard drive is a vault full of documents. Without BitLocker, the vault door is always open — anyone who picks up the vault (steals your laptop, pulls the hard drive) can read everything. With BitLocker on, <span class="highlight">the vault is sealed with a combination lock</span>. The combination is stored in a <strong>TPM chip</strong> soldered to your motherboard (so the drive only decrypts on THIS specific machine), or in a password/USB key you provide at boot. But here's the thing — <span class="highlight">once you type your Windows password and the machine boots up, the vault door swings open.</span> While Windows is running and you're logged in, everything is decrypted transparently. BitLocker protects against physical theft, not against someone who catches you logged in.</p>
+  </div>
+
+  <div class="callout info">
+    <strong>💡 Edition check:</strong> BitLocker is NOT available on Windows Home. If you're on Home edition, you get "Device Encryption" (a stripped-down version that auto-enables if your hardware supports it), but you can't configure it or use advanced features. Pro, Enterprise, and Education get the full deal.
+  </div>
+</section>
+
+<div class="divider">how it works</div>
+
+<!-- HOW IT WORKS -->
+<section class="chapter">
+  <div class="chapter-num">Chapter 02 // Under the hood</div>
+  <h2><span class="emoji">⚙️</span> How BitLocker encrypts your drive</h2>
+
+  <h3>The key chain</h3>
+  <p>BitLocker uses a layered key system:</p>
+  <ol>
+    <li><strong>FVEK (Full Volume Encryption Key)</strong> — the actual AES key that encrypts/decrypts every sector of the drive. Never leaves the disk.</li>
+    <li><strong>VMK (Volume Master Key)</strong> — encrypts the FVEK. This is what the TPM (or your password) unlocks.</li>
+    <li><strong>Key Protectors</strong> — the method used to unlock the VMK. Multiple can exist:
+      <ul>
+        <li><strong>TPM only</strong> — automatic, transparent, the drive decrypts if it's in the original machine</li>
+        <li><strong>TPM + PIN</strong> — you enter a PIN at boot before Windows loads</li>
+        <li><strong>TPM + USB key</strong> — a USB stick must be plugged in at boot</li>
+        <li><strong>Password only</strong> — for machines without TPM (less secure)</li>
+        <li><strong>Recovery key</strong> — a 48-digit backup key (saved to Microsoft account, AD, or printed)</li>
+      </ul>
+    </li>
+  </ol>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <h4>🔧 TPM (Trusted Platform Module)</h4>
+      <p>A dedicated security chip on your motherboard. It stores the VMK and only releases it if the boot process hasn't been tampered with (Secure Boot integrity checks). If someone pulls your drive and puts it in another machine — the TPM isn't there, so the VMK stays locked.</p>
+    </div>
+    <div class="card">
+      <h4>🔑 Recovery key</h4>
+      <p>A 48-digit numeric key generated when you enable BitLocker. This is your "break glass in emergency" key. Saved to your Microsoft account, Active Directory, Azure AD, printed on paper, or saved to a USB stick. <strong>If you lose this AND your TPM fails, your data is gone forever.</strong></p>
+    </div>
+  </div>
+
+  <h3>Enabling BitLocker</h3>
+  <div class="code">
+<span class="com"># GUI: Control Panel → BitLocker Drive Encryption → Turn on</span>
+
+<span class="com"># PowerShell — enable on C: with TPM</span>
+<span class="kw">Enable-BitLocker</span> -MountPoint "C:" -TpmProtector
+
+<span class="com"># PowerShell — enable with TPM + PIN</span>
+$pin = ConvertTo-SecureString "123456" -AsPlainText -Force
+<span class="kw">Enable-BitLocker</span> -MountPoint "C:" -TpmAndPinProtector -Pin $pin
+
+<span class="com"># Check BitLocker status</span>
+<span class="kw">manage-bde</span> -status C:
+
+<span class="com"># Get the recovery key</span>
+<span class="kw">manage-bde</span> -protectors -get C:
+  </div>
+</section>
+
+<div class="divider">bitlocker vs efs</div>
+
+<!-- BITLOCKER VS EFS -->
+<section class="chapter">
+  <div class="chapter-num">Chapter 03 // BitLocker vs EFS</div>
+  <h2><span class="emoji">⚔️</span> Full disk vs file-level encryption</h2>
+
+  <p>Windows has TWO built-in encryption systems on <span class="term" data-term="ntfs">NTFS</span>. They solve different problems:</p>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <h4>💿 BitLocker</h4>
+      <ul>
+        <li>Encrypts the <strong>entire volume</strong> (every sector)</li>
+        <li>Protects against <strong>physical theft</strong></li>
+        <li>Transparent once Windows boots — all data accessible</li>
+        <li>Key stored in TPM (hardware)</li>
+        <li>Doesn't protect files from other logged-in users</li>
+        <li>Pro/Enterprise only</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>📄 EFS (Encrypting File System)</h4>
+      <ul>
+        <li>Encrypts <strong>individual files/folders</strong></li>
+        <li>Protects against <strong>other users on the same machine</strong></li>
+        <li>Tied to user's Windows account &amp; certificate</li>
+        <li>Key stored in user's profile (software)</li>
+        <li>Available on all NTFS volumes</li>
+        <li>Doesn't protect if the user is logged in (same as BitLocker)</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="callout info">
+    <strong>💡 They're complementary, not competing.</strong> BitLocker stops a thief who steals your laptop. EFS stops your coworker (or another admin) from reading your files while the machine is running. Use both in a corporate environment.
+  </div>
+</section>
+
+<div class="divider">pentester angle</div>
+
+<!-- PENTEST / FORENSICS IMPLICATIONS -->
+<section class="chapter">
+  <div class="chapter-num">Chapter 04 // The pentester &amp; forensics angle</div>
+  <h2><span class="emoji">🥷</span> What BitLocker means for attackers and defenders</h2>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <div class="card-badge danger">BLOCKED</div>
+      <h4>🧱 Offline attacks are dead</h4>
+      <p>Pulling the drive and mounting it on your Linux box? Nope. Booting from a USB live OS to read files? Nope. The entire volume is encrypted gibberish without the key. <strong>BitLocker is highly effective against offline attacks.</strong></p>
+    </div>
+    <div class="card">
+      <div class="card-badge">TRANSPARENT</div>
+      <h4>✅ Online access is normal</h4>
+      <p>If the machine is booted and the user is logged in, BitLocker is <strong>completely transparent</strong>. Every file is decrypted on-the-fly. If you have a shell on a running, unlocked Windows machine — BitLocker doesn't matter at all.</p>
+    </div>
+    <div class="card">
+      <div class="card-badge danger">JUICY</div>
+      <h4>🔑 Recovery keys in AD/Azure</h4>
+      <p>In corporate environments, BitLocker recovery keys are often stored in <strong>Active Directory</strong> or <strong>Azure AD</strong>. If you compromise a domain admin account, you can pull every machine's recovery key. That's full disk access to every laptop in the org.</p>
+    </div>
+    <div class="card">
+      <div class="card-badge danger">ADVANCED</div>
+      <h4>🧊 Cold boot attacks</h4>
+      <p>RAM retains data for seconds after power-off. If you can freeze the RAM chips and extract them quickly, you might recover the decryption key from memory. Extreme? Yes. Done in research? Absolutely (Princeton 2008 paper). Practical? Rarely, but it exists.</p>
+    </div>
+  </div>
+
+  <h3>Forensics implications</h3>
+  <ul>
+    <li><strong>Dead box forensics</strong> (powered off) — without the recovery key, the drive is unreadable. Period.</li>
+    <li><strong>Live forensics</strong> (machine running) — capture a RAM dump. The FVEK is in memory while the volume is unlocked. Tools like <code class="inline">volatility</code> can extract it.</li>
+    <li><strong>Hibernation file</strong> — <code class="inline">hiberfil.sys</code> contains a RAM snapshot. If you can get this file (from an unlocked volume), you might extract the key.</li>
+    <li><strong>Memory dumps from crashes</strong> — <code class="inline">MEMORY.DMP</code> files can also contain the key if BitLocker was active when the crash occurred.</li>
+  </ul>
+
+  <div class="brain-power">
+    <h4>🧠 Brain Power</h4>
+    <p>You have physical access to a powered-off laptop with BitLocker enabled. Can you read the drive?</p>
+    <button onclick="toggleAnswer(this)">Reveal answer</button>
+    <div class="answer">
+      <p><strong>No</strong> — not without the recovery key, TPM PIN, or the user's ability to log in. The entire drive is AES-encrypted. Pulling it out and connecting to another machine gives you encrypted gibberish. Booting from USB gives you encrypted gibberish.</p>
+      <p><strong>But</strong> — if the laptop is <strong>running and unlocked</strong>, BitLocker is transparent. All data is accessible. The encryption only protects "data at rest" (powered off / locked). A remote shell on a booted machine bypasses BitLocker entirely.</p>
+      <p>Your options for the powered-off scenario: (1) Find the recovery key in AD/Azure AD, (2) social-engineer the user's password, (3) cold boot attack (freeze RAM, unlikely practical), or (4) accept that BitLocker did its job.</p>
+    </div>
+  </div>
+</section>
+
+<div class="divider">real world</div>
+
+<!-- REAL WORLD -->
+<section class="chapter">
+  <div class="chapter-num">Chapter 05 // Real-world impact</div>
+  <h2><span class="emoji">📰</span> BitLocker in the wild</h2>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <div class="card-badge danger">2023</div>
+      <h4>💀 CVE-2023-21563 (BitLocker bypass)</h4>
+      <p>Researchers demonstrated that on some systems using TPM-only authentication (no PIN), a physical attacker could downgrade the boot process to an older Windows version, extract the VMK from the TPM, and decrypt the drive. Microsoft patched it — but it showed TPM-only mode has risks. <strong>Always use TPM + PIN.</strong></p>
+    </div>
+    <div class="card">
+      <div class="card-badge danger">2024</div>
+      <h4>🔓 TPM sniffing attacks</h4>
+      <p>Security researchers showed you can physically sniff the LPC bus between the CPU and a discrete TPM chip to intercept the VMK as it's transmitted during boot. Requires physical access and hardware tools ($10-50 in parts). Integrated TPMs (fTPM inside the CPU) are immune to this — the key never leaves the chip.</p>
+    </div>
+    <div class="card">
+      <div class="card-badge danger">EVERY CORP</div>
+      <h4>🏢 Compliance requirement</h4>
+      <p>HIPAA, PCI-DSS, GDPR, SOC 2 — nearly every compliance framework requires full-disk encryption on endpoints. BitLocker (or FileVault on Mac) is how most orgs check this box. A stolen unencrypted laptop = reportable breach + fines.</p>
+    </div>
+    <div class="card">
+      <div class="card-badge danger">PENTEST</div>
+      <h4>🎯 Recovery key hunting</h4>
+      <p>Post-exploitation in a Windows domain: <code class="inline">Get-ADObject -Filter {objectClass -eq 'msFVE-RecoveryInformation'} -Properties msFVE-RecoveryPassword</code> — dumps every BitLocker recovery key stored in AD. One command, every laptop's drive unlocked.</p>
+    </div>
+  </div>
+
+  <div class="quiz">
+    <h4>🎯 Quick Check</h4>
+    <div class="q">You land a shell on a running, unlocked Windows machine with BitLocker enabled. Does BitLocker prevent you from reading files?</div>
+    <div class="options">
+      <div class="opt" onclick="quizAnswer(this, false)">Yes — BitLocker encrypts everything, even for processes running on the machine</div>
+      <div class="opt" onclick="quizAnswer(this, true)">No — BitLocker is transparent once Windows is booted and the volume is unlocked</div>
+      <div class="opt" onclick="quizAnswer(this, false)">Only if EFS is also enabled on those specific files</div>
+      <div class="opt" onclick="quizAnswer(this, false)">Only if the user has a TPM + PIN configured</div>
+    </div>
+    <div class="feedback"></div>
+  </div>
+</section>
+
+<!-- RELATED TERMS -->
+<section class="chapter">
+  <div class="related-terms">
+    <h4>🔗 Related in the vault</h4>
+    <div class="tags">
+      <a href="ntfs.html">📁 NTFS</a>
+      <a href="uac.html">🛡️ UAC</a>
+      <a href="cryptographic-failure.html">🔓 Cryptographic Failure</a>
+      <a href="privilege-escalation.html">⬆️ Privilege Escalation</a>
+      <a href="../tryhackme/cybersec-101/windows-fundamentals-1.html">🪟 THM: Windows Fundamentals 1</a>
+    </div>
+  </div>
+</section>
+
+<footer class="site-foot">
+  <p class="coffee-line">Encrypt at rest. Assume breach when running. Always use TPM + PIN. ☕</p>
+</footer>
+
+<script src="../assets/glossary.js"></script>
+<script src="../assets/app.js"></script>
+</body>
+</html>

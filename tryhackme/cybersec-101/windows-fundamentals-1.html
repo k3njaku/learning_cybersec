@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Windows Fundamentals 1 — THM · Cybersecurity 101 ☕</title>
+<link rel="stylesheet" href="../../assets/styles.css" />
+<style>
+  /* ---- NTFS PERMISSIONS TABLE ---- */
+  .perm-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    margin: 16px 0;
+  }
+  .perm-table th {
+    text-align: left;
+    padding: 8px 12px;
+    color: var(--accent);
+    border-bottom: 2px solid var(--accent);
+    font-family: var(--mono);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .perm-table td {
+    padding: 8px 12px;
+    border-bottom: 1px dashed rgba(255,255,255,0.06);
+    color: var(--ink-dim);
+  }
+  .perm-table tr:hover td { background: rgba(0,255,157,0.04); }
+  .perm-table .perm-name { color: var(--accent); font-family: var(--mono); font-weight: bold; }
+
+  /* ---- EDITION COMPARE CARDS ---- */
+  .edition-card {
+    background: #0a0f13;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 18px;
+    position: relative;
+    overflow: hidden;
+  }
+  .edition-card::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 4px;
+  }
+  .edition-card.home::before { background: var(--ink-mute); }
+  .edition-card.pro::before { background: var(--accent); }
+  .edition-card h4 { margin: 0 0 10px; font-family: var(--mono); }
+  .edition-card.home h4 { color: var(--ink-mute); }
+  .edition-card.pro h4 { color: var(--accent); }
+  .edition-card ul { margin: 0; padding-left: 18px; font-size: 13px; }
+  .edition-card li { margin-bottom: 4px; }
+  .edition-card .missing { color: var(--accent-2); text-decoration: line-through; opacity: 0.6; }
+
+  /* ---- DESKTOP COMPONENT LIST ---- */
+  .desktop-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 10px;
+    margin: 16px 0;
+  }
+  .desktop-item {
+    background: rgba(0,0,0,0.3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px;
+    text-align: center;
+    font-size: 13px;
+    transition: border-color 0.15s;
+  }
+  .desktop-item:hover { border-color: var(--accent-3); }
+  .desktop-item .icon { font-size: 1.6rem; display: block; margin-bottom: 6px; }
+  .desktop-item .name { color: var(--accent-3); font-family: var(--mono); font-size: 12px; }
+</style>
+</head>
+<body data-page-slug="thm-windows-fundamentals-1">
+
+<div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
+
+<div class="topbar">
+  <a class="logo" href="../../index.html">☕ CYBERSEC.VAULT</a>
+  <nav>
+    <a href="../../index.html">Home</a>
+    <a href="../../index.html#topics-web">Topics</a>
+    <a href="../../glossary/index.html">Glossary</a>
+    <a href="../index.html" class="active">THM</a>
+    <a href="../../htb-academy/index.html">HTB</a>
+    <a href="../../labs/portswigger/index.html">Labs</a>
+  </nav>
+  <div class="search-wrap">
+    <input type="text" class="search" placeholder="Search (press /)..." />
+    <div class="search-results"></div>
+  </div>
+</div>
+
+<div class="breadcrumb">
+  <a href="../../index.html">Home</a>
+  <span class="sep">›</span>
+  <a href="../index.html">TryHackMe</a>
+  <span class="sep">›</span>
+  <a href="../index.html#paths">Cybersecurity 101</a>
+  <span class="sep">›</span>
+  <span>Windows Fundamentals 1</span>
+</div>
+
+<!-- HERO -->
+<section class="hero" style="min-height: 55vh;">
+  <div class="hero-content">
+    <span class="coffee-badge">🪟 thm · cybersecurity 101 · windows and AD fundamentals</span>
+    <h1>Windows Fundamentals <span style="color: var(--accent-3);">1</span></h1>
+    <p class="subtitle">Your first real tour of Windows — editions, the desktop, NTFS, user accounts, UAC, Control Panel, and Task Manager.</p>
+    <div class="tagline">"Windows runs on 75% of desktops worldwide. That also makes it the #1 malware target on the planet. Know your enemy — even if it's your own OS." 🪟</div>
+    <div style="margin-top: 24px; display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+      <a href="https://tryhackme.com/room/windowsfundamentals1xbx" target="_blank" rel="noopener" class="cta-btn ghost">↗ Open on TryHackMe</a>
+      <a href="#tasks" class="cta-btn">Jump to Tasks 🎯</a>
+    </div>
+  </div>
+</section>
+
+<!-- TL;DR -->
+<section class="chapter" id="tldr">
+  <div class="chapter-num">TL;DR</div>
+  <h2><span class="emoji">⚡</span> What you'll actually learn</h2>
+  <div class="grid cols-3">
+    <div class="card">
+      <h4>🪟 Editions matter</h4>
+      <p>Windows Pro has BitLocker, Remote Desktop, Group Policy. Home doesn't. If you're pentesting, know which features are available on the target.</p>
+    </div>
+    <div class="card">
+      <h4>📂 NTFS is king</h4>
+      <p>Permissions, Alternate Data Streams, journaling, encryption — FAT32 can't do ANY of that. And ADS is how malware hides payloads in plain sight.</p>
+    </div>
+    <div class="card">
+      <h4>🛡️ UAC = last line of defense</h4>
+      <p>User Account Control stops apps from going admin-mode silently. But most users click "Yes" without reading. Attackers love this.</p>
+    </div>
+  </div>
+</section>
+
+<div class="divider">the concepts</div>
+
+<!-- ===== CONCEPT 1: WINDOWS EDITIONS ===== -->
+<section class="chapter" id="concept-editions">
+  <div class="chapter-num">Concept 01 // Windows editions</div>
+  <h2><span class="emoji">🪟</span> Windows editions — not all Windows is created equal</h2>
+  <p class="lead">A quick time-travel through Windows versions, and why the edition installed on your target matters for pentesting.</p>
+
+  <p>The Windows family tree, speed-run:</p>
+  <p><strong>XP</strong> (2001, the legend) → <strong>Vista</strong> (2006, the disaster — everyone hated UAC's first implementation) → <strong>7</strong> (2009, universally loved) → <strong>8</strong> (2012, tiles nobody asked for) → <strong>10</strong> (2015, "the last version of Windows"... until it wasn't) → <strong>11</strong> (2021, rounded corners and a centered taskbar).</p>
+
+  <p>But here's the thing that actually matters for you as a pentester: <strong>editions within each version</strong>.</p>
+
+  <div class="paper">
+    <h4>📝 Think of Windows editions like gym memberships</h4>
+    <p><strong>Home</strong> gets you in the door — you can browse the web, run apps, exist. <strong>Pro</strong> gets you the sauna, personal trainer, and the locker with the combination lock.</p>
+    <p><span class="highlight">Pro has BitLocker (full-disk encryption), Remote Desktop (host), and Group Policy Editor (gpedit.msc). Home has NONE of these.</span></p>
+  </div>
+
+  <div class="grid cols-2">
+    <div class="edition-card home">
+      <h4>🏠 Windows Home</h4>
+      <ul>
+        <li>Basic desktop experience</li>
+        <li>Windows Defender</li>
+        <li>Device encryption (watered-down)</li>
+        <li class="missing">❌ No BitLocker</li>
+        <li class="missing">❌ No Remote Desktop (host)</li>
+        <li class="missing">❌ No Group Policy Editor</li>
+        <li class="missing">❌ No Hyper-V</li>
+      </ul>
+    </div>
+    <div class="edition-card pro">
+      <h4>💼 Windows Pro</h4>
+      <ul>
+        <li>Everything in Home, plus:</li>
+        <li>✅ <span class="term" data-term="bitlocker">BitLocker</span> (full-disk encryption)</li>
+        <li>✅ Remote Desktop (host — others can RDP to you)</li>
+        <li>✅ Group Policy Editor (<code class="inline">gpedit.msc</code>)</li>
+        <li>✅ Hyper-V (built-in hypervisor)</li>
+        <li>✅ Windows Sandbox</li>
+        <li>✅ Domain join (Active Directory)</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="callout info">
+    <strong>💡 Room context:</strong> The VM in this THM room runs <strong>Windows Server 2019 Standard</strong>. Creds: <code class="inline">administrator</code> / <code class="inline">letmein123!</code>. Server editions have all Pro features and more (AD DS, DNS, DHCP, etc.).
+  </div>
+</section>
+
+<!-- ===== CONCEPT 2: DESKTOP & GUI ===== -->
+<section class="chapter" id="concept-desktop">
+  <div class="chapter-num">Concept 02 // The desktop and GUI</div>
+  <h2><span class="emoji">🖥️</span> The desktop — 7 things you see every day (but never think about)</h2>
+  <p class="lead">The Windows desktop is made up of specific components, and knowing their names matters when you're reading recon notes, writing reports, or following attack guides.</p>
+
+  <div class="desktop-grid">
+    <div class="desktop-item"><span class="icon">🖼️</span><span class="name">Desktop</span><p>The background area. Shortcuts live here. Right-click for display settings.</p></div>
+    <div class="desktop-item"><span class="icon">🪟</span><span class="name">Start Menu</span><p>Click the Windows icon. Quick shortcuts (left), app list (middle), live tiles (right).</p></div>
+    <div class="desktop-item"><span class="icon">🔍</span><span class="name">Search Box</span><p>Next to Start. Search apps, settings, files, and the web. Cortana lived here once.</p></div>
+    <div class="desktop-item"><span class="icon">📋</span><span class="name">Task View</span><p>Virtual desktops + timeline. Separate your work from your... "research."</p></div>
+    <div class="desktop-item"><span class="icon">📌</span><span class="name">Taskbar</span><p>The bar at the bottom. Pinned apps + running apps. Right-click it for customization gold.</p></div>
+    <div class="desktop-item"><span class="icon">🔧</span><span class="name">Toolbars</span><p>Optional extras you can add to the taskbar (Address, Links, Desktop). Rarely used.</p></div>
+    <div class="desktop-item"><span class="icon">🔔</span><span class="name">Notification Area</span><p>Bottom-right: clock, network, volume, Action Center. Plus hidden icons (click the ^).</p></div>
+  </div>
+
+  <h3>Start Menu anatomy</h3>
+  <p>The Start Menu has three zones:</p>
+  <ul>
+    <li><strong>Left column:</strong> Quick shortcuts — your account, Documents, Pictures, Settings, Power</li>
+    <li><strong>Middle column:</strong> Alphabetical list of ALL installed apps</li>
+    <li><strong>Right area:</strong> Pinned tiles / live tiles (weather, news, etc.)</li>
+  </ul>
+
+  <h3>Taskbar tricks</h3>
+  <p>Right-click the taskbar for a context menu with:</p>
+  <ul>
+    <li><strong>Toolbars</strong> — add an address bar, links bar, or desktop toolbar</li>
+    <li><strong>Search</strong> → choose Hidden / Show search icon / Show search box</li>
+    <li><strong>Show Task View button</strong> — toggle on/off</li>
+    <li><strong>Taskbar settings</strong> — open the full settings panel</li>
+  </ul>
+
+  <div class="callout info">
+    <strong>💡 Notification Area deep dive:</strong> Besides the clock and network icon, you'll see <strong>Action Center</strong> (the flag/speech-bubble icon). Click the <code class="inline">^</code> arrow to show hidden system tray icons — that's where AV agents, VPN clients, and background services live.
+  </div>
+</section>
+
+<!-- ===== CONCEPT 3: FILE SYSTEM (NTFS) ===== -->
+<section class="chapter" id="concept-ntfs">
+  <div class="chapter-num">Concept 03 // The file system</div>
+  <h2><span class="emoji">📂</span> <span class="term" data-term="ntfs">NTFS</span> — the file system that actually does stuff</h2>
+  <p class="lead">Before NTFS, Windows used FAT16 and FAT32. They were simple. Too simple. NTFS is what makes Windows a serious operating system.</p>
+
+  <div class="paper right">
+    <h4>📝 FAT vs NTFS = a shed vs a bank vault</h4>
+    <p>FAT is a garden shed. One lock, no camera, no alarm. Anybody who walks in can take whatever they want. <strong>NTFS is a bank vault</strong> — security cameras (journaling), individual safety deposit boxes (file-level permissions), hidden compartments (ADS), and a guard at the door (encryption).</p>
+    <p><span class="highlight">If your drive is still FAT32 in 2026, you're either running a USB stick or you have bigger problems.</span></p>
+  </div>
+
+  <h3>NTFS vs FAT — the comparison that matters</h3>
+  <div class="grid cols-2">
+    <div class="card">
+      <h4 style="color: var(--accent);">✅ NTFS can...</h4>
+      <ul style="font-size: 13px;">
+        <li>Set per-file / per-folder permissions</li>
+        <li>Handle files larger than 4 GB</li>
+        <li>Journal changes (crash recovery)</li>
+        <li>Encrypt files (EFS)</li>
+        <li>Compress files at the filesystem level</li>
+        <li>Store Alternate Data Streams (ADS)</li>
+        <li>Support very large volumes (256 TB+)</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4 style="color: var(--accent-2);">❌ FAT32 can't...</h4>
+      <ul style="font-size: 13px;">
+        <li>No file-level permissions at all</li>
+        <li>Max file size: 4 GB (try downloading a VM image...)</li>
+        <li>No journaling (crash = possible corruption)</li>
+        <li>No encryption</li>
+        <li>No compression</li>
+        <li>No ADS</li>
+        <li>Max volume: 2 TB</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>NTFS permissions table</h3>
+  <p>Right-click any file/folder → Properties → Security tab. You'll see these:</p>
+  <table class="perm-table">
+    <thead>
+      <tr><th>Permission</th><th>What it lets you do</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="perm-name">Full Control</td><td>Read, write, execute, delete, change permissions, take ownership. The keys to the kingdom.</td></tr>
+      <tr><td class="perm-name">Modify</td><td>Read, write, execute, delete. Everything except changing permissions.</td></tr>
+      <tr><td class="perm-name">Read &amp; Execute</td><td>View file contents and run executables. Standard for program folders.</td></tr>
+      <tr><td class="perm-name">List Folder Contents</td><td>See what's inside a folder (but not necessarily read the files). Folders only.</td></tr>
+      <tr><td class="perm-name">Read</td><td>View file contents and attributes. Read-only access.</td></tr>
+      <tr><td class="perm-name">Write</td><td>Create new files/folders. Modify existing file data. Can't delete.</td></tr>
+    </tbody>
+  </table>
+
+  <h3>🕵️ Alternate Data Streams (ADS) — the hidden layer</h3>
+  <p>This is the spicy part. NTFS lets you attach <strong>hidden data streams</strong> to any file. A file called <code class="inline">report.pdf</code> could have a completely separate data stream called <code class="inline">report.pdf:evil.exe</code> attached to it — and Windows Explorer won't show it.</p>
+
+  <p>Legitimate uses: Windows uses ADS for "Zone Identifiers" (marking files downloaded from the internet). But malware authors? They use ADS to <strong>hide entire payloads</strong> inside innocent-looking files.</p>
+
+  <div class="code">
+<span class="com"># Create an ADS (for demo purposes)</span>
+echo "hidden payload" > innocent.txt:secret.txt
+
+<span class="com"># Read it back</span>
+more < innocent.txt:secret.txt
+
+<span class="com"># List ADS on a file</span>
+dir /R innocent.txt
+<span class="com"># Or in PowerShell:</span>
+Get-Item innocent.txt -Stream *
+  </div>
+
+  <div class="brain-power">
+    <div class="label">🧠 Brain Power</div>
+    <div class="question">Why would malware authors use Alternate Data Streams instead of just hiding a file in a deep folder somewhere?</div>
+    <button class="reveal-btn" onclick="toggleAnswer(this)">Reveal answer</button>
+    <div class="answer">
+      <p>Three reasons: <strong>(1) ADS are invisible to Windows Explorer</strong> — there's no file to see, no size increase to notice. A user could right-click a file and check Properties and the file size wouldn't include the ADS. <strong>(2) Many antivirus scanners historically didn't scan ADS</strong> (modern ones do, but it's still a blind spot for basic tools). <strong>(3) ADS survive file copies on NTFS volumes</strong> — the hidden stream travels with the host file. It's steganography at the filesystem level.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===== CONCEPT 4: SYSTEM32 ===== -->
+<section class="chapter" id="concept-system32">
+  <div class="chapter-num">Concept 04 // Windows\System32</div>
+  <h2><span class="emoji">⚙️</span> The Windows folder and System32</h2>
+  <p class="lead">The <code class="inline">C:\Windows</code> folder is where the OS lives. And inside it, <code class="inline">System32</code> is the crown jewels.</p>
+
+  <p>The Windows folder location is stored in the environment variable <code class="inline">%windir%</code>. By default, that's <code class="inline">C:\Windows</code>. You can verify:</p>
+  <div class="code">
+<span class="com"># In CMD:</span>
+echo %windir%
+<span class="com"># Output: C:\Windows</span>
+
+<span class="com"># In PowerShell:</span>
+$env:windir
+  </div>
+
+  <p><code class="inline">System32</code> contains <strong>~3,975 items</strong> — critical DLLs, system executables, drivers, and config files. The OS literally cannot function without this folder.</p>
+
+  <div class="callout danger">
+    <strong>🚨 DO NOT delete System32.</strong> This is not a meme warning — it's real. Deleting or corrupting System32 will brick Windows entirely. No boot, no recovery, no mercy. On a pentest, be careful when running cleanup scripts that might touch system directories. On your own machine, obviously just don't.
+  </div>
+</section>
+
+<!-- ===== CONCEPT 5: USER ACCOUNTS ===== -->
+<section class="chapter" id="concept-users">
+  <div class="chapter-num">Concept 05 // User accounts &amp; profiles</div>
+  <h2><span class="emoji">👤</span> User accounts — who are you on this machine?</h2>
+  <p class="lead">Windows has two main account types. Understanding the difference is critical for privilege escalation.</p>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <h4 style="color: var(--accent-2);">👑 Administrator</h4>
+      <ul style="font-size: 13px;">
+        <li>Can add/delete user accounts</li>
+        <li>Can modify groups and group membership</li>
+        <li>Can change system-wide settings</li>
+        <li>Can install software for all users</li>
+        <li>Can access any file on the system</li>
+        <li>Full control over the machine</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4 style="color: var(--ink-dim);">👤 Standard User</h4>
+      <ul style="font-size: 13px;">
+        <li>Can only modify their own files</li>
+        <li>Cannot install system-wide software</li>
+        <li>Cannot change system settings</li>
+        <li>Cannot add/remove other users</li>
+        <li>Limited to their own profile folder</li>
+        <li>Needs UAC elevation for admin tasks</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>Profile folders</h3>
+  <p>Every user gets a profile at <code class="inline">C:\Users\&lt;username&gt;\</code> containing:</p>
+  <div class="code">
+C:\Users\administrator\
+├── Desktop\
+├── Documents\
+├── Downloads\
+├── Music\
+├── Pictures\
+└── Videos\
+  </div>
+
+  <h3>Managing users: <code class="inline">lusrmgr.msc</code></h3>
+  <p>Open the Run dialog (<code class="inline">Win+R</code>) and type <code class="inline">lusrmgr.msc</code> — this opens <strong>Local User and Group Management</strong>. Two folders:</p>
+  <ul>
+    <li><strong>Users</strong> — every local account on the machine. Double-click one to see its properties (full name, description, group membership, password settings).</li>
+    <li><strong>Groups</strong> — built-in groups like Administrators, Users, Guests, Remote Desktop Users. Membership in these groups determines what you can do.</li>
+  </ul>
+
+  <div class="callout info">
+    <strong>💡 The Guest account:</strong> A built-in account meant for temporary access with zero privileges. It's disabled by default on modern Windows — but always worth checking during recon. If someone enabled it... that's a finding.
+  </div>
+</section>
+
+<!-- ===== CONCEPT 6: UAC ===== -->
+<section class="chapter" id="concept-uac">
+  <div class="chapter-num">Concept 06 // User Account Control</div>
+  <h2><span class="emoji">🛡️</span> <span class="term" data-term="uac">UAC</span> — the popup everyone clicks "Yes" on</h2>
+  <p class="lead">Why does it exist? Because most home users run as admin. And when admin = default, every piece of malware you accidentally run ALSO runs as admin.</p>
+
+  <div class="paper">
+    <h4>📝 Think of UAC like a bouncer at a VIP door</h4>
+    <p>You're on the guest list (admin account), but you still have to show ID every time you want into the VIP section (elevated privileges). The bouncer is UAC. Most people just flash their badge and walk through without thinking — but the bouncer exists so that if someone ELSE tries to sneak in using your ticket, they get stopped.</p>
+    <p><span class="highlight">UAC doesn't ask "are you admin?" — it asks "are you SURE you want admin powers RIGHT NOW?"</span></p>
+  </div>
+
+  <h3>How UAC actually works</h3>
+  <ol>
+    <li>You log in with an admin account. But your processes run with <strong>standard privileges</strong> by default.</li>
+    <li>An app needs elevated access (install software, modify system files, change registry).</li>
+    <li>Windows shows the <strong>UAC consent prompt</strong> — "Do you want to allow this app to make changes to your device?"</li>
+    <li>You click Yes → the app gets a new <strong>elevated token</strong> with full admin rights.</li>
+    <li>You click No → nothing happens. The app stays standard-privilege.</li>
+  </ol>
+
+  <p>The <strong>shield icon</strong> 🛡️ on an executable or button means "this action will trigger a UAC prompt." You'll see it on installers, system settings, and anything that touches protected areas.</p>
+
+  <div class="callout danger">
+    <strong>⚠️ Exception:</strong> The <strong>built-in Administrator account</strong> (the one literally named "Administrator") has UAC disabled by default. Every process it runs is fully elevated. This is why landing on the built-in Admin account during a pentest is basically game over — no UAC bypass needed.
+  </div>
+
+  <div class="brain-power">
+    <div class="label">🧠 Brain Power</div>
+    <div class="question">You're pentesting a Windows box and find a Standard User account. The user clicks a program that has a shield icon. What happens?</div>
+    <button class="reveal-btn" onclick="toggleAnswer(this)">Reveal answer</button>
+    <div class="answer">
+      <p>Unlike an admin account (which gets a simple "Yes/No" consent prompt), a <strong>Standard User gets a credentials prompt</strong> — Windows asks for an administrator username and password. If the standard user doesn't know admin creds, they simply can't run the elevated program. This is WHY standard user accounts are more secure than admin accounts — they can't "Yes" their way through UAC.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===== CONCEPT 7: SETTINGS VS CONTROL PANEL ===== -->
+<section class="chapter" id="concept-controlpanel">
+  <div class="chapter-num">Concept 07 // Settings vs Control Panel</div>
+  <h2><span class="emoji">🎛️</span> Two places for settings — the old way and the new way</h2>
+  <p class="lead">Windows has two settings interfaces. They overlap, they redirect to each other, and they're both still here in 2026. Welcome to Microsoft.</p>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <h4>🖥️ Control Panel (the OG)</h4>
+      <ul style="font-size: 13px;">
+        <li>Been around since Windows 3.1 (1992)</li>
+        <li>More detailed, more options</li>
+        <li>Multiple views: Category, Large Icons, Small Icons</li>
+        <li><strong>Programs and Features</strong> — shows ALL installed software + exact versions (recon gold)</li>
+        <li>Still has settings that Settings app doesn't</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>⚙️ Settings (the new kid)</h4>
+      <ul style="font-size: 13px;">
+        <li>Introduced in Windows 8</li>
+        <li>Touch-friendly, simplified, modern UI</li>
+        <li>Organized by category (System, Devices, Network, etc.)</li>
+        <li>Some pages just redirect to Control Panel anyway</li>
+        <li>Microsoft wants this to replace Control Panel... eventually</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="callout info">
+    <strong>💡 Pentest gold:</strong> <strong>Control Panel → Programs and Features</strong> shows every installed program with its <strong>name, publisher, and version number</strong>. This is a treasure map for finding outdated software with known CVEs. On a post-exploit enumeration, this is one of the first things to check (or <code class="inline">wmic product get name,version</code> from the command line).
+  </div>
+</section>
+
+<!-- ===== CONCEPT 8: TASK MANAGER ===== -->
+<section class="chapter" id="concept-taskmanager">
+  <div class="chapter-num">Concept 08 // Task Manager</div>
+  <h2><span class="emoji">📊</span> Task Manager — your first forensics tool</h2>
+  <p class="lead">Right-click the taskbar → Task Manager. Or hit <code class="inline">Ctrl+Shift+Esc</code>. This is the single most useful built-in diagnostic tool on Windows.</p>
+
+  <p>Task Manager has two modes:</p>
+  <ul>
+    <li><strong>Simple View:</strong> Just a list of running apps with an "End task" button. What normies see.</li>
+    <li><strong>More Details:</strong> Click "More details" at the bottom to unlock the REAL Task Manager with multiple tabs.</li>
+  </ul>
+
+  <h3>The tabs that matter</h3>
+  <div class="grid cols-2">
+    <div class="card">
+      <h4>📋 Processes</h4>
+      <p style="font-size: 13px;">Every running app + background process with CPU, memory, disk, and network usage. Sort by CPU to find what's hogging your system.</p>
+    </div>
+    <div class="card">
+      <h4>📈 Performance</h4>
+      <p style="font-size: 13px;">Live graphs for CPU, memory, disk, network, GPU. Great for spotting crypto miners or exfiltration spikes.</p>
+    </div>
+    <div class="card">
+      <h4>👥 Users</h4>
+      <p style="font-size: 13px;">Who's logged in and what they're running. Multi-user servers show all active sessions.</p>
+    </div>
+    <div class="card">
+      <h4>🔍 Details</h4>
+      <p style="font-size: 13px;">Raw process list with PID, status, username, CPU, memory. The "Processes" tab but without the pretty grouping. More data, more columns.</p>
+    </div>
+    <div class="card">
+      <h4>⚙️ Services</h4>
+      <p style="font-size: 13px;">All Windows services with their status (Running/Stopped). Right-click to start, stop, or open the full Services console.</p>
+    </div>
+    <div class="card">
+      <h4>🚀 Startup</h4>
+      <p style="font-size: 13px;">Apps that launch at boot. Disable the ones you don't need. Malware LOVES to add itself here for persistence.</p>
+    </div>
+  </div>
+
+  <div class="brain-power">
+    <div class="label">🧠 Brain Power</div>
+    <div class="question">Why is Task Manager the first thing a malware analyst opens when investigating a suspicious machine?</div>
+    <button class="reveal-btn" onclick="toggleAnswer(this)">Reveal answer</button>
+    <div class="answer">
+      <p><strong>(1) Unusual processes</strong> — malware often runs as a process with a suspicious name (like <code class="inline">svchost.exe</code> running from the wrong directory, or <code class="inline">chrome.exe</code> when Chrome isn't installed). <strong>(2) High CPU/network usage</strong> — crypto miners spike CPU; data exfiltration spikes network. <strong>(3) Unknown startup entries</strong> — persistent malware adds itself to startup. <strong>(4) Process tree</strong> — seeing WHAT launched WHAT helps trace the infection chain (e.g., Word → PowerShell → cmd.exe = classic macro malware). Task Manager is triage step zero before breaking out Process Monitor, Process Explorer, or a full memory dump.</p>
+    </div>
+  </div>
+</section>
+
+<div class="divider">task time</div>
+
+<!-- ===== TASKS & ANSWERS ===== -->
+<section class="chapter" id="tasks">
+  <div class="chapter-num">Tasks</div>
+  <h2><span class="emoji">🧪</span> The tasks (with your answers)</h2>
+  <p class="lead">Each card = one task. Click to expand the answer + the reasoning. Spaced-repetition friendly.</p>
+
+  <!-- TASK 1 -->
+  <div class="card" style="margin-bottom: 14px;">
+    <div class="card-badge">TASK 1</div>
+    <h4>Windows Editions</h4>
+    <p style="color: var(--ink-dim); font-size: 0.92rem;">Learn about different Windows editions and the features they offer.</p>
+    <details style="margin-top: 12px;">
+      <summary style="cursor:pointer; color: var(--accent-2); font-family: var(--mono); font-size: 13px;">▸ Show answer + reasoning</summary>
+      <div style="margin-top: 10px; display: grid; gap: 8px;">
+        <div style="padding: 10px 14px; background: rgba(0,0,0,0.3); border-left: 3px solid var(--accent); border-radius: 4px;">
+          <strong style="color: var(--accent); font-family: var(--mono); font-size: 12px;">Q — What encryption can you enable on Pro that you can't enable on Home?</strong><br>
+          <code class="inline" style="margin-left: 8px;">BitLocker</code>
+        </div>
+        <div style="padding: 10px 14px; background: rgba(0,0,0,0.3); border-left: 3px solid var(--accent-3); border-radius: 4px; font-size: 14px;">
+          <strong style="color: var(--accent-3); font-family: var(--mono); font-size: 12px;">WHY:</strong>
+          <span class="term" data-term="bitlocker">BitLocker</span> is a Pro/Enterprise feature that encrypts entire drives using AES. Home edition doesn't include it — you'd need a third-party tool like VeraCrypt instead. This is the #1 feature gap between Home and Pro that matters for security.
+        </div>
+      </div>
+    </details>
+  </div>
+
+  <!-- TASK 2 -->
+  <div class="card" style="margin-bottom: 14px;">
+    <div class="card-badge">TASK 2</div>
+    <h4>The Desktop (GUI)</h4>
+    <p style="color: var(--ink-dim); font-size: 0.92rem;">Explore the Windows desktop — taskbar, Start Menu, Notification Area.</p>
+    <details style="margin-top: 12px;">
+      <summary style="cursor:pointer; color: var(--accent-2); font-family: var(--mono); font-size: 13px;">▸ Show answer + reasoning</summary>
+      <div style="margin-top: 10px; display: grid; gap: 8px;">
+        <div style="padding: 10px 14px; background: rgba(0,0,0,0.3); border-left: 3px solid var(--accent); border-radius: 4px;">
+          <strong style="color: var(--accent); font-family: var(--mono); font-size: 12px;">Q1 — Which selection will hide/disable the Search box?</strong><br>
+          <code class="inline" style="margin-left: 8px;">Hidden</code>
+        </div>
+        <div style="padding: 10px 14px; background: rgba(0,0,0,0.3); border-left: 3px solid var(--accent); border-radius: 4px;">
+          <strong style="color: var(--accent); font-family: var(--mono); font-size: 12px;">Q2 — Which selection will hide/disable the Task View button?</strong><br>
+          <code class="inline" style="margin-left: 8px;">Show Task View button</code>
+        </div>
+        <div style="padding: 10px 14px; background: rgba(0,0,0,0.3); border-left: 3px solid var(--accent); border-radius: 4px;">
+          <strong style="color: var(--accent); font-family: var(--mono); font-size: 12px;">Q3 — Besides Clock and Network, what other icon is visible in the Notification Area?</strong><br>
+          <code class="inline" style="margin-left: 8px;">Action Center</code>
+        </div>
+        <div style="padding: 10px 14px; background: rgba(0,0,0,0.3); border-left: 3px solid var(--accent-3); border-radius: 4px; font-size: 14px;">
+          <strong style="color: var(--accent-3); font-family: var(--mono); font-size: 12px;">WHY:</strong>
+          Right-click the taskbar → hover over <strong>Search</strong> → select <strong>Hidden</strong> to hide the search box entirely. The <strong>Task View button</strong> is a toggle checkbox in the same right-click menu — uncheck it to hide it. The <strong>Notification Area</strong> (system tray, bottom-right) shows Clock, Network, and <strong>Action Center</strong> — the flag/notification icon for system alerts.
+        </div>
+      </div>
+    </details>
+  </div>
+
+  <!-- TASK 3 -->
+  <div class="card" style="margin-bottom: 14px;">
+    <div class="card-badge">TASK 3</div>
+    <h4>Introduction to Windows</h4>
+    <p style="color: var(--ink-dim); font-size: 0.92rem;">Read the intro, start the machine, and log in.</p>
+    <details style="margin-top: 12px;">
+      <summary style="cursor:pointer; color: var(--accent-2); font-family: var(--mono); font-size: 13px;">▸ Show answer + reasoning</summary>
+      <div style="margin-top: 10px; display: grid; gap: 8px;">
+        <div style="padding: 10px 14px; background: rgba(0,0,0,0.3); border-left: 3px solid var(--accent); border-radius: 4px;">
+          <strong style="color: var(--accent); font-family: var(--mono); font-size: 12px;">ANSWER:</strong>
+          <code class="inline" style="margin-left: 8px;">No answer needed</code>
+        </div>
+        <div style="padding: 10px 14px; background: rgba(0,0,0,0.3); border-left: 3px solid var(--accent-3); border-radius: 4px; font-size: 14px;">
+          <strong style="color: var(--accent-3); font-family: var(--mono); font-size: 12px;">WHY:</strong>
+          Just read through and deploy the machine. Credentials: <code class="inline">administrator</code> / <code class="inline">letmein123!</code>. You'll connect via the browser-based RDP client that THM provides.
+        </div>
+      </div>
+    </details>
+  </div>
+
+  <!-- TASK 4 -->
+  <div class="card" style="margin-bottom: 14px;">
+    <div class="card-badge">TASK 4</div>
+    <h4>The File System</h4>
+    <p style="color: var(--ink-dim); font-size: 0.92rem;">Learn about NTFS, FAT, permissions, and ADS.</p>
+    <details style="margin-top: 12px;">
+      <summary style="cursor:pointer; color: var(--accent-2); font-family: var(--mono); font-size: 13px;">▸ Show answer + reasoning</summary>
+      <div style="margin-top: 10px; display: grid; gap: 8px;">
+        <div style="padding: 10px 14px; background: rgba(0,0,0,0.3); border-left: 3px solid var(--accent); border-radius: 4px;">
+          <strong style="color: var(--accent); font-family: var(--mono); font-size: 12px;">Q — What is the meaning of NTFS?</strong><br>
+          <code class="inline" style="margin-left: 8px;">New Technology File System</code>
+        </div>
+        <div style="padding: 10px 14px; background: rgba(0,0,0,0.3); border-left: 3px solid var(--accent-3); border-radius: 4px; font-size: 14px;">
+          <strong style="color: var(--accent-3); font-family: var(--mono); font-size: 12px;">WHY:</strong>
+          <span class="term" data-term="ntfs">NTFS</span> stands for <strong>New Technology File System</strong>. The "New Technology" part comes from Windows NT (New Technology), Microsoft's enterprise OS line from the 1990s. NTFS replaced FAT as the default file system starting with Windows NT 3.1 and has been the standard ever since.
+        </div>
+      </div>
+    </details>
+  </div>
+
+  <!-- TASK 5 -->
+  <div class="card" style="margin-bottom: 14px;">
+    <div class="card-badge">TASK 5</div>
+    <h4>The Windows\System32 Folders</h4>
+    <p style="color: var(--ink-dim); font-size: 0.92rem;">Explore the Windows directory and System32.</p>
+    <details style="margin-top: 12px;">
+      <summary style="cursor:pointer; color: var(--accent-2); font-family: var(--mono); font-size: 13px;">▸ Show answer + reasoning</summary>
+      <div style="margin-top: 10px; display: grid; gap: 8px;">
+        <div style="padding: 10px 14px; background: rgba(0,0,0,0.3); border-left: 3px solid var(--accent); border-radius: 4px;">
+          <strong style="color: var(--accent); font-family: var(--mono); font-size: 12px;">Q — What is the system variable for the Windows folder?</strong><br>
+          <code class="inline" style="margin-left: 8px;">%windir%</code>
+        </div>
+        <div style="padding: 10px 14px; background: rgba(0,0,0,0.3); border-left: 3px solid var(--accent-3); border-radius: 4px; font-size: 14px;">
+          <strong style="color: var(--accent-3); font-family: var(--mono); font-size: 12px;">WHY:</strong>
+          <code class="inline">%windir%</code> is the environment variable that points to the Windows installation directory (typically <code class="inline">C:\Windows</code>). You can verify by opening CMD and typing <code class="inline">echo %windir%</code>. Other useful ones: <code class="inline">%USERPROFILE%</code> (your profile), <code class="inline">%TEMP%</code> (temp folder), <code class="inline">%SYSTEMROOT%</code> (same as %windir%).
+        </div>
+      </div>
+    </details>
+  </div>
+
+  <!-- TASK 6 -->
+  <div class="card" style="margin-bottom: 14px;">
+    <div class="card-badge">TASK 6</div>
+    <h4>User Accounts, Profiles, and Permissions</h4>
+    <p style="color: var(--ink-dim); font-size: 0.92rem;">Explore user accounts, lusrmgr.msc, and local groups on the VM.</p>
+    <details style="margin-top: 12px;">
+      <summary style="cursor:pointer; color: var(--accent-2); font-family: var(--mono); font-size: 13px;">▸ Show answer + reasoning</summary>
+      <div style="margin-top: 10px; display: grid; gap: 8px;">
+        <div style="padding: 10px 14px; background: rgba(0,0,0,0.3); border-left: 3px solid var(--accent); border-radius: 4px;">
+          <strong style="color: var(--accent); font-family: var(--mono); font-size: 12px;">Q1 — What is the name of the other user account?</strong><br>
+          <code class="inline" style="margin-left: 8px;">[[MACHINE — open lusrmgr.msc via Win+R, check the Users folder for a non-default account]]</code>
+        </div>
+        <div style="padding: 10px 14px; background: rgba(0,0,0,0.3); border-left: 3px solid var(--accent); border-radius: 4px;">
+          <strong style="color: var(--accent); font-family: var(--mono); font-size: 12px;">Q2 — What groups is this user a member of?</strong><br>
+          <code class="inline" style="margin-left: 8px;">[[MACHINE — in lusrmgr.msc > Users > double-click the user > "Member Of" tab]]</code>
+        </div>
+        <div style="padding: 10px 14px; background: rgba(0,0,0,0.3); border-left: 3px solid var(--accent); border-radius: 4px;">
+          <strong style="color: var(--accent); font-family: var(--mono); font-size: 12px;">Q3 — What built-in account is for guest access to the computer?</strong><br>
+          <code class="inline" style="margin-left: 8px;">Guest</code>
+        </div>
+        <div style="padding: 10px 14px; background: rgba(0,0,0,0.3); border-left: 3px solid var(--accent); border-radius: 4px;">
+          <strong style="color: var(--accent); font-family: var(--mono); font-size: 12px;">Q4 — What is the account status?</strong><br>
+          <code class="inline" style="margin-left: 8px;">[[MACHINE — in lusrmgr.msc > Users > Guest > check the Description field and status]]</code>
+        </div>
+        <div style="padding: 10px 14px; background: rgba(0,0,0,0.3); border-left: 3px solid var(--accent-3); border-radius: 4px; font-size: 14px;">
+          <strong style="color: var(--accent-3); font-family: var(--mono); font-size: 12px;">WHY:</strong>
+          <code class="inline">lusrmgr.msc</code> (Local Users and Groups Manager) is the go-to tool for user enumeration on Windows. Open it via <code class="inline">Win+R → lusrmgr.msc</code>. The <strong>Users</strong> folder shows every local account. Double-click any user to see properties: full name, description, group memberships, and account flags (disabled, locked, password never expires). The <strong>Guest</strong> account is a built-in account meant for temporary/anonymous access — it's disabled by default but always worth checking.
+        </div>
+      </div>
+    </details>
+  </div>
+
+  <!-- TASK 7 -->
+  <div class="card" style="margin-bottom: 14px;">
+    <div class="card-badge">TASK 7</div>
+    <h4>User Account Control</h4>
+    <p style="color: var(--ink-dim); font-size: 0.92rem;">Learn about UAC and why it exists.</p>
+    <details style="margin-top: 12px;">
+      <summary style="cursor:pointer; color: var(--accent-2); font-family: var(--mono); font-size: 13px;">▸ Show answer + reasoning</summary>
+      <div style="margin-top: 10px; display: grid; gap: 8px;">
+        <div style="padding: 10px 14px; background: rgba(0,0,0,0.3); border-left: 3px solid var(--accent); border-radius: 4px;">
+          <strong style="color: var(--accent); font-family: var(--mono); font-size: 12px;">Q — What does UAC mean?</strong><br>
+          <code class="inline" style="margin-left: 8px;">User Account Control</code>
+        </div>
+        <div style="padding: 10px 14px; background: rgba(0,0,0,0.3); border-left: 3px solid var(--accent-3); border-radius: 4px; font-size: 14px;">
+          <strong style="color: var(--accent-3); font-family: var(--mono); font-size: 12px;">WHY:</strong>
+          <span class="term" data-term="uac">UAC</span> stands for <strong>User Account Control</strong>. Introduced in Windows Vista (and universally hated at first because it popped up for EVERYTHING). It was refined in Windows 7+ to be less aggressive. The whole point: prevent apps from silently using admin privileges. Even if you're logged in as admin, your token starts as standard — UAC upgrades it on demand.
+        </div>
+      </div>
+    </details>
+  </div>
+
+  <!-- TASK 8 -->
+  <div class="card" style="margin-bottom: 14px;">
+    <div class="card-badge">TASK 8</div>
+    <h4>Settings and the Control Panel</h4>
+    <p style="color: var(--ink-dim); font-size: 0.92rem;">Navigate Control Panel in Small Icons view.</p>
+    <details style="margin-top: 12px;">
+      <summary style="cursor:pointer; color: var(--accent-2); font-family: var(--mono); font-size: 13px;">▸ Show answer + reasoning</summary>
+      <div style="margin-top: 10px; display: grid; gap: 8px;">
+        <div style="padding: 10px 14px; background: rgba(0,0,0,0.3); border-left: 3px solid var(--accent); border-radius: 4px;">
+          <strong style="color: var(--accent); font-family: var(--mono); font-size: 12px;">Q — In the Control Panel, change the view to Small Icons. What is the last setting in the Control Panel view?</strong><br>
+          <code class="inline" style="margin-left: 8px;">[[MACHINE — open Control Panel, switch "View by" to Small icons, scroll to the very bottom of the alphabetical list]]</code>
+        </div>
+        <div style="padding: 10px 14px; background: rgba(0,0,0,0.3); border-left: 3px solid var(--accent-3); border-radius: 4px; font-size: 14px;">
+          <strong style="color: var(--accent-3); font-family: var(--mono); font-size: 12px;">WHY:</strong>
+          Control Panel supports three view modes: Category (grouped), Large Icons (alphabetical grid), and Small Icons (compact alphabetical list). Switching to Small Icons gives you every single setting applet in one view. The last item alphabetically depends on what's installed — on a default Windows Server 2019, it's typically <strong>Windows Defender Firewall</strong> or similar. Check the VM to confirm.
+        </div>
+      </div>
+    </details>
+  </div>
+
+  <!-- TASK 9 -->
+  <div class="card" style="margin-bottom: 14px;">
+    <div class="card-badge">TASK 9</div>
+    <h4>Task Manager</h4>
+    <p style="color: var(--ink-dim); font-size: 0.92rem;">Open Task Manager and explore its tabs.</p>
+    <details style="margin-top: 12px;">
+      <summary style="cursor:pointer; color: var(--accent-2); font-family: var(--mono); font-size: 13px;">▸ Show answer + reasoning</summary>
+      <div style="margin-top: 10px; display: grid; gap: 8px;">
+        <div style="padding: 10px 14px; background: rgba(0,0,0,0.3); border-left: 3px solid var(--accent); border-radius: 4px;">
+          <strong style="color: var(--accent); font-family: var(--mono); font-size: 12px;">Q — What is the keyboard shortcut to open Task Manager?</strong><br>
+          <code class="inline" style="margin-left: 8px;">Ctrl+Shift+Esc</code>
+        </div>
+        <div style="padding: 10px 14px; background: rgba(0,0,0,0.3); border-left: 3px solid var(--accent-3); border-radius: 4px; font-size: 14px;">
+          <strong style="color: var(--accent-3); font-family: var(--mono); font-size: 12px;">WHY:</strong>
+          <code class="inline">Ctrl+Shift+Esc</code> opens Task Manager directly. The more famous <code class="inline">Ctrl+Alt+Del</code> opens the security screen where Task Manager is one of several options. Right-clicking the taskbar and selecting "Task Manager" also works. On a pentest, if you land a GUI session, Task Manager is your first stop for process enumeration.
+        </div>
+      </div>
+    </details>
+  </div>
+
+  <!-- TASK 10 -->
+  <div class="card" style="margin-bottom: 14px;">
+    <div class="card-badge">TASK 10</div>
+    <h4>Conclusion</h4>
+    <p style="color: var(--ink-dim); font-size: 0.92rem;">Terminate the machine. On to Windows Fundamentals 2!</p>
+    <details style="margin-top: 12px;">
+      <summary style="cursor:pointer; color: var(--accent-2); font-family: var(--mono); font-size: 13px;">▸ Show answer + reasoning</summary>
+      <div style="margin-top: 10px; display: grid; gap: 8px;">
+        <div style="padding: 10px 14px; background: rgba(0,0,0,0.3); border-left: 3px solid var(--accent); border-radius: 4px;">
+          <strong style="color: var(--accent); font-family: var(--mono); font-size: 12px;">ANSWER:</strong>
+          <code class="inline" style="margin-left: 8px;">No answer needed</code>
+        </div>
+        <div style="padding: 10px 14px; background: rgba(0,0,0,0.3); border-left: 3px solid var(--accent-3); border-radius: 4px; font-size: 14px;">
+          <strong style="color: var(--accent-3); font-family: var(--mono); font-size: 12px;">WHAT'S NEXT:</strong>
+          Terminate the machine and move on. Windows Fundamentals 2 dives into <strong>System Configuration (msconfig)</strong>, <strong>Computer Management</strong>, <strong>Resource Monitor</strong>, <strong>Windows Registry</strong>, and more. The tools that live INSIDE Windows are where the real power is — and the real attack surface.
+        </div>
+      </div>
+    </details>
+  </div>
+</section>
+
+<!-- RETENTION QUIZ -->
+<section class="chapter" id="quiz">
+  <div class="chapter-num">Retention Check</div>
+  <h2><span class="emoji">🎯</span> Did it stick?</h2>
+
+  <div class="quiz">
+    <h4>🎯 Question 1 — File systems</h4>
+    <div class="q">What file system does modern Windows use that supports permissions, journaling, and files larger than 4 GB?</div>
+    <div class="options">
+      <div class="opt" onclick="quizAnswer(this, false)">FAT32</div>
+      <div class="opt" onclick="quizAnswer(this, true)">NTFS</div>
+      <div class="opt" onclick="quizAnswer(this, false)">ext4</div>
+      <div class="opt" onclick="quizAnswer(this, false)">APFS</div>
+    </div>
+    <div class="feedback"></div>
+  </div>
+
+  <div class="quiz" style="margin-top: 24px;">
+    <h4>🎯 Question 2 — UAC behavior</h4>
+    <div class="q">A UAC prompt appears when you try to install software. What happens if you click No?</div>
+    <div class="options">
+      <div class="opt" onclick="quizAnswer(this, false)">The program installs anyway but with limited features</div>
+      <div class="opt" onclick="quizAnswer(this, false)">The computer restarts to apply security settings</div>
+      <div class="opt" onclick="quizAnswer(this, true)">The program does NOT install and nothing changes</div>
+      <div class="opt" onclick="quizAnswer(this, false)">Windows disables UAC permanently so you won't be asked again</div>
+    </div>
+    <div class="feedback"></div>
+  </div>
+</section>
+
+<!-- RELATED TERMS -->
+<section class="chapter">
+  <div class="related-terms">
+    <h4>🔗 Related in the vault</h4>
+    <div class="tags">
+      <a href="../../glossary/ntfs.html">📂 NTFS</a>
+      <a href="../../glossary/uac.html">🛡️ UAC</a>
+      <a href="../../glossary/bitlocker.html">🔐 BitLocker</a>
+      <a href="../../glossary/privilege-escalation.html">⬆️ Privilege Escalation</a>
+      <a href="linux-fundamentals-part-3.html">🐧 THM: Linux Fundamentals Pt. 3</a>
+    </div>
+  </div>
+</section>
+
+<footer class="site-foot">
+  <p class="coffee-line">Now you know your way around Windows. Next up: the tools that live inside it. ☕</p>
+  <p style="font-size: 12px;">Original room: <a href="https://tryhackme.com/room/windowsfundamentals1xbx" target="_blank" rel="noopener">tryhackme.com/room/windowsfundamentals1xbx</a></p>
+</footer>
+
+<script src="../../assets/glossary.js"></script>
+<script src="../../assets/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>UAC — User Account Control ☕</title>
+<link rel="stylesheet" href="../assets/styles.css" />
+</head>
+<body data-page-slug="uac">
+
+<div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
+
+<div class="topbar">
+  <a class="logo" href="../index.html">☕ CYBERSEC.VAULT</a>
+  <nav>
+    <a href="../index.html">Home</a>
+    <a href="../index.html#topics-web">Topics</a>
+    <a href="../index.html#topics-python">Python</a>
+    <a href="index.html" class="active">Glossary</a>
+    <a href="../tryhackme/index.html">THM</a>
+    <a href="../htb-academy/index.html">HTB</a>
+    <a href="../labs/portswigger/index.html">Labs</a>
+  </nav>
+  <div class="search-wrap">
+    <input type="text" class="search" placeholder="Search (press /)..." />
+    <div class="search-results"></div>
+  </div>
+</div>
+
+<div class="breadcrumb">
+  <a href="../index.html">Home</a>
+  <span class="sep">›</span>
+  <a href="index.html">Glossary</a>
+  <span class="sep">›</span>
+  <span>UAC (User Account Control)</span>
+</div>
+
+<!-- HERO -->
+<section class="hero" style="min-height: 45vh;">
+  <div class="hero-content">
+    <span class="coffee-badge">📖 glossary · windows security · the bouncer</span>
+    <h1>UAC <span style="color: var(--accent-2);">🛡️</span></h1>
+    <p class="subtitle">User Account Control — Windows' "Do you want to allow this app to make changes?" popup.<br>The last line of defense between you and a malware's dream.</p>
+    <div class="tagline">"Even admins have to show their badge. Unless they know the side door." 🚪</div>
+  </div>
+</section>
+
+<!-- WHAT IS IT -->
+<section class="chapter">
+  <div class="chapter-num">Chapter 01 // Definition</div>
+  <h2><span class="emoji">📖</span> What is UAC?</h2>
+  <p class="lead">User Account Control is a Windows security feature (introduced in <strong>Windows Vista</strong>, 2006) that prevents applications from making system-wide changes without explicit approval — even if you're logged in as an administrator.</p>
+
+  <div class="paper">
+    <h4>📝 UAC is like the bouncer at a VIP area — even if your name is on the list (admin), you still have to show ID every time you want in</h4>
+    <p>Before Vista, if you were an admin, <em>everything</em> you ran had admin powers. Open a browser? Admin. Run a random .exe from the internet? Admin. Malware loved this — it could do ANYTHING the moment it ran. <span class="highlight">UAC splits your admin session into two tokens: a standard one (used by default) and an elevated one (used only when you click "Yes" on the prompt).</span> So even though you're an admin, your Firefox isn't. Your malware isn't. Unless you explicitly agree to elevate it.</p>
+  </div>
+
+  <h3>The problem UAC solved</h3>
+  <div class="grid cols-2">
+    <div class="card">
+      <h4>😱 Before Vista (XP era)</h4>
+      <p>Most users ran as <strong>Administrator</strong> 24/7. Every program had full system access. Malware didn't need exploits — it just ran and owned everything. Drive-by downloads were devastating.</p>
+    </div>
+    <div class="card">
+      <h4>🛡️ After UAC</h4>
+      <p>Admin sessions start with <strong>standard privileges</strong>. Elevation requires a consent prompt (the dimmed desktop + "Yes/No" dialog). Malware now has to either trick the user into clicking "Yes" — or find a UAC bypass.</p>
+    </div>
+  </div>
+</section>
+
+<div class="divider">how it works</div>
+
+<!-- HOW UAC WORKS -->
+<section class="chapter">
+  <div class="chapter-num">Chapter 02 // Under the hood</div>
+  <h2><span class="emoji">⚙️</span> How UAC actually works</h2>
+
+  <h3>The split token model</h3>
+  <p>When an admin logs into Windows, the system creates <strong>two access tokens</strong>:</p>
+  <ol>
+    <li><strong>Standard token</strong> — used by default for all processes. Has normal user-level permissions.</li>
+    <li><strong>Elevated token</strong> — full admin rights. Only handed to a process when you approve a UAC prompt.</li>
+  </ol>
+
+  <p>When an app requests elevation (e.g., an installer, system settings, <code class="inline">cmd.exe</code> → "Run as administrator"), Windows shows the consent prompt on a secure desktop (the dimmed screen). If you click "Yes," the process gets the elevated token.</p>
+
+  <h3>The shield icon 🛡️</h3>
+  <p>Ever notice the shield icon on certain buttons and executables in Windows? That means "clicking this will trigger UAC." It's Windows telling you: "this action needs admin approval."</p>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <h4>🛡️ Triggers UAC</h4>
+      <ul>
+        <li>Installing/uninstalling software</li>
+        <li>Changing system settings</li>
+        <li>Modifying <code class="inline">C:\Windows</code> or <code class="inline">C:\Program Files</code></li>
+        <li>Running "as administrator"</li>
+        <li>Modifying other users' files</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>✅ Doesn't trigger UAC</h4>
+      <ul>
+        <li>Running normal apps (browser, notepad)</li>
+        <li>Changing your own settings</li>
+        <li>Writing to your own user folder</li>
+        <li>Connecting to WiFi</li>
+        <li>Installing per-user apps (some)</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>UAC levels</h3>
+  <p>Windows lets you adjust how aggressive UAC is (Settings → "Change User Account Control settings"):</p>
+  <div class="grid cols-2">
+    <div class="card">
+      <h4>🔴 Always notify</h4>
+      <p>Maximum security. Prompts for EVERY elevation attempt and EVERY Windows settings change. Annoying but safest.</p>
+    </div>
+    <div class="card">
+      <h4>🟡 Default (notify for apps only)</h4>
+      <p>Prompts when apps try to elevate. Doesn't prompt for Windows settings changes by admin users. The default on most installs.</p>
+    </div>
+    <div class="card">
+      <h4>🟠 Notify but don't dim desktop</h4>
+      <p>Same as default but the secure desktop (dimming) is disabled. Less secure — malware can interact with the prompt window.</p>
+    </div>
+    <div class="card">
+      <h4>⚫ Never notify</h4>
+      <p>UAC is effectively <strong>off</strong>. Everything runs elevated. Back to the XP days. Never do this. Please.</p>
+    </div>
+  </div>
+
+  <div class="callout danger">
+    <strong>🚨 The built-in Administrator account</strong> (the one with RID 500) has UAC disabled by default. If you land on that account during a pentest, you're already fully elevated — no bypass needed.
+  </div>
+</section>
+
+<div class="divider">bypasses</div>
+
+<!-- UAC BYPASS TECHNIQUES -->
+<section class="chapter">
+  <div class="chapter-num">Chapter 03 // UAC bypass techniques</div>
+  <h2><span class="emoji">🥷</span> Getting past the bouncer without showing ID</h2>
+
+  <p>Here's the dirty secret: Microsoft considers UAC a <strong>"convenience feature," not a security boundary.</strong> That means they <em>won't necessarily patch</em> UAC bypasses. There are <strong>dozens</strong> of known bypasses, and new ones pop up regularly.</p>
+
+  <h3>How bypasses work (the pattern)</h3>
+  <p>Most UAC bypasses follow the same recipe:</p>
+  <ol>
+    <li>Find a <strong>Windows binary that auto-elevates</strong> (runs elevated without prompting UAC because Microsoft trusted it)</li>
+    <li>Find a way to make that binary <strong>execute YOUR code</strong> instead of (or in addition to) what it normally does</li>
+    <li>Usually via <strong>registry hijacking</strong> — the binary reads a registry key to decide what to run, and your low-priv user can write to that key</li>
+  </ol>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <div class="card-badge danger">CLASSIC</div>
+      <h4>🎯 fodhelper.exe</h4>
+      <p>A Windows binary that auto-elevates (it manages "optional features"). It reads <code class="inline">HKCU\Software\Classes\ms-settings\Shell\Open\command</code> before launching. Set that registry key to your payload → fodhelper runs it <strong>elevated</strong>, no UAC prompt.</p>
+      <div class="code" style="margin-top: 8px;">
+<span class="com"># Set registry key to your payload</span>
+<span class="kw">REG ADD</span> HKCU\Software\Classes\ms-settings\Shell\Open\command <span class="str">/d "cmd.exe /c powershell -e BASE64PAYLOAD"</span> /f
+<span class="kw">REG ADD</span> HKCU\Software\Classes\ms-settings\Shell\Open\command /v DelegateExecute /t REG_SZ /f
+
+<span class="com"># Trigger the auto-elevating binary</span>
+<span class="kw">fodhelper.exe</span>
+<span class="com"># Your payload runs elevated. No UAC prompt appeared.</span>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-badge danger">CLASSIC</div>
+      <h4>🎯 eventvwr.exe</h4>
+      <p>Event Viewer auto-elevates. It reads <code class="inline">HKCU\Software\Classes\mscfile\Shell\Open\command</code> first (user-writable), then falls back to <code class="inline">HKCR</code>. Hijack the HKCU key → your command runs elevated when eventvwr launches.</p>
+    </div>
+    <div class="card">
+      <div class="card-badge danger">MODERN</div>
+      <h4>🎯 DiskCleanup / SilentCleanup</h4>
+      <p>The <code class="inline">SilentCleanup</code> scheduled task runs with highest privileges. It executes <code class="inline">%windir%\system32\cleanmgr.exe</code>. By manipulating the <code class="inline">%windir%</code> environment variable (user-controllable), you can make it run from a writable location.</p>
+    </div>
+    <div class="card">
+      <div class="card-badge danger">TOOL</div>
+      <h4>🧰 UACME</h4>
+      <p><a href="https://github.com/hfiref0x/UACME" target="_blank" rel="noopener">UACME on GitHub</a> — an open-source tool that catalogs <strong>70+ UAC bypass methods</strong>. Each one numbered, each one documented. The pentester's UAC encyclopedia.</p>
+    </div>
+  </div>
+
+  <div class="brain-power">
+    <h4>🧠 Brain Power</h4>
+    <p>Microsoft says UAC is "not a security boundary." What does that mean for pentesters?</p>
+    <button onclick="toggleAnswer(this)">Reveal answer</button>
+    <div class="answer">
+      <p>It means Microsoft <strong>won't patch UAC bypasses as security vulnerabilities</strong>. They're considered <strong>by-design</strong> behavior. There are dozens of known bypasses (fodhelper, eventvwr, SilentCleanup, DiskCleanup, ComputerDefaults, sdclt, and many more), and they often survive across Windows versions. For pentesters, this is great news: <strong>UAC is a speed bump, not a wall.</strong> If you're a local admin but not elevated, a UAC bypass is almost always available.</p>
+      <p>For defenders, the implication is harsh: <strong>don't rely on UAC as your only defense</strong>. Use it alongside proper least-privilege (don't give users admin), application whitelisting, and endpoint detection.</p>
+    </div>
+  </div>
+</section>
+
+<div class="divider">real world</div>
+
+<!-- REAL WORLD -->
+<section class="chapter">
+  <div class="chapter-num">Chapter 04 // Real-world impact</div>
+  <h2><span class="emoji">📰</span> UAC in the wild</h2>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <div class="card-badge danger">2017</div>
+      <h4>💀 WannaCry ransomware</h4>
+      <p>Exploited EternalBlue (MS17-010) for initial access, then used UAC bypass techniques to escalate and spread across networks. Once elevated: encrypt everything, demand Bitcoin. 200,000+ machines in 150 countries.</p>
+    </div>
+    <div class="card">
+      <div class="card-badge danger">ONGOING</div>
+      <h4>🔓 Commodity malware &amp; RATs</h4>
+      <p>Most modern malware families (Emotet, TrickBot, Agent Tesla) include UAC bypass modules as standard. It's so common it's practically a checkbox on the malware feature list. The fodhelper bypass alone has been seen in hundreds of malware samples.</p>
+    </div>
+    <div class="card">
+      <div class="card-badge danger">EVERY CTF</div>
+      <h4>🏁 Windows privesc rooms</h4>
+      <p>Nearly every Windows CTF and pentest engagement involves UAC bypass as a step. TryHackMe, HackTheBox, OSCP — if the box is Windows and you're admin but not elevated, a UAC bypass is waiting.</p>
+    </div>
+    <div class="card">
+      <div class="card-badge danger">2020+</div>
+      <h4>🕵️ APT groups</h4>
+      <p>Nation-state groups like APT29 (Cozy Bear) have been documented using UAC bypasses in their toolkits. When state-sponsored hackers use it, you know it works.</p>
+    </div>
+  </div>
+</section>
+
+<!-- DEFENSE -->
+<section class="chapter">
+  <div class="chapter-num">Chapter 05 // Defense &amp; detection</div>
+  <h2><span class="emoji">🛡️</span> How to make UAC actually useful</h2>
+
+  <ul>
+    <li><strong>Set UAC to "Always notify"</strong> — it's annoying, but it catches auto-elevating binary abuse.</li>
+    <li><strong>Don't give users local admin</strong> — if they're standard users, UAC prompts require an admin password, not just "Yes."</li>
+    <li><strong>Monitor registry keys</strong> — watch for writes to <code class="inline">HKCU\Software\Classes\ms-settings</code> and <code class="inline">HKCU\Software\Classes\mscfile</code>.</li>
+    <li><strong>Application whitelisting</strong> (AppLocker / WDAC) — block unknown executables regardless of elevation.</li>
+    <li><strong>EDR alerts</strong> — modern endpoint detection tools flag known UAC bypass patterns.</li>
+  </ul>
+
+  <div class="quiz">
+    <h4>🎯 Quick Check</h4>
+    <div class="q">Why do most UAC bypass techniques involve Windows binaries that "auto-elevate"?</div>
+    <div class="options">
+      <div class="opt" onclick="quizAnswer(this, false)">Because auto-elevating binaries have known buffer overflow vulnerabilities</div>
+      <div class="opt" onclick="quizAnswer(this, false)">Because auto-elevating binaries run with kernel-level privileges</div>
+      <div class="opt" onclick="quizAnswer(this, true)">Because they run elevated WITHOUT showing a UAC prompt — so if you can hijack what they execute, your code runs elevated silently</div>
+      <div class="opt" onclick="quizAnswer(this, false)">Because Microsoft forgot to sign these binaries</div>
+    </div>
+    <div class="feedback"></div>
+  </div>
+</section>
+
+<!-- RELATED TERMS -->
+<section class="chapter">
+  <div class="related-terms">
+    <h4>🔗 Related in the vault</h4>
+    <div class="tags">
+      <a href="ntfs.html">📁 NTFS</a>
+      <a href="privilege-escalation.html">⬆️ Privilege Escalation</a>
+      <a href="bitlocker.html">🔒 BitLocker</a>
+      <a href="wordpress.html">🔵 WordPress (admin accounts parallel)</a>
+      <a href="../tryhackme/cybersec-101/windows-fundamentals-1.html">🪟 THM: Windows Fundamentals 1</a>
+    </div>
+  </div>
+</section>
+
+<footer class="site-foot">
+  <p class="coffee-line">UAC is a speed bump, not a wall. Treat it accordingly. ☕</p>
+</footer>
+
+<script src="../assets/glossary.js"></script>
+<script src="../assets/app.js"></script>
+</body>
+</html>

@@ -53,6 +53,15 @@ window.GLOSSARY = {
     page: "brute-force.html",
     related: ["authentication", "ssh", "payload"]
   },
+  "bitlocker": {
+    name: "BitLocker",
+    aliases: ["bitlocker-encryption", "bitlocker-drive-encryption", "full-disk-encryption"],
+    category: "Windows Security",
+    blurb: "Microsoft's built-in full-disk encryption. Pro/Enterprise only — Home users get nothing.",
+    short: "A full-volume encryption feature built into Windows Pro, Enterprise, and Education editions. It encrypts entire drives (including the OS drive) using AES-128 or AES-256, protecting data at rest from physical theft. Requires a TPM chip (or USB key as fallback). Recovery keys are stored in your Microsoft account or Active Directory. Pentest angle: a stolen laptop with BitLocker enabled is a brick to the thief — but if the machine is already booted and logged in, BitLocker can't help. Also: recovery keys left in AD or Azure AD are a juicy post-exploit target.",
+    page: "bitlocker.html",
+    related: ["ntfs", "uac", "privilege-escalation"]
+  },
   "bug-bounty": {
     name: "Bug Bounty",
     aliases: ["bug-bounty program"],
@@ -250,6 +259,17 @@ window.GLOSSARY = {
     short: "Short for 'manual page.' Every standard Linux command ships with docs accessible via `man <cmd>`. Shows synopsis, flags, examples. Navigate with arrow keys, search with `/pattern`, quit with `q`. Knowing how to read man pages is the difference between guessing flags and actually owning the shell.",
     page: "man-page.html",
     related: ["linux-permissions", "chmod"]
+  },
+
+  /* ---------- N ---------- */
+  "ntfs": {
+    name: "NTFS (New Technology File System)",
+    aliases: ["new-technology-file-system", "ntfs-permissions", "ntfs-file-system"],
+    category: "Windows Fundamentals",
+    blurb: "The default Windows file system. Permissions, journaling, encryption, and Alternate Data Streams.",
+    short: "New Technology File System — the default file system on modern Windows. Supports file-level permissions (Full Control, Modify, Read & Execute, Read, Write), journaling (crash recovery), encryption (EFS), files larger than 4 GB, and Alternate Data Streams (ADS). ADS lets you attach hidden data to any file — legitimate uses include zone identifiers, but malware authors use ADS to hide payloads. Pentest angle: check NTFS permissions via the Security tab (right-click → Properties) to find overly permissive shares, and look for ADS with <code>dir /R</code> or <code>Get-Item -Stream *</code>.",
+    page: "ntfs.html",
+    related: ["bitlocker", "uac", "privilege-escalation"]
   },
 
   /* ---------- O ---------- */
@@ -451,6 +471,15 @@ window.GLOSSARY = {
   },
 
   /* ---------- U ---------- */
+  "uac": {
+    name: "UAC (User Account Control)",
+    aliases: ["user-account-control", "uac-prompt", "elevation-prompt"],
+    category: "Windows Security",
+    blurb: "The 'Do you want to allow this app to make changes?' popup. Windows' last line of defense.",
+    short: "A Windows security feature (introduced in Vista) that prevents apps from making system-wide changes without explicit admin approval. Even if you're logged in as an admin, your processes run with standard privileges by default. When something needs elevated access, UAC pops a consent prompt. The shield icon on executables means 'this will trigger UAC.' Pentest angle: UAC bypass techniques (e.g. fodhelper.exe, eventvwr.exe abuse) are a staple of Windows privilege escalation. The built-in Administrator account has UAC disabled by default — if you land on that account, you're already elevated.",
+    page: "uac.html",
+    related: ["ntfs", "bitlocker", "privilege-escalation"]
+  },
   "user-agent": {
     name: "User-Agent",
     aliases: ["ua", "user agent", "ua-header"],
