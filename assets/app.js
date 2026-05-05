@@ -119,6 +119,37 @@ window.SITE_LABS = {
   ]
 };
 
+/* ---------- HTB ACADEMY MODULES + SECTIONS -------------------------------------------
+   Each MODULE groups sections (like chapters in a course).
+   Each section gets its own rebuilt page.
+   Only add a section entry here AFTER you create its HTML page.
+   `htbUrl` = the original HTB Academy section URL.
+-------------------------------------------------------------------------------------- */
+window.SITE_HTB = {
+  modules: [
+    {
+      slug: "learning-process",
+      name: "Learning Process",
+      icon: "🧠",
+      blurb: "Meta-learning module — how to think, learn, and research in infosec.",
+      htbUrl: "https://academy.hackthebox.com/module/details/9",
+      totalSections: 20,
+      sections: [
+        {
+          slug: "01-way-of-thinking",
+          name: "Way of Thinking",
+          icon: "💭",
+          blurb: "The field is massive. Learn how to think about learning itself.",
+          path: "htb-academy/learning-process/01-way-of-thinking.html",
+          htbUrl: "https://academy.hackthebox.com/module/9/section/45",
+          completed: false,
+          tags: ["mindset", "meta-learning"]
+        }
+      ]
+    }
+  ]
+};
+
 /* ---------- THM PATHS + ROOMS --------------------------------------------------------
    Each PATH (learning path) has a list of ROOMS you've rebuilt.
    Only add a room entry here AFTER you create the HTML page for it.
@@ -174,7 +205,7 @@ window.rootBase = (function () {
   const path = window.location.pathname;
   // Any page under /topics/<lane>/<slug>/<file>, /labs/<plat>/<file>,
   // /tryhackme/<path>/<file>, or /glossary/<file>. Walk up to vault root.
-  const m = path.match(/\/(topics|labs|glossary|tryhackme)\/(.+)/);
+  const m = path.match(/\/(topics|labs|glossary|tryhackme|htb-academy)\/(.+)/);
   if (m) {
     const segs = m[2].split('/');
     const dirs = segs.length - 1;        // directories beneath the section
@@ -331,6 +362,19 @@ window.markCompleted = function (slug) {
         });
       });
     });
+    // HTB Academy sections (flattened across modules)
+    const HTB = window.SITE_HTB || { modules: [] };
+    (HTB.modules || []).forEach(mod => {
+      (mod.sections || []).forEach(s => {
+        items.push({
+          type: 'htb',
+          name: s.name,
+          blurb: `HTB · ${mod.name} · ${s.blurb}`,
+          aliases: [s.slug, mod.slug, 'htb', 'hack the box', 'hackthebox', 'academy'].map(a => a.toLowerCase()),
+          href: base + s.path
+        });
+      });
+    });
     // Labs (flattened across platform > track > lab)
     const LABS = window.SITE_LABS || { platforms: [] };
     (LABS.platforms || []).forEach(plat => {
@@ -364,7 +408,7 @@ window.markCompleted = function (slug) {
       resultsEl.classList.add('open');
       return;
     }
-    const tagLabel = { topic: 'Topic', glossary: 'Term', thm: 'THM', lab: 'Lab' };
+    const tagLabel = { topic: 'Topic', glossary: 'Term', thm: 'THM', htb: 'HTB', lab: 'Lab' };
     resultsEl.innerHTML = matches.map(m => `
       <a href="${m.href}">
         <span class="tag ${m.type}">${tagLabel[m.type] || m.type}</span>

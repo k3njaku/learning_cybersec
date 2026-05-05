@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Way of Thinking — HTB · Learning Process ☕</title>
+<link rel="stylesheet" href="../../assets/styles.css" />
+<style>
+  /* Math puzzle playground */
+  .math-playground {
+    background: #0a0f13;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px;
+    margin: 18px 0;
+    font-family: var(--mono);
+  }
+  .math-equation {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    font-size: 1.4rem;
+    color: var(--accent);
+    margin: 16px 0;
+  }
+  .math-equation input {
+    width: 110px;
+    text-align: center;
+    font-family: var(--mono);
+    font-size: 1.3rem;
+    padding: 8px;
+    background: #000;
+    color: var(--accent-2);
+    border: 2px solid var(--accent-2);
+    border-radius: 6px;
+    outline: none;
+  }
+  .math-equation input:focus {
+    box-shadow: 0 0 14px rgba(255,46,99,0.3);
+  }
+  .math-result {
+    background: #000;
+    padding: 14px;
+    border-radius: 6px;
+    margin-top: 10px;
+    font-size: 14px;
+    min-height: 48px;
+  }
+  .math-result.correct { border-left: 3px solid var(--accent); color: var(--accent); }
+  .math-result.wrong { border-left: 3px solid var(--accent-2); color: var(--accent-2); }
+  .math-result.neutral { border-left: 3px solid var(--border); color: var(--ink-dim); }
+
+  /* Four pillars visual */
+  .pillar-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin: 20px 0;
+  }
+  @media (max-width: 600px) { .pillar-grid { grid-template-columns: 1fr 1fr; } }
+  .pillar {
+    background: #0a0f13;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 18px 14px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.2s;
+  }
+  .pillar::before {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 4px;
+    background: var(--accent);
+  }
+  .pillar.missing { border-color: var(--accent-2); }
+  .pillar.missing::before { background: var(--accent-2); }
+  .pillar .num {
+    font-family: var(--mono);
+    font-size: 2rem;
+    font-weight: bold;
+    display: block;
+    margin-bottom: 6px;
+  }
+  .pillar .num.green { color: var(--accent); }
+  .pillar .num.pink { color: var(--accent-2); }
+  .pillar .label { font-size: 14px; color: var(--ink); font-weight: 600; }
+  .pillar .desc { font-size: 12px; color: var(--ink-dim); margin-top: 6px; }
+</style>
+</head>
+<body data-page-slug="htb-learning-process-01">
+
+<div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
+
+<div class="topbar">
+  <a class="logo" href="../../index.html">☕ CYBERSEC.VAULT</a>
+  <nav>
+    <a href="../../index.html">Home</a>
+    <a href="../../index.html#topics-web">Topics</a>
+    <a href="../../glossary/index.html">Glossary</a>
+    <a href="../../tryhackme/index.html">THM</a>
+    <a href="../index.html" class="active">HTB</a>
+    <a href="../../labs/portswigger/index.html">Labs</a>
+  </nav>
+  <div class="search-wrap">
+    <input type="text" class="search" placeholder="Search (press /)..." />
+    <div class="search-results"></div>
+  </div>
+</div>
+
+<div class="breadcrumb">
+  <a href="../../index.html">Home</a>
+  <span class="sep">›</span>
+  <a href="../index.html">HTB Academy</a>
+  <span class="sep">›</span>
+  <a href="../index.html#modules">Learning Process</a>
+  <span class="sep">›</span>
+  <span>Way of Thinking</span>
+</div>
+
+<!-- HERO -->
+<section class="hero" style="min-height: 55vh;">
+  <div class="hero-content">
+    <span class="coffee-badge">🧠 htb academy · learning process · section 1/20</span>
+    <h1>Way of <span style="color: var(--accent-2);">Thinking</span></h1>
+    <p class="subtitle">The infosec field is massive. You can't learn everything.<br>So how do you actually get good? Start here.</p>
+    <div class="tagline">"You don't need to know everything. You need to know how to LEARN anything." 🔥</div>
+    <div style="margin-top: 24px; display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+      <a href="https://academy.hackthebox.com/module/9/section/45" target="_blank" rel="noopener" class="cta-btn ghost">↗ Open on HTB Academy</a>
+      <a href="#questions" class="cta-btn">Jump to Questions 🎯</a>
+    </div>
+  </div>
+</section>
+
+<!-- TL;DR -->
+<section class="chapter" id="tldr">
+  <div class="chapter-num">TL;DR</div>
+  <h2><span class="emoji">⚡</span> What you'll actually internalize</h2>
+  <div class="grid cols-3">
+    <div class="card">
+      <h4>🎯 Depth > Breadth</h4>
+      <p>Master ONE programming language deeply → every other language becomes faster to learn. Same with exploit classes.</p>
+    </div>
+    <div class="card">
+      <h4>🔄 The 4-Step Loop</h4>
+      <p><strong>Find → Choose → Adapt → LEARN.</strong> The missing word everyone skips is LEARN. Passive reading ≠ learning.</p>
+    </div>
+    <div class="card">
+      <h4>🧠 Active > Passive</h4>
+      <p>Reading 50 books about hacking won't make you a hacker. Writing your own exploit will. Do the thing.</p>
+    </div>
+  </div>
+</section>
+
+<div class="divider">the concepts</div>
+
+<!-- CONCEPT 1: THE FIELD IS MASSIVE -->
+<section class="chapter" id="concept-massive">
+  <div class="chapter-num">Concept 01 // Reality check</div>
+  <h2><span class="emoji">🌊</span> The ocean problem</h2>
+  <p class="lead">There are 200+ programming languages. Thousands of CVEs published every year. Dozens of exploit classes. Hundreds of tools. Multiple OS families. Endless protocols. You cannot learn all of it.</p>
+
+  <div class="paper">
+    <h4>📝 Think of it like learning spoken languages</h4>
+    <p>If you tried to learn every spoken language on Earth (7,000+), you'd learn none of them well. But if you go deep on <strong>one</strong> — say Urdu — and truly understand its grammar, phonetics, and structure, suddenly picking up Hindi is fast. Punjabi is manageable. Farsi has recognizable patterns.</p>
+    <p><span class="highlight">Same with programming and hacking. Go deep on ONE language, ONE vulnerability class, ONE methodology. The rest follows faster than you think.</span></p>
+  </div>
+
+  <p>HTB Academy calls out R.D. Tennent's three principles that all programming languages share:</p>
+
+  <div class="grid cols-3">
+    <div class="card">
+      <h4>1. Abstraction</h4>
+      <p>Every language lets you hide complexity behind a simpler interface. Functions, classes, modules — it's all abstraction. Learn to spot it once, see it everywhere.</p>
+    </div>
+    <div class="card">
+      <h4>2. Correspondence</h4>
+      <p>Things that look similar behave similarly. A <code class="inline">for</code> loop in Python, JavaScript, and C all do roughly the same thing with different syntax.</p>
+    </div>
+    <div class="card">
+      <h4>3. Data Type Completeness</h4>
+      <p>Every language has a way to represent integers, strings, booleans, collections. The names change. The concepts don't.</p>
+    </div>
+  </div>
+
+  <div class="callout info">
+    <strong>💡 What this means for YOU:</strong> You're learning Python right now (Textile Scraper project). Once Python "clicks," JavaScript will feel like a dialect. And reading PHP source code during web pentests becomes doable. You're not learning ONE language — you're building a foundation for ALL of them.
+  </div>
+</section>
+
+<!-- CONCEPT 2: COMMUNITY & KNOWLEDGE LEVEL -->
+<section class="chapter" id="concept-community">
+  <div class="chapter-num">Concept 02 // Self-awareness</div>
+  <h2><span class="emoji">🪞</span> The two types of people in infosec communities</h2>
+  <p class="lead">HTB calls out a hard truth about forums, Discords, and study groups:</p>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <h4>Type 1: "I don't know anything"</h4>
+      <p>They're aware of their gaps. They ask questions. They're honest about being lost. <strong>This is the better position to be in.</strong></p>
+    </div>
+    <div class="card">
+      <h4>Type 2: "I think I don't know anything"</h4>
+      <p>They actually know more than they think — but imposter syndrome tells them otherwise. They freeze instead of trying.</p>
+    </div>
+  </div>
+
+  <div class="paper right">
+    <h4>📝 The real flex isn't knowing everything</h4>
+    <p>It's knowing what you <strong>don't</strong> know — and being comfortable with that. The best pentesters Google things mid-engagement. They just know <em>what</em> to Google and <em>how</em> to evaluate the results.</p>
+    <p><span class="highlight">Your job isn't to memorize everything. It's to build a system for finding answers FAST.</span></p>
+  </div>
+
+  <div class="brain-power">
+    <div class="label">🧠 Brain Power</div>
+    <div class="question">Be honest: which type are you right now? Type 1 or Type 2? There's no wrong answer — but knowing which one changes how you study.</div>
+    <button class="reveal-btn" onclick="toggleAnswer(this)">Reveal answer</button>
+    <div class="answer">
+      <p>If you're Type 1 (genuinely new) → focus on <strong>building breadth first</strong>. Touch every topic lightly, then pick the one that excites you and go deep. That's what this vault is doing for you.</p>
+      <p>If you're Type 2 (know more than you think) → focus on <strong>doing, not reading</strong>. You already have enough theory. Start breaking things. PortSwigger labs, HTB machines, CTFs. The confidence comes from reps, not from one more course.</p>
+    </div>
+  </div>
+</section>
+
+<!-- CONCEPT 3: THE 4 PILLARS -->
+<section class="chapter" id="concept-pillars">
+  <div class="chapter-num">Concept 03 // The framework</div>
+  <h2><span class="emoji">🏗️</span> Find → Choose → Adapt → ???</h2>
+  <p class="lead">HTB gives you three verbs for research methodology. But there's a fourth one missing. Can you spot it?</p>
+
+  <div class="pillar-grid">
+    <div class="pillar">
+      <span class="num green">1</span>
+      <div class="label">Find</div>
+      <div class="desc">Locate the information you need. Search engines, docs, source code, forums.</div>
+    </div>
+    <div class="pillar">
+      <span class="num green">2</span>
+      <div class="label">Choose</div>
+      <div class="desc">Filter the noise. Pick the source that actually applies to YOUR situation.</div>
+    </div>
+    <div class="pillar">
+      <span class="num green">3</span>
+      <div class="label">Adapt</div>
+      <div class="desc">Twist what you found to fit your environment. Copy-paste rarely works — adapt it.</div>
+    </div>
+    <div class="pillar missing">
+      <span class="num pink">4</span>
+      <div class="label" id="pillar4Label">???</div>
+      <div class="desc" id="pillar4Desc">The one everyone skips. Click "Reveal" below.</div>
+    </div>
+  </div>
+
+  <div class="brain-power">
+    <div class="label">🧠 Brain Power</div>
+    <div class="question">You can find information, choose the right source, and adapt it to your context. But there's a 4th step that separates script kiddies from actual pentesters. What is it?</div>
+    <button class="reveal-btn" onclick="revealPillar4(this)">Reveal answer</button>
+    <div class="answer">
+      <p><strong style="color: var(--accent-2); font-size: 1.2rem;">LEARN.</strong></p>
+      <p>Not just "read it and move on." Actually understand <em>why</em> something works. Internalize it so deeply that you can explain it to someone else without looking at notes.</p>
+      <p>Finding a PoC exploit on GitHub and running it = script kiddie level. <strong>Understanding WHY the exploit works, WHAT the vulnerable code pattern is, and HOW to write your own variant</strong> = pentester level.</p>
+      <p>That's the whole point of this vault. Every page forces you to think, not just copy.</p>
+    </div>
+  </div>
+</section>
+
+<!-- CONCEPT 4: ACTIVE vs PASSIVE -->
+<section class="chapter" id="concept-active">
+  <div class="chapter-num">Concept 04 // The ADHD brain truth</div>
+  <h2><span class="emoji">🔥</span> Active learning vs passive learning</h2>
+  <p class="lead">Reading 50 books about Python won't make you a Python dev. You'll just be a person who read 50 books.</p>
+
+  <div class="grid cols-2">
+    <div class="card" style="border-left: 3px solid var(--accent-2);">
+      <h4>😴 Passive learning</h4>
+      <ul style="font-size: 14px;">
+        <li>Watching 10 hours of "hacking tutorials"</li>
+        <li>Reading the entire OWASP guide cover to cover</li>
+        <li>Bookmarking 47 blog posts about XSS</li>
+        <li>Following along without typing the commands</li>
+      </ul>
+      <p style="color: var(--accent-2); font-size: 13px; margin-top: 8px;">Feels productive. Isn't.</p>
+    </div>
+    <div class="card" style="border-left: 3px solid var(--accent);">
+      <h4>🔥 Active learning</h4>
+      <ul style="font-size: 14px;">
+        <li>Breaking a PortSwigger lab with curl</li>
+        <li>Writing your own SQLi payload from scratch</li>
+        <li>Building a scraper that actually works</li>
+        <li>Explaining to someone else how CSRF works</li>
+      </ul>
+      <p style="color: var(--accent); font-size: 13px; margin-top: 8px;">Feels hard. Is the only thing that works.</p>
+    </div>
+  </div>
+
+  <div class="callout success">
+    <strong>☕ Why this vault exists:</strong> Every page has brain-power blocks that make you STOP and think. Playgrounds that make you TRY things. Quizzes that test if you actually learned — not just if you scrolled to the bottom. It's not content for the sake of content. It's active learning infrastructure.
+  </div>
+
+  <div class="paper">
+    <h4>📝 The math that proves it</h4>
+    <p>HTB drops this equation in the section:</p>
+    <p style="font-size: 1.3rem; text-align: center; margin: 12px 0;"><code class="inline">20 * _____ + _____ = 65535</code></p>
+    <p>Most people solve it one way and move on. The point isn't the answer — it's realizing there are <strong>MANY</strong> valid solutions. Did you think about how many? Did you think about <em>why</em> you chose the method you chose?</p>
+    <p><span class="highlight">That self-reflection — "why did I approach it this way?" — is what separates a learner from a reader.</span></p>
+  </div>
+</section>
+
+<!-- INTERACTIVE: MATH PLAYGROUND -->
+<section class="chapter" id="playground">
+  <div class="chapter-num">Playground</div>
+  <h2><span class="emoji">🧪</span> The equation playground</h2>
+  <p class="lead">Try different values. How many solutions can you find? The point isn't one answer — it's realizing the problem space is bigger than you assumed.</p>
+
+  <div class="math-playground">
+    <p style="margin-top: 0; color: var(--ink-dim); font-size: 13px;">Fill in both blanks. Hit Enter or click Check.</p>
+    <div class="math-equation">
+      <span>20</span>
+      <span>×</span>
+      <input type="number" id="mathA" placeholder="?" />
+      <span>+</span>
+      <input type="number" id="mathB" placeholder="?" />
+      <span>=</span>
+      <span style="color: var(--accent-2);">65535</span>
+      <button onclick="checkMath()" style="padding: 8px 18px; background: var(--accent); color: #000; border: none; border-radius: 6px; font-family: var(--mono); cursor: pointer; font-weight: bold;">Check</button>
+    </div>
+    <div class="math-result neutral" id="mathResult">Enter two numbers above and click Check.</div>
+    <p style="font-size: 12px; color: var(--ink-mute); margin-top: 12px;">Solutions found: <strong id="solCount">0</strong> — Can you find at least 3 different pairs?</p>
+  </div>
+</section>
+
+<div class="divider">section questions</div>
+
+<!-- QUESTIONS -->
+<section class="chapter" id="questions">
+  <div class="chapter-num">Questions</div>
+  <h2><span class="emoji">🎯</span> Section 1 answers</h2>
+  <p class="lead">HTB Academy's exercise for this section. Answer + reasoning below.</p>
+
+  <div class="card" style="margin-bottom: 14px;">
+    <div class="card-badge">QUESTION</div>
+    <h4>Which key term is missing from the above list?</h4>
+    <p style="color: var(--ink-dim); font-size: 0.92rem;">The list: find, choose, adapt — what's the 4th?</p>
+    <details style="margin-top: 12px;">
+      <summary style="cursor:pointer; color: var(--accent-2); font-family: var(--mono); font-size: 13px;">▸ Show answer + reasoning</summary>
+      <div style="margin-top: 10px; display: grid; gap: 8px;">
+        <div style="padding: 10px 14px; background: rgba(0,0,0,0.3); border-left: 3px solid var(--accent); border-radius: 4px;">
+          <strong style="color: var(--accent); font-family: var(--mono); font-size: 12px;">ANSWER:</strong>
+          <code class="inline" style="margin-left: 8px;">LEARN</code>
+        </div>
+        <div style="padding: 10px 14px; background: rgba(0,0,0,0.3); border-left: 3px solid var(--accent-3); border-radius: 4px; font-size: 14px;">
+          <strong style="color: var(--accent-3); font-family: var(--mono); font-size: 12px;">WHY:</strong>
+          Finding, choosing, and adapting information is research. But <strong>learning</strong> — truly understanding and internalizing — is the step that makes it stick. Without it, you're just copy-pasting StackOverflow into your terminal. With it, you can face problems you've never seen before and reason your way through. The section literally highlights it: <em>"The crucial missing term is: LEARN."</em>
+        </div>
+      </div>
+    </details>
+  </div>
+</section>
+
+<!-- RETENTION QUIZ -->
+<section class="chapter" id="quiz">
+  <div class="chapter-num">Retention Check</div>
+  <h2><span class="emoji">🎯</span> Did it stick?</h2>
+
+  <div class="quiz">
+    <h4>🎯 What separates a script kiddie from a real pentester?</h4>
+    <div class="q">According to the "Way of Thinking" framework, the difference between running someone else's PoC and being an actual pentester is:</div>
+    <div class="options">
+      <div class="opt" onclick="quizAnswer(this, false)">Knowing more CVE numbers from memory</div>
+      <div class="opt" onclick="quizAnswer(this, false)">Having a CISSP certification</div>
+      <div class="opt" onclick="quizAnswer(this, true)">Understanding WHY the exploit works, not just running it</div>
+      <div class="opt" onclick="quizAnswer(this, false)">Using Kali Linux instead of Ubuntu</div>
+    </div>
+    <div class="feedback"></div>
+  </div>
+
+  <div class="quiz" style="margin-top: 24px;">
+    <h4>🎯 The 4-step research framework</h4>
+    <div class="q">What is the correct 4-step research methodology from this section?</div>
+    <div class="options">
+      <div class="opt" onclick="quizAnswer(this, false)">Read → Practice → Test → Repeat</div>
+      <div class="opt" onclick="quizAnswer(this, false)">Google → Copy → Paste → Pray</div>
+      <div class="opt" onclick="quizAnswer(this, true)">Find → Choose → Adapt → Learn</div>
+      <div class="opt" onclick="quizAnswer(this, false)">Scan → Exploit → Escalate → Report</div>
+    </div>
+    <div class="feedback"></div>
+  </div>
+</section>
+
+<!-- RELATED TERMS -->
+<section class="chapter">
+  <div class="related-terms">
+    <h4>🔗 Related in the vault</h4>
+    <div class="tags">
+      <a href="../index.html">🟩 HTB Academy Hub</a>
+      <a href="../../topics/python/textile-scraper/index.html">🕷️ Textile Scraper (active learning in action)</a>
+      <a href="../../labs/portswigger/index.html">🧪 PortSwigger Labs (active learning)</a>
+      <a href="../../topics/web/sql-injection/index.html">💉 SQL Injection (go deep on one topic)</a>
+    </div>
+  </div>
+</section>
+
+<footer class="site-foot">
+  <p class="coffee-line">You don't need to know everything. You need to know how to learn anything. ☕</p>
+  <p style="font-size: 12px;">Original section: <a href="https://academy.hackthebox.com/module/9/section/45" target="_blank" rel="noopener">HTB Academy · Learning Process · Section 1</a></p>
+</footer>
+
+<script src="../../assets/glossary.js"></script>
+<script src="../../assets/app.js"></script>
+<script>
+  // Pillar 4 reveal
+  function revealPillar4(btn) {
+    document.getElementById('pillar4Label').textContent = 'LEARN';
+    document.getElementById('pillar4Desc').textContent = 'Truly understand WHY. Not just what. Not just how. WHY.';
+    var pillar = document.querySelector('.pillar.missing');
+    pillar.classList.remove('missing');
+    pillar.style.borderColor = 'var(--accent-2)';
+    pillar.style.background = 'rgba(255,46,99,0.08)';
+    toggleAnswer(btn);
+  }
+
+  // Math playground
+  var foundSolutions = {};
+  function checkMath() {
+    var a = parseFloat(document.getElementById('mathA').value);
+    var b = parseFloat(document.getElementById('mathB').value);
+    var result = document.getElementById('mathResult');
+    if (isNaN(a) || isNaN(b)) {
+      result.className = 'math-result neutral';
+      result.textContent = 'Enter numbers in both fields.';
+      return;
+    }
+    var val = 20 * a + b;
+    if (Math.abs(val - 65535) < 0.001) {
+      var key = a + ',' + b;
+      foundSolutions[key] = true;
+      var count = Object.keys(foundSolutions).length;
+      document.getElementById('solCount').textContent = count;
+      result.className = 'math-result correct';
+      if (count === 1) {
+        result.textContent = '✅ Correct! 20 × ' + a + ' + ' + b + ' = 65535. Now — can you find a DIFFERENT pair?';
+      } else if (count < 4) {
+        result.textContent = '✅ Nice! Solution #' + count + ': 20 × ' + a + ' + ' + b + ' = 65535. Keep going — how many can you find?';
+      } else {
+        result.textContent = '🔥 Solution #' + count + '! You get it — the problem has MANY answers. That awareness IS the lesson.';
+      }
+    } else {
+      result.className = 'math-result wrong';
+      result.textContent = '❌ 20 × ' + a + ' + ' + b + ' = ' + val + ' (not 65535). Try again.';
+    }
+  }
+  // Enter key triggers check
+  document.getElementById('mathA').addEventListener('keydown', function(e) { if (e.key === 'Enter') checkMath(); });
+  document.getElementById('mathB').addEventListener('keydown', function(e) { if (e.key === 'Enter') checkMath(); });
+</script>
+</body>
+</html>

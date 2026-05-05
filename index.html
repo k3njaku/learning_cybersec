@@ -19,6 +19,7 @@
     <a href="index.html#topics-python">Python</a>
     <a href="glossary/index.html">Glossary</a>
     <a href="tryhackme/index.html">THM</a>
+    <a href="htb-academy/index.html">HTB</a>
     <a href="labs/portswigger/index.html">Labs</a>
   </nav>
   <div class="search-wrap">
@@ -123,6 +124,19 @@
   <div id="thmPreview"></div>
   <div style="text-align: center; margin-top: 20px;">
     <a href="tryhackme/index.html" class="cta-btn ghost">Open THM Hub →</a>
+  </div>
+</section>
+
+<div class="divider">htb academy</div>
+
+<!-- HTB ACADEMY SECTION -->
+<section class="chapter" id="htb-home">
+  <div class="chapter-num">HTB Academy // 🟩 Structured Learning</div>
+  <h2>🟩 HTB Academy — rebuilt in your voice</h2>
+  <p class="lead">Hack The Box Academy modules, section by section. Same curriculum, zero wall-of-text energy.</p>
+  <div id="htbPreview"></div>
+  <div style="text-align: center; margin-top: 20px;">
+    <a href="htb-academy/index.html" class="cta-btn ghost">Open HTB Hub →</a>
   </div>
 </section>
 
@@ -266,6 +280,33 @@
     }).join('');
   })();
 
+  // HTB Academy preview — show modules with their latest sections
+  (function () {
+    const container = document.getElementById('htbPreview');
+    const HTB = window.SITE_HTB || { modules: [] };
+    container.innerHTML = HTB.modules.map(m => {
+      const sectionCount = (m.sections || []).length;
+      const preview = sectionCount === 0
+        ? `<p style="color: var(--ink-dim); font-size: 0.95rem; margin-top: 8px;">🎲 No sections rebuilt yet. Capture a page PDF and drop it in chat.</p>`
+        : `<div class="grid cols-3" style="margin-top: 14px;">${
+            m.sections.slice(0, 3).map(s => `
+              <a class="card is-link" href="${s.path}">
+                <h4>${s.icon || '📄'} ${s.name}</h4>
+                <p style="font-size: 13px;">${s.blurb}</p>
+              </a>`).join('')
+          }</div>`;
+      return `
+        <div class="card" style="margin-bottom: 20px; padding: 24px;">
+          <div style="display:flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+            <h4 style="margin-bottom: 0; font-size: 1.2rem;">${m.icon} ${m.name}</h4>
+            <span style="font-family: var(--mono); font-size: 12px; color: var(--ink-mute);">${sectionCount}/${m.totalSections} sections rebuilt</span>
+          </div>
+          <p style="color: var(--ink-dim); font-size: 0.95rem; margin-top: 4px;">${m.blurb}</p>
+          ${preview}
+        </div>`;
+    }).join('');
+  })();
+
   // Labs preview — show platforms with their latest tracks + labs
   (function () {
     const container = document.getElementById('labsPreview');
@@ -316,6 +357,13 @@
     (window.SITE_THM?.paths || []).forEach(p => {
       (p.rooms || []).forEach(r => { thmBySlug['thm-' + r.slug] = { r, pathName: p.name }; });
     });
+    // Flatten HTB Academy sections: data-page-slug="htb-learning-process-01" etc.
+    const htbBySlug = {};
+    (window.SITE_HTB?.modules || []).forEach(mod => {
+      (mod.sections || []).forEach(s => {
+        htbBySlug['htb-' + mod.slug + '-' + s.slug.split('-')[0]] = { s, modName: mod.name };
+      });
+    });
     // Flatten labs: data-page-slug="lab-ps-sqli-01" etc., so we match on path instead.
     const labsBySlug = {};
     (window.SITE_LABS?.platforms || []).forEach(plat => {
@@ -340,6 +388,13 @@
         return `<a class="card is-link" href="${r.path}">
           <h4>${r.icon || '🎯'} ${r.name}</h4>
           <p style="font-size: 12px;">THM · ${pathName} · ${new Date(ts).toLocaleString()}</p>
+        </a>`;
+      }
+      if (htbBySlug[slug]) {
+        const { s, modName } = htbBySlug[slug];
+        return `<a class="card is-link" href="${s.path}">
+          <h4>${s.icon || '🟩'} ${s.name}</h4>
+          <p style="font-size: 12px;">HTB · ${modName} · ${new Date(ts).toLocaleString()}</p>
         </a>`;
       }
       if (labsBySlug[slug]) {

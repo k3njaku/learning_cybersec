@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>HTB Academy — Rebuilt For Your Brain ☕</title>
+<link rel="stylesheet" href="../assets/styles.css" />
+</head>
+<body data-page-slug="htb-academy-hub">
+
+<div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
+
+<div class="topbar">
+  <a class="logo" href="../index.html">☕ CYBERSEC.VAULT</a>
+  <nav>
+    <a href="../index.html">Home</a>
+    <a href="../index.html#topics-web">Topics</a>
+    <a href="../index.html#topics-python">Python</a>
+    <a href="../glossary/index.html">Glossary</a>
+    <a href="../tryhackme/index.html">THM</a>
+    <a href="index.html" class="active">HTB</a>
+    <a href="../labs/portswigger/index.html">Labs</a>
+  </nav>
+  <div class="search-wrap">
+    <input type="text" class="search" placeholder="Search (press /)..." />
+    <div class="search-results"></div>
+  </div>
+</div>
+
+<div class="breadcrumb">
+  <a href="../index.html">Home</a>
+  <span class="sep">›</span>
+  <span>HTB Academy</span>
+</div>
+
+<!-- HERO -->
+<section class="hero" style="min-height: 50vh;">
+  <div class="hero-content">
+    <span class="coffee-badge">🟩 hack the box · academy · reforged</span>
+    <h1>HTB Academy</h1>
+    <p class="subtitle">Structured learning modules from Hack The Box Academy.<br>Rebuilt in your voice because walls of text aren't it.</p>
+    <div class="tagline">"same curriculum, zero wall-of-text energy." ⚡</div>
+    <div style="margin-top: 24px;">
+      <a href="https://academy.hackthebox.com" target="_blank" rel="noopener" class="cta-btn ghost">↗ Open HTB Academy</a>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="chapter">
+  <div class="chapter-num">How this section works</div>
+  <h2><span class="emoji">🔧</span> The workflow</h2>
+  <div class="grid cols-3">
+    <div class="card">
+      <h4>1️⃣ You start a module</h4>
+      <p>You're working through an HTB Academy module and the section text is dry or overwhelming.</p>
+    </div>
+    <div class="card">
+      <h4>2️⃣ Capture the page</h4>
+      <p>Save the section as a PDF into <code class="inline">Webpage_Captured/</code>. Drop it in chat.</p>
+    </div>
+    <div class="card">
+      <h4>3️⃣ Rebuilt section appears</h4>
+      <p>The section lands here — analogies, brain-power blocks, interactive demos. Cross-linked to the vault glossary.</p>
+    </div>
+  </div>
+  <div class="callout info">
+    <strong>☕ Pro tip:</strong> Every rebuilt section links back to the original HTB Academy page — so you can do the exercises there while referencing the non-boring version here.
+  </div>
+</section>
+
+<div class="divider">your modules</div>
+
+<!-- MODULES -->
+<section class="chapter" id="modules">
+  <div class="chapter-num">Modules</div>
+  <h2>📚 What you're working through</h2>
+  <div id="modulesContainer"></div>
+</section>
+
+<footer class="site-foot">
+  <p class="coffee-line">Dry Academy text → pages your ADHD brain wants to read. ☕</p>
+  <p style="font-size: 12px;">Powered by caffeine and zero tolerance for boring.</p>
+</footer>
+
+<script src="../assets/glossary.js"></script>
+<script src="../assets/app.js"></script>
+<script>
+  (function () {
+    const HTB = window.SITE_HTB || { modules: [] };
+    const container = document.getElementById('modulesContainer');
+    container.innerHTML = HTB.modules.map(m => {
+      const sectionCount = (m.sections || []).length;
+      const completedCount = (m.sections || []).filter(s => s.completed).length;
+      const pct = m.totalSections > 0 ? Math.round((completedCount / m.totalSections) * 100) : 0;
+      const sectionsHTML = sectionCount === 0
+        ? `<div class="card" style="opacity: 0.6; grid-column: 1/-1;">
+             <h4>🎲 No sections rebuilt yet</h4>
+             <p>Capture a section PDF from <strong>${m.name}</strong> and drop it in chat. It'll appear here, reforged.</p>
+           </div>`
+        : m.sections.map(s => `
+            <a class="card is-link" href="../${s.path}">
+              <div class="card-badge ${s.completed ? '' : 'warn'}">${s.completed ? '✅ DONE' : '🚧 WIP'}</div>
+              <h4>${s.icon || '📄'} ${s.name}</h4>
+              <p>${s.blurb}</p>
+              <div style="font-family: var(--mono); font-size: 11px; color: var(--ink-mute); margin-top: 10px;">
+                ${(s.tags || []).map(t => `<span style="margin-right: 8px;">#${t}</span>`).join('')}
+              </div>
+            </a>`).join('');
+      return `
+        <div style="margin-bottom: 40px;">
+          <h3 style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+            <span style="font-size: 1.6rem;">${m.icon}</span>
+            <span>${m.name}</span>
+            <span style="font-family: var(--mono); font-size: 12px; color: var(--ink-mute); margin-left: auto;">${sectionCount}/${m.totalSections} sections rebuilt</span>
+          </h3>
+          <p style="color: var(--ink-dim); font-size: 0.95rem; margin-bottom: 12px;">${m.blurb}</p>
+          <div class="progress" style="margin-bottom: 18px;"><div style="width: ${pct}%"></div></div>
+          <div class="grid cols-2">${sectionsHTML}</div>
+        </div>`;
+    }).join('');
+  })();
+</script>
+</body>
+</html>
