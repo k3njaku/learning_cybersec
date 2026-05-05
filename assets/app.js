@@ -53,7 +53,8 @@ window.SITE_TOPICS = [
     path: "topics/web/wordpress-pentesting/index.html",
     subpages: [
       { name: "🧪 Lab Setup (Docker + Vulnerable Plugins)", path: "topics/web/wordpress-pentesting/lab-setup.html" },
-      { name: "📖 CVE Encyclopedia (14+ exploits)", path: "topics/web/wordpress-pentesting/cve-encyclopedia.html" }
+      { name: "📖 CVE Encyclopedia (14+ exploits)", path: "topics/web/wordpress-pentesting/cve-encyclopedia.html" },
+      { name: "💀 Exploit: Duplicator Path Traversal (CVE-2020-11738)", path: "topics/web/wordpress-pentesting/exploit-duplicator.html" }
     ],
     progress: 0.2,
     tags: ["WordPress", "Bug Bounty", "Plugins", "CVE", "WPScan"]

