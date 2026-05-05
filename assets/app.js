@@ -144,6 +144,16 @@ window.SITE_HTB = {
           htbUrl: "https://academy.hackthebox.com/module/9/section/45",
           completed: false,
           tags: ["mindset", "meta-learning"]
+        },
+        {
+          slug: "02-think-outside-the-box",
+          name: "Think Outside the Box",
+          icon: "📦",
+          blurb: "The math had no rules. You added the constraints. Hackers break assumptions, not just systems.",
+          path: "htb-academy/learning-process/02-think-outside-the-box.html",
+          htbUrl: "https://academy.hackthebox.com/module/9/section/46",
+          completed: false,
+          tags: ["mindset", "assumptions"]
         }
       ]
     }

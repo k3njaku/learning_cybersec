@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Think Outside the Box — HTB · Learning Process ☕</title>
+<link rel="stylesheet" href="../../assets/styles.css" />
+<style>
+  /* Constraint-breaking demo */
+  .constraint-demo {
+    background: #0a0f13;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px;
+    margin: 18px 0;
+  }
+  .constraint-demo .scenario {
+    background: #000;
+    border-left: 3px solid var(--accent-3);
+    padding: 14px;
+    border-radius: 4px;
+    margin-bottom: 14px;
+    font-size: 14px;
+  }
+  .constraint-demo .attempts {
+    display: grid;
+    gap: 10px;
+    margin-top: 14px;
+  }
+  .constraint-demo .attempt {
+    padding: 12px 16px;
+    background: rgba(0,0,0,0.4);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: var(--mono);
+    font-size: 13px;
+  }
+  .constraint-demo .attempt:hover { border-color: var(--accent); background: rgba(0,255,157,0.05); }
+  .constraint-demo .attempt.basic { border-left: 3px solid var(--ink-mute); }
+  .constraint-demo .attempt.creative { border-left: 3px solid var(--warn); }
+  .constraint-demo .attempt.hacker { border-left: 3px solid var(--accent-2); }
+  .constraint-demo .attempt .tag {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 2px 8px;
+    border-radius: 8px;
+    display: inline-block;
+    margin-bottom: 6px;
+  }
+  .attempt.basic .tag { background: rgba(255,255,255,0.1); color: var(--ink-mute); }
+  .attempt.creative .tag { background: rgba(255,182,39,0.15); color: var(--warn); }
+  .attempt.hacker .tag { background: rgba(255,46,99,0.15); color: var(--accent-2); }
+  .constraint-demo .reveal-area {
+    margin-top: 14px;
+    padding: 14px;
+    border-radius: 6px;
+    font-size: 14px;
+    display: none;
+  }
+  .constraint-demo .reveal-area.open { display: block; }
+</style>
+</head>
+<body data-page-slug="htb-learning-process-02">
+
+<div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
+
+<div class="topbar">
+  <a class="logo" href="../../index.html">☕ CYBERSEC.VAULT</a>
+  <nav>
+    <a href="../../index.html">Home</a>
+    <a href="../../index.html#topics-web">Topics</a>
+    <a href="../../glossary/index.html">Glossary</a>
+    <a href="../../tryhackme/index.html">THM</a>
+    <a href="../index.html" class="active">HTB</a>
+    <a href="../../labs/portswigger/index.html">Labs</a>
+  </nav>
+  <div class="search-wrap">
+    <input type="text" class="search" placeholder="Search (press /)..." />
+    <div class="search-results"></div>
+  </div>
+</div>
+
+<div class="breadcrumb">
+  <a href="../../index.html">Home</a>
+  <span class="sep">›</span>
+  <a href="../index.html">HTB Academy</a>
+  <span class="sep">›</span>
+  <a href="../index.html#modules">Learning Process</a>
+  <span class="sep">›</span>
+  <span>Think Outside the Box</span>
+</div>
+
+<!-- HERO -->
+<section class="hero" style="min-height: 55vh;">
+  <div class="hero-content">
+    <span class="coffee-badge">🧠 htb academy · learning process · section 2/20</span>
+    <h1>Think <span style="color: var(--accent-2);">Outside the Box</span></h1>
+    <p class="subtitle">The math exercise had no rules. You added the constraints yourself.<br>That reflex is exactly what hackers exploit.</p>
+    <div class="tagline">"The box is made of assumptions. Hackers don't break systems — they break assumptions." 🔥</div>
+    <div style="margin-top: 24px; display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+      <a href="https://academy.hackthebox.com/module/9/section/46" target="_blank" rel="noopener" class="cta-btn ghost">↗ Open on HTB Academy</a>
+      <a href="01-way-of-thinking.html" class="cta-btn ghost">← Section 1</a>
+    </div>
+  </div>
+</section>
+
+<!-- TL;DR -->
+<section class="chapter" id="tldr">
+  <div class="chapter-num">TL;DR</div>
+  <h2><span class="emoji">⚡</span> The one thing to internalize</h2>
+  <div class="grid cols-3">
+    <div class="card">
+      <h4>🚫 No limitations were given</h4>
+      <p>The math exercise (20 × ___ + ___ = 65535) had zero rules. But you probably solved it with basic integers only. Why?</p>
+    </div>
+    <div class="card">
+      <h4>🧱 You built the box yourself</h4>
+      <p>Nobody said you couldn't use decimals, negative numbers, or change the operations. Your brain assumed constraints that didn't exist.</p>
+    </div>
+    <div class="card">
+      <h4>🔓 Hackers question every assumption</h4>
+      <p>Every vulnerability exists because someone assumed "users will only input normal data." Spoiler: they won't.</p>
+    </div>
+  </div>
+</section>
+
+<div class="divider">the concept</div>
+
+<!-- CONCEPT: THE INVISIBLE BOX -->
+<section class="chapter" id="concept-box">
+  <div class="chapter-num">Concept 01 // The invisible box</div>
+  <h2><span class="emoji">📦</span> The constraints that don't exist</h2>
+  <p class="lead">HTB's point is short but nuclear:</p>
+
+  <div class="callout danger" style="font-size: 1.05rem;">
+    <strong>"What limitations were you given for this exercise? — None."</strong><br>
+    So why didn't you think to add more digits, use decimals, use negatives, or replace the arithmetic operations entirely?
+  </div>
+
+  <p>Because your brain imposed rules that were never stated. School trained you to solve equations "the right way." But hacking isn't school. There IS no "right way." There's only: <strong>does it work?</strong></p>
+
+  <div class="paper">
+    <h4>📝 The hacker mindset in one sentence</h4>
+    <p>A developer sees a login form and thinks: <em>"Users will type a username and password."</em></p>
+    <p>A hacker sees the same login form and thinks: <em>"What happens if I type <code class="inline">' OR 1=1--</code> instead?"</em></p>
+    <p><span class="highlight">The developer assumed the input would be "normal." The hacker questioned that assumption. That's the entire game.</span></p>
+  </div>
+</section>
+
+<!-- CONCEPT: REAL EXAMPLES -->
+<section class="chapter" id="concept-examples">
+  <div class="chapter-num">Concept 02 // This isn't abstract</div>
+  <h2><span class="emoji">💥</span> Every major hack = a broken assumption</h2>
+  <p class="lead">The "outside the box" principle isn't philosophy. It's literally how every bug bounty payout happens.</p>
+
+  <div class="grid cols-2">
+    <div class="card" style="border-left: 3px solid var(--accent-2);">
+      <h4>💉 SQL Injection</h4>
+      <p><strong>Assumption:</strong> "The user will type a product name."</p>
+      <p><strong>Reality:</strong> Attacker types <code class="inline">' UNION SELECT password FROM users--</code></p>
+      <p style="font-size: 12px; color: var(--accent-2);">Assumption broken: input is ONLY data, never code.</p>
+    </div>
+    <div class="card" style="border-left: 3px solid var(--accent-2);">
+      <h4>🔐 IDOR</h4>
+      <p><strong>Assumption:</strong> "Users will only access their own profile."</p>
+      <p><strong>Reality:</strong> Attacker changes <code class="inline">/api/user/1337</code> to <code class="inline">/api/user/1</code></p>
+      <p style="font-size: 12px; color: var(--accent-2);">Assumption broken: the client enforces access control.</p>
+    </div>
+    <div class="card" style="border-left: 3px solid var(--accent-2);">
+      <h4>📁 Path Traversal</h4>
+      <p><strong>Assumption:</strong> "The filename parameter will be a normal file."</p>
+      <p><strong>Reality:</strong> Attacker sends <code class="inline">../../../../etc/passwd</code></p>
+      <p style="font-size: 12px; color: var(--accent-2);">Assumption broken: input stays inside the web root.</p>
+    </div>
+    <div class="card" style="border-left: 3px solid var(--accent-2);">
+      <h4>🧮 The math exercise</h4>
+      <p><strong>Assumption:</strong> "I should use positive integers."</p>
+      <p><strong>Reality:</strong> <code class="inline">20 × 3276.75 + 0 = 65535</code></p>
+      <p style="font-size: 12px; color: var(--accent-2);">Assumption broken: numbers must be whole + positive.</p>
+    </div>
+  </div>
+
+  <div class="callout success">
+    <strong>☕ Pattern recognition:</strong> Every card above follows the same shape — someone assumed "X will be normal" and an attacker proved it doesn't have to be. Train your brain to spot that shape everywhere.
+  </div>
+</section>
+
+<!-- INTERACTIVE: CONSTRAINT BREAKER -->
+<section class="chapter" id="playground">
+  <div class="chapter-num">Playground</div>
+  <h2><span class="emoji">🧪</span> Constraint breaker</h2>
+  <p class="lead">You're pentesting a web app. The login form expects an email address. What do you try?</p>
+
+  <div class="constraint-demo">
+    <div class="scenario">
+      <strong>Scenario:</strong> A login form with one field: <code class="inline">Email address</code>. The app checks if the email exists, then sends a magic link.<br>
+      <strong>The "normal" input:</strong> <code class="inline">user@example.com</code>
+    </div>
+
+    <p style="color: var(--ink-dim); font-size: 13px;">Click each approach to see the thinking behind it. How many would you have tried?</p>
+
+    <div class="attempts">
+      <div class="attempt basic" onclick="showAttempt(this, 'basic1')">
+        <div class="tag">inside the box</div>
+        <div><code class="inline">admin@company.com</code></div>
+        <div style="color: var(--ink-dim); font-size: 12px; margin-top: 4px;">Try common admin emails. Standard approach.</div>
+      </div>
+
+      <div class="attempt creative" onclick="showAttempt(this, 'creative1')">
+        <div class="tag">slightly outside</div>
+        <div><code class="inline">user@example.com, admin@company.com</code></div>
+        <div style="color: var(--ink-dim); font-size: 12px; margin-top: 4px;">What if the field accepts multiple emails separated by commas?</div>
+      </div>
+
+      <div class="attempt creative" onclick="showAttempt(this, 'creative2')">
+        <div class="tag">further outside</div>
+        <div><code class="inline">user@example.com%0acc:attacker@evil.com</code></div>
+        <div style="color: var(--ink-dim); font-size: 12px; margin-top: 4px;">Email header injection — sneak a CC into the magic link email.</div>
+      </div>
+
+      <div class="attempt hacker" onclick="showAttempt(this, 'hacker1')">
+        <div class="tag">outside the box</div>
+        <div><code class="inline">' OR 1=1--@x.com</code></div>
+        <div style="color: var(--ink-dim); font-size: 12px; margin-top: 4px;">Is the email checked via SQL? Maybe it's injectable.</div>
+      </div>
+
+      <div class="attempt hacker" onclick="showAttempt(this, 'hacker2')">
+        <div class="tag">way outside</div>
+        <div><code class="inline">{{7*7}}@x.com</code></div>
+        <div style="color: var(--ink-dim); font-size: 12px; margin-top: 4px;">SSTI probe — does the email get rendered in a template? If the response says "49", you just found server-side template injection.</div>
+      </div>
+
+      <div class="attempt hacker" onclick="showAttempt(this, 'hacker3')">
+        <div class="tag">the box doesn't exist</div>
+        <div>Skip the form. Send a raw POST to the API with <code class="inline">{"email": ["admin@company.com"]}</code></div>
+        <div style="color: var(--ink-dim); font-size: 12px; margin-top: 4px;">Send an array instead of a string. Many backends crash or behave differently on unexpected types.</div>
+      </div>
+    </div>
+
+    <div class="reveal-area" id="attemptReveal"></div>
+  </div>
+</section>
+
+<!-- BRAIN POWER -->
+<section class="chapter" id="reflection">
+  <div class="chapter-num">Concept 03 // Self-reflection</div>
+  <h2><span class="emoji">🪞</span> Where are YOUR invisible constraints?</h2>
+
+  <div class="brain-power">
+    <div class="label">🧠 Brain Power</div>
+    <div class="question">Think about the last time you were stuck on a problem (a CTF challenge, a coding bug, a life decision). What assumption were you making that, once removed, would have unblocked you?</div>
+    <button class="reveal-btn" onclick="toggleAnswer(this)">Reveal answer</button>
+    <div class="answer">
+      <p>There's no single right answer here. But common invisible constraints include:</p>
+      <ul>
+        <li><strong>"The tool must be wrong"</strong> — when actually your input was wrong</li>
+        <li><strong>"This field only accepts X"</strong> — when you never tested sending Y</li>
+        <li><strong>"I need permission to try this"</strong> — when the scope said "full pentest"</li>
+        <li><strong>"This technology is too new to have bugs"</strong> — it's not</li>
+        <li><strong>"I should solve this the way the tutorial showed"</strong> — tutorials show ONE path, not the only path</li>
+      </ul>
+      <p>HTB's optional exercise asks you to write 200 words about this. Actually doing it (not just reading this) is the active learning from Section 1. See how the sections build on each other?</p>
+    </div>
+  </div>
+
+  <div class="callout info">
+    <strong>💡 HTB's optional exercise:</strong> "Why didn't you consider changing the arithmetic operations? Why didn't you think to add more digits? Try to answer as detailed as possible on your own. Try to write about it in at least 200 words."
+    <br><br>
+    This isn't busy work. Writing forces you to articulate your thought process — and articulating it is the first step to changing it. Grab a notebook or open a text file and actually do this one.
+  </div>
+</section>
+
+<div class="divider">section questions</div>
+
+<!-- QUESTIONS -->
+<section class="chapter" id="questions">
+  <div class="chapter-num">Questions</div>
+  <h2><span class="emoji">🎯</span> Section 2 answers</h2>
+
+  <div class="card" style="margin-bottom: 14px;">
+    <div class="card-badge">SECTION NOTE</div>
+    <h4>No graded questions in this section</h4>
+    <p style="color: var(--ink-dim); font-size: 0.92rem;">Section 2 has only an optional writing exercise. The key takeaway is the concept itself: <strong>"Outside the box"</strong> — question every assumption.</p>
+    <details style="margin-top: 12px;">
+      <summary style="cursor:pointer; color: var(--accent-2); font-family: var(--mono); font-size: 13px;">▸ Show the optional exercise</summary>
+      <div style="margin-top: 10px; padding: 14px; background: rgba(0,0,0,0.3); border-left: 3px solid var(--warn); border-radius: 4px; font-size: 14px;">
+        <strong style="color: var(--warn); font-family: var(--mono); font-size: 12px;">OPTIONAL EXERCISE:</strong>
+        <p style="margin-top: 8px;">Why didn't you consider changing the arithmetic operations? Why didn't you think to add more digits? Try to answer as detailed as possible on your own. Try to write about it in at least 200 words.</p>
+        <p style="margin-top: 8px; color: var(--ink-dim);"><strong>Pro tip:</strong> If you do this exercise, save it. Re-read it after completing this entire module. You'll be surprised how much your thinking has shifted.</p>
+      </div>
+    </details>
+  </div>
+</section>
+
+<!-- RETENTION QUIZ -->
+<section class="chapter" id="quiz">
+  <div class="chapter-num">Retention Check</div>
+  <h2><span class="emoji">🎯</span> Did it stick?</h2>
+
+  <div class="quiz">
+    <h4>🎯 What does "thinking outside the box" mean for hackers?</h4>
+    <div class="q">In the context of this section, "outside the box" specifically means:</div>
+    <div class="options">
+      <div class="opt" onclick="quizAnswer(this, false)">Using advanced tools instead of basic ones</div>
+      <div class="opt" onclick="quizAnswer(this, true)">Questioning assumptions that were never explicitly stated as rules</div>
+      <div class="opt" onclick="quizAnswer(this, false)">Working longer hours than other hackers</div>
+      <div class="opt" onclick="quizAnswer(this, false)">Reading more documentation than anyone else</div>
+    </div>
+    <div class="feedback"></div>
+  </div>
+
+  <div class="quiz" style="margin-top: 24px;">
+    <h4>🎯 Why does SQL injection work?</h4>
+    <div class="q">At its core, SQLi exists because of which broken assumption?</div>
+    <div class="options">
+      <div class="opt" onclick="quizAnswer(this, false)">The database software has a known CVE</div>
+      <div class="opt" onclick="quizAnswer(this, false)">The server is running an old version of PHP</div>
+      <div class="opt" onclick="quizAnswer(this, true)">The developer assumed user input would only contain data, never executable code</div>
+      <div class="opt" onclick="quizAnswer(this, false)">The attacker has physical access to the server</div>
+    </div>
+    <div class="feedback"></div>
+  </div>
+</section>
+
+<!-- RELATED TERMS -->
+<section class="chapter">
+  <div class="related-terms">
+    <h4>🔗 Related in the vault</h4>
+    <div class="tags">
+      <a href="01-way-of-thinking.html">💭 Section 1: Way of Thinking</a>
+      <a href="../index.html">🟩 HTB Academy Hub</a>
+      <a href="../../topics/web/sql-injection/index.html">💉 SQL Injection (broken assumption in action)</a>
+      <a href="../../glossary/idor.html">🔐 IDOR (another broken assumption)</a>
+      <a href="../../labs/portswigger/sql-injection/01-retrieve-hidden-data.html">🧪 SQLi Lab 01 (try it yourself)</a>
+    </div>
+  </div>
+</section>
+
+<footer class="site-foot">
+  <p class="coffee-line">The box is made of assumptions. Break the assumptions, break the system. ☕</p>
+  <p style="font-size: 12px;">Original section: <a href="https://academy.hackthebox.com/module/9/section/46" target="_blank" rel="noopener">HTB Academy · Learning Process · Section 2</a></p>
+</footer>
+
+<script src="../../assets/glossary.js"></script>
+<script src="../../assets/app.js"></script>
+<script>
+  var attemptData = {
+    basic1: { color: 'var(--ink-mute)', text: '📋 <strong>Inside the box.</strong> Trying common admin emails is a valid first step — but it\'s just username enumeration. You\'re still playing by the rules the app set.' },
+    creative1: { color: 'var(--warn)', text: '⚠️ <strong>Slightly outside.</strong> Testing for multi-email input is smart. Some apps parse comma-separated values and send the magic link to ALL of them. That\'s a real bug class (email parameter pollution).' },
+    creative2: { color: 'var(--warn)', text: '⚠️ <strong>Email header injection.</strong> If the backend concatenates your input into a raw email header, you can inject CC/BCC fields. The magic link goes to the victim AND to you. Real CVE territory.' },
+    hacker1: { color: 'var(--accent-2)', text: '🔥 <strong>Outside the box.</strong> Why would you assume the email field can\'t be injected? The format might look like an email to you — but if the backend builds a SQL query with it, the database doesn\'t know what an "email" is. It just sees strings.' },
+    hacker2: { color: 'var(--accent-2)', text: '🔥 <strong>SSTI probe.</strong> If the "welcome" email says "Hello 49" instead of "Hello {{7*7}}", the server is evaluating your input as template code. You just went from "email field" to "remote code execution." All because you questioned what the field actually processes.' },
+    hacker3: { color: 'var(--accent-2)', text: '🔥🔥 <strong>The box doesn\'t exist.</strong> You\'re not even using the form anymore. You\'re talking directly to the API, sending data types the frontend would never send. Arrays, objects, nulls. Many backends have completely different code paths for unexpected types. This is how type juggling bugs and mass assignment vulns are found.' }
+  };
+  function showAttempt(el, key) {
+    var data = attemptData[key];
+    var reveal = document.getElementById('attemptReveal');
+    reveal.style.background = 'rgba(0,0,0,0.4)';
+    reveal.style.borderLeft = '3px solid ' + data.color;
+    reveal.innerHTML = data.text;
+    reveal.className = 'reveal-area open';
+    // Highlight selected
+    document.querySelectorAll('.attempt').forEach(function(a) { a.style.opacity = '0.5'; });
+    el.style.opacity = '1';
+  }
+</script>
+</body>
+</html>
