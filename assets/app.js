@@ -45,6 +45,20 @@ window.SITE_TOPICS = [
     tags: ["OSINT", "Recon", "GitHub", "Bug Bounty", "Red Team"]
   },
   {
+    slug: "wordpress-pentesting",
+    lane: "web",
+    name: "WordPress Pentesting",
+    icon: "🔵",
+    blurb: "43% of the web runs WP. 97% of vulns are in plugins. The #1 bug bounty attack surface.",
+    path: "topics/web/wordpress-pentesting/index.html",
+    subpages: [
+      { name: "🧪 Lab Setup (Docker + Vulnerable Plugins)", path: "topics/web/wordpress-pentesting/lab-setup.html" },
+      { name: "📖 CVE Encyclopedia (14+ exploits)", path: "topics/web/wordpress-pentesting/cve-encyclopedia.html" }
+    ],
+    progress: 0.2,
+    tags: ["WordPress", "Bug Bounty", "Plugins", "CVE", "WPScan"]
+  },
+  {
     slug: "textile-scraper",
     lane: "python",
     name: "Project: Textile Scraper 🧵",

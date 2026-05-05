@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>wp-config.php — The Keys to the Kingdom ☕</title>
+<link rel="stylesheet" href="../assets/styles.css" />
+</head>
+<body data-page-slug="wp-config">
+
+<div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
+
+<div class="topbar">
+  <a class="logo" href="../index.html">☕ CYBERSEC.VAULT</a>
+  <nav>
+    <a href="../index.html">Home</a>
+    <a href="../index.html#topics-web">Topics</a>
+    <a href="../index.html#topics-python">Python</a>
+    <a href="index.html" class="active">Glossary</a>
+    <a href="../tryhackme/index.html">THM</a>
+    <a href="../htb-academy/index.html">HTB</a>
+    <a href="../labs/portswigger/index.html">Labs</a>
+  </nav>
+  <div class="search-wrap">
+    <input type="text" class="search" placeholder="Search (press /)..." />
+    <div class="search-results"></div>
+  </div>
+</div>
+
+<div class="breadcrumb">
+  <a href="../index.html">Home</a>
+  <span class="sep">›</span>
+  <a href="index.html">Glossary</a>
+  <span class="sep">›</span>
+  <span>wp-config.php</span>
+</div>
+
+<!-- HERO -->
+<section class="hero" style="min-height: 45vh;">
+  <div class="hero-content">
+    <span class="coffee-badge">📖 glossary · configuration · one file to rule them all</span>
+    <h1 style="font-family: var(--mono);">wp-config.php <span style="color: var(--accent-2);">🔑</span></h1>
+    <p class="subtitle">WordPress's brain. Database credentials, auth keys, debug flags — all in one PHP file.<br>If you find a backup copy served as plain text, it's game over.</p>
+    <div class="tagline">"Every WP pentest includes hunting for wp-config.php backups. Every single one." 🎯</div>
+  </div>
+</section>
+
+<!-- WHAT IT IS -->
+<section class="chapter">
+  <div class="chapter-num">Chapter 01 // Definition</div>
+  <h2><span class="emoji">📖</span> What is wp-config.php?</h2>
+  <p class="lead"><strong>wp-config.php</strong> is the main configuration file for <span class="term" data-term="wordpress">WordPress</span>. It lives in the web root (or one directory above it) and contains everything WordPress needs to connect to its database and run securely — credentials, cryptographic keys, table prefix, debug settings, and custom constants.</p>
+
+  <div class="paper">
+    <h4>📝 The master keyring analogy</h4>
+    <p>Imagine a janitor's master keyring — one ring that holds the key to every door in the building: the vault, the server room, the CEO's office, the alarm system panel.</p>
+    <p>Now imagine someone leaves a <strong>photocopy of that keyring</strong> in the lobby, labeled "BACKUP — DO NOT USE."</p>
+    <p><span class="highlight">That's what happens when a wp-config.php backup file ends up in the web root.</span> The web server doesn't execute <code class="inline">.bak</code> or <code class="inline">.old</code> files as PHP — it serves them as <strong>plain text</strong>. Anyone who requests it gets database credentials, auth salts, and the keys to every lock in the kingdom.</p>
+  </div>
+</section>
+
+<div class="divider">what's inside</div>
+
+<!-- CONTENTS -->
+<section class="chapter">
+  <div class="chapter-num">Chapter 02 // Anatomy</div>
+  <h2><span class="emoji">🔬</span> What's inside wp-config.php</h2>
+
+  <div class="code">
+<span class="com">// ============ DATABASE CREDENTIALS ============</span>
+<span class="com">// 🔑 This is what pentesters want MOST</span>
+define(<span class="str">'DB_NAME'</span>,     <span class="str">'wordpress_db'</span>);       <span class="com">// Database name</span>
+define(<span class="str">'DB_USER'</span>,     <span class="str">'wp_admin'</span>);           <span class="com">// DB username</span>
+define(<span class="str">'DB_PASSWORD'</span>, <span class="inject">'S3cretP@ss2024!'</span>);   <span class="com">// DB password — JACKPOT</span>
+define(<span class="str">'DB_HOST'</span>,     <span class="str">'localhost'</span>);           <span class="com">// Usually localhost or a RDS endpoint</span>
+define(<span class="str">'DB_CHARSET'</span>,  <span class="str">'utf8mb4'</span>);
+define(<span class="str">'DB_COLLATE'</span>,  <span class="str">''</span>);
+
+<span class="com">// ============ AUTH KEYS + SALTS ============</span>
+<span class="com">// Cryptographic material for session cookies</span>
+<span class="com">// If you have these, you can forge valid auth cookies</span>
+define(<span class="str">'AUTH_KEY'</span>,         <span class="inject">'put-unique-phrase-here'</span>);
+define(<span class="str">'SECURE_AUTH_KEY'</span>,  <span class="inject">'put-unique-phrase-here'</span>);
+define(<span class="str">'LOGGED_IN_KEY'</span>,   <span class="inject">'put-unique-phrase-here'</span>);
+define(<span class="str">'NONCE_KEY'</span>,       <span class="inject">'put-unique-phrase-here'</span>);
+define(<span class="str">'AUTH_SALT'</span>,        <span class="inject">'put-unique-phrase-here'</span>);
+define(<span class="str">'SECURE_AUTH_SALT'</span>, <span class="inject">'put-unique-phrase-here'</span>);
+define(<span class="str">'LOGGED_IN_SALT'</span>,  <span class="inject">'put-unique-phrase-here'</span>);
+define(<span class="str">'NONCE_SALT'</span>,      <span class="inject">'put-unique-phrase-here'</span>);
+
+<span class="com">// ============ TABLE PREFIX ============</span>
+<span class="com">// Default "wp_" — if changed, SQLi payloads need the custom prefix</span>
+$table_prefix = <span class="str">'wp_'</span>;
+
+<span class="com">// ============ DEBUG MODE ============</span>
+<span class="com">// If true in production → error messages leak internal paths + SQL queries</span>
+define(<span class="str">'WP_DEBUG'</span>,     <span class="inject">true</span>);
+define(<span class="str">'WP_DEBUG_LOG'</span>, <span class="inject">true</span>);   <span class="com">// Writes errors to /wp-content/debug.log</span>
+
+<span class="com">// ============ CUSTOM CONSTANTS (sometimes) ============</span>
+define(<span class="str">'WP_SITEURL'</span>,     <span class="str">'https://example.com'</span>);
+define(<span class="str">'WP_HOME'</span>,        <span class="str">'https://example.com'</span>);
+define(<span class="str">'DISALLOW_FILE_EDIT'</span>, true);  <span class="com">// Blocks theme/plugin editor in admin</span>
+
+<span class="com">// ============ ABSPATH ============</span>
+<span class="kw">if</span> (!defined(<span class="str">'ABSPATH'</span>))
+  define(<span class="str">'ABSPATH'</span>, dirname(__FILE__) . <span class="str">'/'</span>);
+<span class="kw">require_once</span>(ABSPATH . <span class="str">'wp-settings.php'</span>);
+  </div>
+</section>
+
+<div class="divider">why pentesters hunt it</div>
+
+<!-- WHY IT'S A TARGET -->
+<section class="chapter">
+  <div class="chapter-num">Chapter 03 // The hunt</div>
+  <h2><span class="emoji">💥</span> Why wp-config.php is a pentest goldmine</h2>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <h4>🗄️ Database credentials</h4>
+      <p>The DB_USER + DB_PASSWORD + DB_HOST combo. If the database is exposed (bad firewall rules, port 3306 open), you connect directly and dump everything — users, hashed passwords, posts, settings.</p>
+    </div>
+    <div class="card">
+      <h4>🔐 Auth keys + salts</h4>
+      <p>With the cryptographic salts, an attacker can <strong>forge valid WordPress session cookies</strong> for any user — including admin. No password needed. Just cookie crafting.</p>
+    </div>
+    <div class="card">
+      <h4>🔁 Password reuse</h4>
+      <p>The DB password is often reused for SSH, FTP, admin panel logins, or other services. One credential leak → lateral movement across the entire infrastructure.</p>
+    </div>
+    <div class="card">
+      <h4>🐛 Debug mode intel</h4>
+      <p>If <code class="inline">WP_DEBUG</code> is true, error messages leak internal file paths, SQL query structures, and stack traces. <code class="inline">WP_DEBUG_LOG = true</code> writes it all to <code class="inline">/wp-content/debug.log</code> — another file to grab.</p>
+    </div>
+  </div>
+
+  <h3>How backup files end up in the web root</h3>
+  <p>Developers and sysadmins create backup copies of wp-config.php before making changes. Common patterns:</p>
+  <ul>
+    <li><code class="inline">cp wp-config.php wp-config.php.bak</code> — manual backup</li>
+    <li>Text editors auto-save: <code class="inline">wp-config.php.save</code>, <code class="inline">wp-config.php.swp</code>, <code class="inline">wp-config.php~</code></li>
+    <li>Version control artifacts: <code class="inline">wp-config.php.old</code>, <code class="inline">wp-config.php.orig</code></li>
+    <li>Deployment tools leaving: <code class="inline">wp-config.php.dist</code>, <code class="inline">wp-config.txt</code></li>
+  </ul>
+  <p>The web server (Apache/Nginx) only executes <code class="inline">.php</code> files as PHP. Everything else? <strong>Served as plain text.</strong> Request <code class="inline">/wp-config.php.bak</code> and you get the raw PHP source code — including every credential.</p>
+</section>
+
+<div class="divider">backup hunting</div>
+
+<!-- BACKUP HUNTING -->
+<section class="chapter">
+  <div class="chapter-num">Chapter 04 // Hunting technique</div>
+  <h2><span class="emoji">🎯</span> The backup-hunting curl loop</h2>
+
+  <div class="code evil">
+<span class="com">#!/bin/bash</span>
+<span class="com"># Hunt for wp-config.php backup files</span>
+<span class="com"># Run this against authorized targets ONLY</span>
+
+<span class="kw">TARGET</span>=<span class="str">"https://target.com"</span>
+
+<span class="kw">EXTENSIONS</span>=(<span class="str">"bak" "old" "save" "orig" "copy" "tmp" "txt"
+  "swp" "swo" "~" "1" "2" "backup" "dist" "inc"
+  "php.bak" "php.old" "php~"</span>)
+
+<span class="kw">for</span> ext <span class="kw">in</span> "${EXTENSIONS[@]}"; <span class="kw">do</span>
+  url=<span class="str">"${TARGET}/wp-config.${ext}"</span>
+  code=$(<span class="term" data-term="curl">curl</span> -s -o /dev/null -w <span class="str">"%{http_code}"</span> <span class="str">"$url"</span>)
+  <span class="kw">if</span> [ <span class="str">"$code"</span> == <span class="str">"200"</span> ]; <span class="kw">then</span>
+    <span class="kw">echo</span> <span class="inject">"[!] FOUND: $url (HTTP $code)"</span>
+  <span class="kw">fi</span>
+<span class="kw">done</span>
+
+<span class="com"># Also check common alternate filenames</span>
+<span class="kw">for</span> name <span class="kw">in</span> "wp-config-backup.php" "wp-config-sample.php" \
+  "config.php.bak" ".wp-config.php.swp"; <span class="kw">do</span>
+  url=<span class="str">"${TARGET}/${name}"</span>
+  code=$(curl -s -o /dev/null -w <span class="str">"%{http_code}"</span> <span class="str">"$url"</span>)
+  <span class="kw">if</span> [ <span class="str">"$code"</span> == <span class="str">"200"</span> ]; <span class="kw">then</span>
+    <span class="kw">echo</span> <span class="inject">"[!] FOUND: $url (HTTP $code)"</span>
+  <span class="kw">fi</span>
+<span class="kw">done</span>
+  </div>
+
+  <div class="callout info">
+    <strong>💡 Pro tip:</strong> <span class="term" data-term="wpscan">WPScan</span> can also hunt for config backups: <code class="inline">wpscan --url target.com --enumerate cb</code> (cb = config backups). It checks a curated list of common backup extensions.
+  </div>
+</section>
+
+<div class="divider">what to do with it</div>
+
+<!-- WHAT YOU CAN DO -->
+<section class="chapter">
+  <div class="chapter-num">Chapter 05 // Post-discovery</div>
+  <h2><span class="emoji">🔓</span> You found wp-config.php — now what?</h2>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <h4>1️⃣ Try the DB creds on MySQL</h4>
+      <p>If port 3306 is open: <code class="inline">mysql -h target -u wp_admin -p</code>. Dump <code class="inline">wp_users</code> table, grab password hashes, crack them offline with hashcat.</p>
+    </div>
+    <div class="card">
+      <h4>2️⃣ Try creds on wp-login.php</h4>
+      <p>Password reuse is king. Try the DB password as the WordPress admin password. You'd be surprised how often it works.</p>
+    </div>
+    <div class="card">
+      <h4>3️⃣ Try creds on SSH / FTP</h4>
+      <p>Same password on SSH? Game over — you have a shell. Same on FTP? Upload a PHP webshell. Password reuse is the gift that keeps on giving.</p>
+    </div>
+    <div class="card">
+      <h4>4️⃣ Forge auth cookies</h4>
+      <p>With the AUTH_KEY, SECURE_AUTH_KEY, LOGGED_IN_KEY, and their salts, you can craft valid session cookies for any WordPress user without knowing their password.</p>
+    </div>
+    <div class="card">
+      <h4>5️⃣ Check for debug.log</h4>
+      <p>If WP_DEBUG_LOG is true, fetch <code class="inline">/wp-content/debug.log</code>. It often contains SQL errors (leak table structure), file paths, PHP warnings, and sometimes even credentials passed through deprecated functions.</p>
+    </div>
+    <div class="card">
+      <h4>6️⃣ Note the table prefix</h4>
+      <p>If it's not the default <code class="inline">wp_</code>, you'll need the custom prefix for any <span class="term" data-term="sql-injection">SQL injection</span> payloads: <code class="inline">SELECT * FROM custom_users</code> instead of <code class="inline">wp_users</code>.</p>
+    </div>
+  </div>
+
+  <div class="brain-power">
+    <div class="label">🧠 Brain Power</div>
+    <div class="question">You found <code class="inline">wp-config.php.bak</code> and got DB credentials. The database isn't exposed to the internet (port 3306 is closed). Is the wp-config.php leak still useful?</div>
+    <button class="reveal-btn" onclick="toggleAnswer(this)">Reveal answer</button>
+    <div class="answer">
+      <p><strong>YES — absolutely.</strong> The database not being internet-facing doesn't make the leak useless. Here's why:</p>
+      <ul>
+        <li><strong>Password reuse is extremely common.</strong> Try the DB password on: <code class="inline">wp-login.php</code>, SSH (port 22), FTP (port 21), cPanel, PHPMyAdmin, any other admin panels on the same server.</li>
+        <li><strong>Auth keys + salts</strong> let you forge admin session cookies — no database access needed.</li>
+        <li><strong>Debug mode</strong> info (if WP_DEBUG = true) tells you internal paths and PHP version — useful for further exploitation.</li>
+        <li><strong>The DB_HOST</strong> value might reveal internal infrastructure: a hostname like <code class="inline">db.internal.company.com</code> or an internal IP like <code class="inline">10.0.1.50</code> — recon gold for further SSRF or pivoting.</li>
+        <li>If you later get a shell (via any other vector), you can connect to the DB <strong>from the server itself</strong> using <code class="inline">mysql -h localhost</code> with the creds you already have.</li>
+      </ul>
+      <p><strong>Bottom line:</strong> A wp-config.php leak is ALWAYS valuable, regardless of whether the database is directly reachable.</p>
+    </div>
+  </div>
+</section>
+
+<div class="divider">defense</div>
+
+<!-- DEFENSE -->
+<section class="chapter">
+  <div class="chapter-num">Chapter 06 // Protecting wp-config.php</div>
+  <h2><span class="emoji">🛡️</span> Lock it down</h2>
+
+  <ul>
+    <li><strong>Move it up one directory</strong> — WordPress natively supports loading wp-config.php from one directory above the web root. This puts it outside the publicly accessible path entirely.</li>
+    <li><strong>Block access via .htaccess</strong>:</li>
+  </ul>
+  <div class="code safe">
+<span class="com"># Deny all access to wp-config.php</span>
+&lt;Files wp-config.php&gt;
+  Order Allow,Deny
+  Deny from all
+&lt;/Files&gt;
+  </div>
+  <ul>
+    <li><strong>Never leave backups in the web root</strong> — after editing, immediately delete any <code class="inline">.bak</code>, <code class="inline">.old</code>, <code class="inline">.swp</code>, or <code class="inline">~</code> files. Better yet, edit on a local machine and deploy via git.</li>
+    <li><strong>Set restrictive file permissions</strong> — <code class="inline">chmod 400 wp-config.php</code> (read-only, owner only). The web server user needs read access; nobody needs write.</li>
+    <li><strong>Use unique, random salts</strong> — Generate from <code class="inline">https://api.wordpress.org/secret-key/1.1/salt/</code>. Never use the default placeholder strings.</li>
+    <li><strong>Rotate DB credentials</strong> — if you suspect any leak, change the password immediately. Also rotate auth salts to invalidate all existing sessions.</li>
+    <li><strong>Disable WP_DEBUG in production</strong> — <code class="inline">define('WP_DEBUG', false)</code>. Error messages in production = information disclosure.</li>
+  </ul>
+
+  <div class="quiz">
+    <h4>🎯 Quick Check</h4>
+    <div class="q">A developer creates a backup with <code class="inline">cp wp-config.php wp-config.php.bak</code> before editing. What's the security impact?</div>
+    <div class="options">
+      <div class="opt" onclick="quizAnswer(this, false)">None — .bak files aren't processed by the web server</div>
+      <div class="opt" onclick="quizAnswer(this, false)">Minor — only the database name is leaked</div>
+      <div class="opt" onclick="quizAnswer(this, true)">Critical — the .bak file is served as plain text, exposing DB creds, auth salts, and all secrets</div>
+      <div class="opt" onclick="quizAnswer(this, false)">Moderate — it depends on the PHP version</div>
+    </div>
+    <div class="feedback"></div>
+  </div>
+</section>
+
+<div class="divider">real world</div>
+
+<!-- REAL WORLD -->
+<section class="chapter">
+  <div class="chapter-num">Chapter 07 // Real-world examples</div>
+  <h2><span class="emoji">📰</span> When wp-config.php leaks go wrong</h2>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <div class="card-badge danger">Bug bounty classic</div>
+      <h4>The .bak file that paid $5,000</h4>
+      <p>A researcher on HackerOne found <code class="inline">wp-config.php.bak</code> on a Fortune 500 company's marketing subdomain. The DB password was reused on the staging server's admin panel. Full admin access. P1 severity. $5,000 bounty for a single curl request.</p>
+    </div>
+    <div class="card">
+      <div class="card-badge danger">Common in CTFs</div>
+      <h4>Every WordPress CTF box ever</h4>
+      <p>WordPress-themed CTF boxes (THM, HTB) almost always include a wp-config.php discovery step. Find the backup → get creds → use them somewhere else (SSH, admin panel). It's THE archetypal WP recon finding.</p>
+    </div>
+    <div class="card">
+      <div class="card-badge danger">Vim swap files</div>
+      <h4>The .swp that nobody cleaned up</h4>
+      <p>Vim creates <code class="inline">.wp-config.php.swp</code> when you edit a file and don't close cleanly. It's a hidden file (starts with dot), but web servers still serve it at <code class="inline">/.wp-config.php.swp</code>. Use <code class="inline">vim -r .wp-config.php.swp</code> to recover the original file contents including all credentials.</p>
+    </div>
+    <div class="card">
+      <div class="card-badge danger">2019</div>
+      <h4>Mossack Fonseca (Panama Papers)</h4>
+      <p>The law firm behind the Panama Papers leak had a WordPress site with known vulnerabilities AND exposed configuration. Poor WP hygiene was part of the attack chain that led to the biggest document leak in history — 11.5 million files, 2.6 TB of data.</p>
+    </div>
+  </div>
+</section>
+
+<!-- RELATED TERMS -->
+<section class="chapter">
+  <div class="related-terms">
+    <h4>🔗 Related in the vault</h4>
+    <div class="tags">
+      <a href="wordpress.html">🌐 WordPress</a>
+      <a href="env-file.html">📄 .env File</a>
+      <a href="sql-injection-term.html">💉 SQL Injection</a>
+      <a href="wpscan.html">🔍 WPScan</a>
+      <a href="xml-rpc.html">📡 XML-RPC</a>
+      <a href="brute-force.html">🔨 Brute Force</a>
+      <a href="ssh.html">🔐 SSH</a>
+    </div>
+  </div>
+</section>
+
+<footer class="site-foot">
+  <p class="coffee-line">One .bak file. All the credentials. Never leave backups in the web root. ☕</p>
+</footer>
+
+<script src="../assets/glossary.js"></script>
+<script src="../assets/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>WordPress — The CMS Behind 43% of the Internet ☕</title>
+<link rel="stylesheet" href="../assets/styles.css" />
+</head>
+<body data-page-slug="wordpress">
+
+<div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
+
+<div class="topbar">
+  <a class="logo" href="../index.html">☕ CYBERSEC.VAULT</a>
+  <nav>
+    <a href="../index.html">Home</a>
+    <a href="../index.html#topics-web">Topics</a>
+    <a href="../index.html#topics-python">Python</a>
+    <a href="index.html" class="active">Glossary</a>
+    <a href="../tryhackme/index.html">THM</a>
+    <a href="../htb-academy/index.html">HTB</a>
+    <a href="../labs/portswigger/index.html">Labs</a>
+  </nav>
+  <div class="search-wrap">
+    <input type="text" class="search" placeholder="Search (press /)..." />
+    <div class="search-results"></div>
+  </div>
+</div>
+
+<div class="breadcrumb">
+  <a href="../index.html">Home</a>
+  <span class="sep">›</span>
+  <a href="index.html">Glossary</a>
+  <span class="sep">›</span>
+  <span>WordPress</span>
+</div>
+
+<!-- HERO -->
+<section class="hero" style="min-height: 45vh;">
+  <div class="hero-content">
+    <span class="coffee-badge">📖 glossary · technology · the internet's biggest target</span>
+    <h1>WordPress 🌐</h1>
+    <p class="subtitle">The CMS behind 43% of the internet.<br>60,000+ plugins. 97% of vulnerabilities come from plugins. Pentesters' playground.</p>
+    <div class="tagline">"You don't hack WordPress. You hack its plugins." 🎯</div>
+  </div>
+</section>
+
+<!-- WHAT IT IS -->
+<section class="chapter">
+  <div class="chapter-num">Chapter 01 // Definition</div>
+  <h2><span class="emoji">📖</span> What is WordPress?</h2>
+  <p class="lead"><strong>WordPress</strong> is an open-source content management system (CMS) written in PHP and backed by MySQL/MariaDB. It lets anyone — from bloggers to Fortune 500 companies — build and manage a website without writing code. And it powers <strong>43% of all websites on the internet</strong>.</p>
+
+  <div class="paper">
+    <h4>📝 The LEGO analogy</h4>
+    <p>Think of WordPress core like a LEGO baseplate. By itself, it's a solid rectangle — functional but boring.</p>
+    <p><strong>Themes</strong> are the colors and shapes of your bricks — they change how it looks.</p>
+    <p><strong>Plugins</strong> are the motorized kits, the lights, the moving parts. They add contact forms, SEO tools, e-commerce, sliders, caching, analytics… anything you can imagine.</p>
+    <p>Here's the catch: LEGO quality-controls their official kits. WordPress does NOT quality-control plugins. <span class="highlight">Anyone can publish a plugin. Many are abandoned, unpatched, and full of vulnerabilities.</span> That's why 97% of WP vulnerabilities come from plugins.</p>
+  </div>
+</section>
+
+<div class="divider">architecture</div>
+
+<!-- ARCHITECTURE -->
+<section class="chapter">
+  <div class="chapter-num">Chapter 02 // Architecture</div>
+  <h2><span class="emoji">🏗️</span> The four layers of WordPress</h2>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <h4>🧱 Core</h4>
+      <p>The WordPress application itself — PHP files that handle routing, the admin panel, the editor, user management, the REST API. Maintained by Automattic + the open-source community. Gets automatic security patches. <strong>Relatively hardened</strong> — only ~3% of WP vulns are in core.</p>
+    </div>
+    <div class="card">
+      <h4>🎨 Themes</h4>
+      <p>PHP/CSS/JS templates that control the visual layout. Stored in <code class="inline">/wp-content/themes/</code>. Some themes are just CSS; others contain complex PHP logic (page builders, AJAX handlers) — and that logic can be vulnerable.</p>
+    </div>
+    <div class="card">
+      <h4>🔌 Plugins</h4>
+      <p>Extensions that add functionality. Stored in <code class="inline">/wp-content/plugins/</code>. This is where <strong>97% of vulnerabilities</strong> live. Third-party devs, varied quality, often abandoned after a few updates. Every plugin is a separate attack surface.</p>
+    </div>
+    <div class="card">
+      <h4>🗄️ Database</h4>
+      <p>MySQL/MariaDB stores posts, users, passwords (phpass hashed), settings, and plugin data. Default table prefix: <code class="inline">wp_</code>. Connection credentials live in <span class="term" data-term="wp-config">wp-config.php</span>.</p>
+    </div>
+  </div>
+
+  <h3>Typical WordPress file structure</h3>
+  <div class="code">
+/var/www/html/
+├── <span class="kw">wp-config.php</span>          <span class="com"># 🔑 DB creds, auth keys, salts — THE target</span>
+├── <span class="kw">wp-login.php</span>           <span class="com"># Login page — brute-force target</span>
+├── <span class="kw">xmlrpc.php</span>             <span class="com"># Legacy API — brute-force amplifier</span>
+├── wp-settings.php          <span class="com"># Bootstrap file</span>
+├── wp-cron.php              <span class="com"># Scheduled tasks</span>
+├── wp-admin/                <span class="com"># Admin dashboard</span>
+│   ├── admin-ajax.php       <span class="com"># AJAX handler (plugin vulns often here)</span>
+│   └── ...
+├── wp-includes/             <span class="com"># Core libraries</span>
+│   └── ...
+└── <span class="kw">wp-content/</span>            <span class="com"># 🎯 User-generated content</span>
+    ├── themes/              <span class="com"># Active + inactive themes</span>
+    ├── <span class="kw">plugins/</span>            <span class="com"># 🔥 97% of vulns live HERE</span>
+    │   ├── contact-form-7/
+    │   ├── elementor/
+    │   └── ...
+    └── uploads/             <span class="com"># Media library (check for PHP shells)</span>
+        └── 2026/05/
+  </div>
+</section>
+
+<div class="divider">why hackers love it</div>
+
+<!-- WHY PENTESTERS LOVE IT -->
+<section class="chapter">
+  <div class="chapter-num">Chapter 03 // Why it's target #1</div>
+  <h2><span class="emoji">💥</span> Why pentesters and bug hunters obsess over WordPress</h2>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <div class="card-badge danger">43%</div>
+      <h4>Massive attack surface</h4>
+      <p>43% of ALL websites = hundreds of millions of installations. Find one plugin vuln → it affects millions of sites simultaneously. That's scale that makes researchers drool.</p>
+    </div>
+    <div class="card">
+      <div class="card-badge danger">60,000+</div>
+      <h4>Plugin explosion</h4>
+      <p>60,000+ plugins on wordpress.org alone, plus thousands more sold on CodeCanyon and other marketplaces. Each one is a separate PHP codebase you can audit. Most have zero security review.</p>
+    </div>
+    <div class="card">
+      <div class="card-badge danger">97%</div>
+      <h4>Plugins = 97% of vulns</h4>
+      <p>WP core gets patched fast and auto-updates. Plugins? Many are one-person side projects. Developer ghosts the plugin after v1.2, and 200K installs sit there, unpatched, waiting for a CVE.</p>
+    </div>
+    <div class="card">
+      <div class="card-badge danger">Recon gold</div>
+      <h4>Predictable structure</h4>
+      <p>Every WP site has the same file paths: <code class="inline">/wp-admin/</code>, <code class="inline">/wp-login.php</code>, <code class="inline">/xmlrpc.php</code>, <code class="inline">/wp-json/</code>. Tools like <span class="term" data-term="wpscan">WPScan</span> exploit this predictability to enumerate everything.</p>
+    </div>
+  </div>
+
+  <div class="callout danger">
+    <strong>⚠️ Real numbers:</strong> In 2023 alone, Wordfence reported <strong>4,528 new WordPress vulnerabilities</strong>. That's 12+ new WP vulns per day. The vast majority were in plugins. If you're looking for bugs to hunt, WordPress is a target-rich environment.
+  </div>
+</section>
+
+<div class="divider">key attack surfaces</div>
+
+<!-- ATTACK SURFACES -->
+<section class="chapter">
+  <div class="chapter-num">Chapter 04 // The pentester's hit list</div>
+  <h2><span class="emoji">🎯</span> Where to probe on any WordPress site</h2>
+
+  <ul>
+    <li><strong><code class="inline">/wp-login.php</code></strong> — Login form. <span class="term" data-term="brute-force">Brute force</span> with Hydra, WPScan, or Burp Intruder. Check for username enumeration via error messages.</li>
+    <li><strong><code class="inline">/xmlrpc.php</code></strong> — <span class="term" data-term="xml-rpc">XML-RPC</span> endpoint. Multicall brute-force amplification, pingback SSRF, DDoS reflection. Should be disabled; rarely is.</li>
+    <li><strong><code class="inline">/wp-json/wp/v2/users</code></strong> — REST API user enumeration. Often returns usernames in JSON even if registration is closed.</li>
+    <li><strong><code class="inline">/wp-content/plugins/</code></strong> — Directory listing? Reveals installed plugins. Even without listing, probe known plugin paths for <code class="inline">readme.txt</code> files that leak version numbers.</li>
+    <li><strong><code class="inline">/wp-content/uploads/</code></strong> — Media uploads. Check for directory listing → find uploaded files. Sometimes attackers upload PHP shells disguised as images.</li>
+    <li><strong><code class="inline">/wp-config.php</code></strong> backup files — Hunt for <code class="inline">.bak</code>, <code class="inline">.old</code>, <code class="inline">.save</code>, <code class="inline">.swp</code>, <code class="inline">~</code> extensions. <span class="term" data-term="wp-config">wp-config.php</span> backups served as plain text = database credentials on a silver platter.</li>
+    <li><strong><code class="inline">/?author=1</code></strong> — User enumeration via author archive redirect. Reveals the username for user ID 1 (usually admin).</li>
+  </ul>
+
+  <div class="brain-power">
+    <div class="label">🧠 Brain Power</div>
+    <div class="question">WordPress core accounts for only ~3% of all WP vulnerabilities. Plugins account for ~97%. Why are plugins SO much more vulnerable than core?</div>
+    <button class="reveal-btn" onclick="toggleAnswer(this)">Reveal answer</button>
+    <div class="answer">
+      <p><strong>Third-party code, varied quality, and abandonment.</strong></p>
+      <p>WordPress core is maintained by a dedicated security team at Automattic, gets automatic updates, and has been audited extensively. Plugins, on the other hand, are written by anyone — a freelancer, a student, a company that pivoted away.</p>
+      <p>Many plugins:</p>
+      <ul>
+        <li>Have <strong>no security review</strong> before being published to wordpress.org</li>
+        <li>Are maintained by a <strong>single developer</strong> who may abandon the project</li>
+        <li>Don't implement basics like input sanitization, nonce checks, or capability verification</li>
+        <li>Have <strong>auto-update lag</strong> — even when a patch is released, site owners often don't update for weeks or months</li>
+      </ul>
+      <p>The result: a never-ending supply of vulnerable code sitting on millions of live websites.</p>
+    </div>
+  </div>
+</section>
+
+<div class="divider">real world</div>
+
+<!-- REAL-WORLD EXAMPLES -->
+<section class="chapter">
+  <div class="chapter-num">Chapter 05 // Real-world breaches</div>
+  <h2><span class="emoji">📰</span> When WordPress plugins get people pwned</h2>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <div class="card-badge danger">2024 / CVE-2024-27956</div>
+      <h4>WP-Automatic — SQLi to admin</h4>
+      <p>A critical <span class="term" data-term="sql-injection">SQL injection</span> in the WP-Automatic plugin let unauthenticated attackers create admin accounts, upload backdoors, and take full control. Over 30,000 sites used this plugin. Exploit was in the wild within days of disclosure.</p>
+    </div>
+    <div class="card">
+      <div class="card-badge danger">2021 / CVE-2021-24507</div>
+      <h4>Flavor — Stored XSS (100K+ installs)</h4>
+      <p>The flavor theme allowed unauthenticated stored XSS. Attackers injected JavaScript that ran in admin browsers, enabling session hijacking and full site takeover on 100,000+ installations.</p>
+    </div>
+    <div class="card">
+      <div class="card-badge danger">2020 / CVE-2020-35489</div>
+      <h4>Contact Form 7 — file upload RCE</h4>
+      <p>The world's most popular WP plugin (5M+ installs) had an unrestricted file upload vulnerability. Attackers uploaded PHP shells through the contact form. One plugin. Five million sites at risk.</p>
+    </div>
+    <div class="card">
+      <div class="card-badge danger">2019 — Panama Papers trail</div>
+      <h4>Mossack Fonseca — unpatched Revolution Slider</h4>
+      <p>The law firm behind the Panama Papers leak ran WordPress with an unpatched Revolution Slider plugin (known vuln since 2014). Attackers walked in through a 3-year-old plugin vuln. 11.5 million documents leaked. 2.6 TB. World-shaking scandal — and it started with a WordPress plugin.</p>
+    </div>
+  </div>
+</section>
+
+<div class="divider">defense</div>
+
+<!-- DEFENSE -->
+<section class="chapter">
+  <div class="chapter-num">Chapter 06 // Hardening WordPress</div>
+  <h2><span class="emoji">🛡️</span> How to make WordPress less of a sitting duck</h2>
+
+  <ul>
+    <li><strong>Keep everything updated</strong> — Core, themes, AND plugins. Enable auto-updates for minor releases. Check weekly for plugin patches.</li>
+    <li><strong>Delete unused plugins + themes</strong> — Deactivated ≠ safe. The PHP files are still on disk and reachable. Delete what you don't use.</li>
+    <li><strong>Disable XML-RPC</strong> — Unless you specifically need it (Jetpack, mobile app). Block at the web server level or use a security plugin.</li>
+    <li><strong>Hide version info</strong> — Remove the WordPress version meta tag. Change the default <code class="inline">wp_</code> table prefix. Don't make recon easy.</li>
+    <li><strong>Restrict <code class="inline">/wp-admin/</code> access</strong> — IP whitelist or VPN for the admin panel. Add 2FA to admin accounts.</li>
+    <li><strong>Protect <code class="inline">wp-config.php</code></strong> — Move it one directory above the web root (WP supports this). Block access via <code class="inline">.htaccess</code> rules. Never leave backups in the web root.</li>
+    <li><strong>Web Application Firewall</strong> — Wordfence, Sucuri, or Cloudflare WAF to catch common exploit patterns before they reach your plugins.</li>
+    <li><strong>Audit plugins before installing</strong> — Check last-updated date, active installs, support forum activity. If it hasn't been updated in 2+ years, walk away.</li>
+  </ul>
+
+  <div class="quiz">
+    <h4>🎯 Quick Check</h4>
+    <div class="q">A WordPress site has 15 plugins installed but only 5 are active. The other 10 are deactivated. Are the deactivated plugins still a security risk?</div>
+    <div class="options">
+      <div class="opt" onclick="quizAnswer(this, false)">No — deactivated plugins can't run any code</div>
+      <div class="opt" onclick="quizAnswer(this, true)">Yes — the PHP files are still on disk and some endpoints may still be reachable</div>
+      <div class="opt" onclick="quizAnswer(this, false)">Only if they have known CVEs</div>
+      <div class="opt" onclick="quizAnswer(this, false)">Only if directory listing is enabled</div>
+    </div>
+    <div class="feedback"></div>
+  </div>
+</section>
+
+<!-- RELATED TERMS -->
+<section class="chapter">
+  <div class="related-terms">
+    <h4>🔗 Related in the vault</h4>
+    <div class="tags">
+      <a href="wpscan.html">🔍 WPScan</a>
+      <a href="xml-rpc.html">📡 XML-RPC</a>
+      <a href="wp-config.html">🔑 wp-config.php</a>
+      <a href="sql-injection-term.html">💉 SQL Injection</a>
+      <a href="brute-force.html">🔨 Brute Force</a>
+      <a href="env-file.html">📄 .env File</a>
+    </div>
+  </div>
+</section>
+
+<footer class="site-foot">
+  <p class="coffee-line">43% of the web runs on WordPress. 97% of WP vulns are in plugins. You do the math. ☕</p>
+</footer>
+
+<script src="../assets/glossary.js"></script>
+<script src="../assets/app.js"></script>
+</body>
+</html>

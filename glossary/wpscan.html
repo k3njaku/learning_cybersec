@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>WPScan — The WordPress Security Scanner ☕</title>
+<link rel="stylesheet" href="../assets/styles.css" />
+</head>
+<body data-page-slug="wpscan">
+
+<div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
+
+<div class="topbar">
+  <a class="logo" href="../index.html">☕ CYBERSEC.VAULT</a>
+  <nav>
+    <a href="../index.html">Home</a>
+    <a href="../index.html#topics-web">Topics</a>
+    <a href="../index.html#topics-python">Python</a>
+    <a href="index.html" class="active">Glossary</a>
+    <a href="../tryhackme/index.html">THM</a>
+    <a href="../htb-academy/index.html">HTB</a>
+    <a href="../labs/portswigger/index.html">Labs</a>
+  </nav>
+  <div class="search-wrap">
+    <input type="text" class="search" placeholder="Search (press /)..." />
+    <div class="search-results"></div>
+  </div>
+</div>
+
+<div class="breadcrumb">
+  <a href="../index.html">Home</a>
+  <span class="sep">›</span>
+  <a href="index.html">Glossary</a>
+  <span class="sep">›</span>
+  <span>WPScan</span>
+</div>
+
+<!-- HERO -->
+<section class="hero" style="min-height: 45vh;">
+  <div class="hero-content">
+    <span class="coffee-badge">📖 glossary · tool · WordPress's worst nightmare</span>
+    <h1 style="font-family: var(--mono);">WPScan <span style="color: var(--accent-2);">🔍</span></h1>
+    <p class="subtitle">The #1 WordPress security scanner.<br>Enumerate plugins, themes, users. Check for CVEs. Brute-force logins. One command.</p>
+    <div class="tagline">"wpscan --url target.com --enumerate vp,vt,u — and the recon is done." 🎯</div>
+  </div>
+</section>
+
+<!-- WHAT IT IS -->
+<section class="chapter">
+  <div class="chapter-num">Chapter 01 // Definition</div>
+  <h2><span class="emoji">📖</span> What is WPScan?</h2>
+  <p class="lead"><strong>WPScan</strong> is a free, open-source, black-box <span class="term" data-term="wordpress">WordPress</span> vulnerability scanner. It probes a WordPress site from the outside — enumerating installed plugins, themes, and users, checking their versions against a massive vulnerability database (WPVulnDB), and optionally brute-forcing credentials.</p>
+
+  <div class="paper">
+    <h4>📝 The building inspector analogy</h4>
+    <p>Imagine hiring an inspector to walk around the outside of a building. They don't go inside — they just look at what's visible: the locks on the doors, the brand of windows, whether there's a fire escape, the sign out front listing the company name.</p>
+    <p>Then they pull up a database: "That lock model was recalled in 2023 — it can be picked with a bobby pin." "That window brand has a known bypass." "The fire escape ladder is missing rungs."</p>
+    <p><span class="highlight">WPScan is that inspector, but for WordPress sites.</span> It fingerprints what's installed, then checks if any of it has known vulnerabilities. All from the outside.</p>
+  </div>
+</section>
+
+<div class="divider">installation</div>
+
+<!-- INSTALLATION -->
+<section class="chapter">
+  <div class="chapter-num">Chapter 02 // Getting started</div>
+  <h2><span class="emoji">⚡</span> Installation — three ways</h2>
+
+  <div class="grid cols-3">
+    <div class="card">
+      <h4>💎 Ruby gem (native)</h4>
+      <div class="code" style="font-size: 12px;">
+gem install wpscan
+      </div>
+      <p style="font-size: 13px; color: var(--ink-dim); margin-top: 8px;">Needs Ruby 2.7+ and development headers. Best for Kali/Parrot where deps are pre-installed.</p>
+    </div>
+    <div class="card">
+      <h4>🐳 Docker (cleanest)</h4>
+      <div class="code" style="font-size: 12px;">
+docker pull wpscanteam/wpscan
+docker run -it --rm \
+  wpscanteam/wpscan \
+  --url target.com
+      </div>
+      <p style="font-size: 13px; color: var(--ink-dim); margin-top: 8px;">Zero dependency headaches. Works anywhere Docker runs.</p>
+    </div>
+    <div class="card">
+      <h4>🐧 Kali/Parrot</h4>
+      <div class="code" style="font-size: 12px;">
+<span class="com"># Already pre-installed!</span>
+wpscan --version
+      </div>
+      <p style="font-size: 13px; color: var(--ink-dim); margin-top: 8px;">Both major pentesting distros ship WPScan out of the box.</p>
+    </div>
+  </div>
+
+  <div class="callout info">
+    <strong>💡 API token:</strong> WPScan's vulnerability database requires a free API token for full vuln data. Sign up at <code class="inline">wpscan.com</code>, grab your token, and pass it with <code class="inline">--api-token YOUR_TOKEN</code>. Without it, you still get enumeration — but no CVE details.
+  </div>
+</section>
+
+<div class="divider">the 5 commands you need</div>
+
+<!-- KEY COMMANDS -->
+<section class="chapter">
+  <div class="chapter-num">Chapter 03 // Essential commands</div>
+  <h2><span class="emoji">🛠️</span> The 5 most useful WPScan commands</h2>
+
+  <div class="code">
+<span class="com"># 1. Full recon — enumerate vulnerable plugins, themes, and users</span>
+wpscan --url <span class="str">https://target.com</span> \
+  --enumerate <span class="kw">vp,vt,u</span> \
+  --api-token <span class="str">YOUR_TOKEN</span>
+
+<span class="com"># 2. Aggressive plugin detection (finds plugins passive mode misses)</span>
+wpscan --url <span class="str">https://target.com</span> \
+  --enumerate <span class="kw">ap</span> \
+  --plugins-detection <span class="kw">aggressive</span>
+
+<span class="com"># 3. Brute-force wp-login.php with a wordlist</span>
+wpscan --url <span class="str">https://target.com</span> \
+  -U <span class="str">admin</span> \
+  -P <span class="str">/usr/share/wordlists/rockyou.txt</span>
+
+<span class="com"># 4. Brute-force via XML-RPC (faster, often bypasses rate limits)</span>
+wpscan --url <span class="str">https://target.com</span> \
+  -U <span class="str">admin</span> \
+  -P <span class="str">passwords.txt</span> \
+  --password-attack <span class="kw">xmlrpc</span>
+
+<span class="com"># 5. Stealthy scan (random user-agent, throttled requests)</span>
+wpscan --url <span class="str">https://target.com</span> \
+  --enumerate <span class="kw">vp,vt,u</span> \
+  --random-user-agent \
+  --throttle <span class="kw">500</span>
+  </div>
+
+  <h3>Enumeration flags cheat sheet</h3>
+  <div style="overflow-x:auto;">
+    <table style="width:100%; border-collapse: collapse; font-family: var(--mono); font-size: 13px;">
+      <thead>
+        <tr style="background: var(--panel-2);">
+          <th style="padding:10px; text-align:left; border:1px solid rgba(255,255,255,0.08);">Flag</th>
+          <th style="padding:10px; text-align:left; border:1px solid rgba(255,255,255,0.08);">What it enumerates</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td style="padding:8px 10px; border:1px solid rgba(255,255,255,0.08); color: var(--accent);">vp</td><td style="padding:8px 10px; border:1px solid rgba(255,255,255,0.08); color: var(--ink-dim);">Vulnerable plugins</td></tr>
+        <tr><td style="padding:8px 10px; border:1px solid rgba(255,255,255,0.08); color: var(--accent);">ap</td><td style="padding:8px 10px; border:1px solid rgba(255,255,255,0.08); color: var(--ink-dim);">All plugins (not just vulnerable ones)</td></tr>
+        <tr><td style="padding:8px 10px; border:1px solid rgba(255,255,255,0.08); color: var(--accent);">vt</td><td style="padding:8px 10px; border:1px solid rgba(255,255,255,0.08); color: var(--ink-dim);">Vulnerable themes</td></tr>
+        <tr><td style="padding:8px 10px; border:1px solid rgba(255,255,255,0.08); color: var(--accent);">at</td><td style="padding:8px 10px; border:1px solid rgba(255,255,255,0.08); color: var(--ink-dim);">All themes</td></tr>
+        <tr><td style="padding:8px 10px; border:1px solid rgba(255,255,255,0.08); color: var(--accent);">u</td><td style="padding:8px 10px; border:1px solid rgba(255,255,255,0.08); color: var(--ink-dim);">Users (enumeration via author archives + REST API)</td></tr>
+        <tr><td style="padding:8px 10px; border:1px solid rgba(255,255,255,0.08); color: var(--accent);">cb</td><td style="padding:8px 10px; border:1px solid rgba(255,255,255,0.08); color: var(--ink-dim);">Config backups (wp-config.php.bak, etc.)</td></tr>
+        <tr><td style="padding:8px 10px; border:1px solid rgba(255,255,255,0.08); color: var(--accent);">dbe</td><td style="padding:8px 10px; border:1px solid rgba(255,255,255,0.08); color: var(--ink-dim);">Database exports (dump.sql, etc.)</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<div class="divider">interpreting results</div>
+
+<!-- READING RESULTS -->
+<section class="chapter">
+  <div class="chapter-num">Chapter 04 // Reading the output</div>
+  <h2><span class="emoji">📊</span> Interpreting WPScan results like a pro</h2>
+
+  <p>WPScan uses a color-coded system in the terminal. Here's what matters:</p>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <h4 style="color: var(--accent);">🟢 [+] Interesting findings</h4>
+      <p>Detected WordPress version, server headers, interesting HTTP headers, exposed readme files. Not vulns on their own, but pieces of the puzzle.</p>
+    </div>
+    <div class="card">
+      <h4 style="color: var(--warn);">🟡 [!] Warnings</h4>
+      <p>Outdated plugin/theme versions, detected XML-RPC, missing security headers. These need attention — they're often exploitable.</p>
+    </div>
+    <div class="card">
+      <h4 style="color: var(--danger);">🔴 [!!] Vulnerabilities</h4>
+      <p>Known CVEs matched against detected versions. This is the money. Each one includes: CVE ID, vuln type (SQLi, XSS, RCE…), affected versions, references. <strong>Start here.</strong></p>
+    </div>
+    <div class="card">
+      <h4>📋 Users enumerated</h4>
+      <p>Usernames found via author archives, <code class="inline">/?author=N</code>, and REST API. These become the <code class="inline">-U</code> list for brute-force attacks.</p>
+    </div>
+  </div>
+
+  <div class="brain-power">
+    <div class="label">🧠 Brain Power</div>
+    <div class="question">WPScan says "No plugins found." Does that mean the site has no plugins?</div>
+    <button class="reveal-btn" onclick="toggleAnswer(this)">Reveal answer</button>
+    <div class="answer">
+      <p><strong>No!</strong> It means passive/default mode didn't find any.</p>
+      <p>WPScan's default <code class="inline">--plugins-detection mixed</code> mode checks a curated list of ~2,000 popular plugins by probing known paths. If a plugin isn't in that list (or its files are hidden behind a WAF), it won't show up.</p>
+      <p>Switch to <code class="inline">--plugins-detection aggressive</code> and WPScan will test against a database of <strong>100,000+ plugin slugs</strong>. It's slower (and noisier — the target WILL see it in logs), but it catches what passive mode misses.</p>
+      <p><strong>Takeaway:</strong> "No plugins found" in passive mode just means the scan was too quiet. Crank it up before concluding the site is plugin-free.</p>
+    </div>
+  </div>
+</section>
+
+<div class="divider">real world</div>
+
+<!-- REAL-WORLD USAGE -->
+<section class="chapter">
+  <div class="chapter-num">Chapter 05 // Real-world impact</div>
+  <h2><span class="emoji">📰</span> WPScan in the wild</h2>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <div class="card-badge danger">Bug bounty staple</div>
+      <h4>First tool in WP recon</h4>
+      <p>On platforms like HackerOne and Bugcrowd, when a target runs WordPress, WPScan is the first thing every researcher runs. It's practically step 0 of WP-focused bug bounty methodology. Many critical findings start with <code class="inline">wpscan --enumerate vp</code>.</p>
+    </div>
+    <div class="card">
+      <div class="card-badge danger">CTF / THM / HTB</div>
+      <h4>Standard for WP-based boxes</h4>
+      <p>Every WordPress-themed CTF box or TryHackMe room expects you to use WPScan. The enumeration output gives you the plugin version, you search the CVE, and you have your initial foothold. It's that formulaic.</p>
+    </div>
+  </div>
+
+  <div class="callout danger">
+    <strong>⚠️ Legal note:</strong> WPScan, like any scanner, should only be run against targets you own or have explicit authorization to test. Unauthorized scanning is illegal under CFAA and similar laws worldwide. Stick to CTFs, bug bounty programs in scope, and your own test environments.
+  </div>
+</section>
+
+<div class="divider">quiz</div>
+
+<!-- QUIZ -->
+<section class="chapter">
+  <div class="quiz">
+    <h4>🎯 Quick Check</h4>
+    <div class="q">You run <code class="inline">wpscan --url target.com --enumerate vp</code> and get 0 vulnerable plugins. What should you do next?</div>
+    <div class="options">
+      <div class="opt" onclick="quizAnswer(this, false)">Move on — the site is secure</div>
+      <div class="opt" onclick="quizAnswer(this, false)">Try brute-forcing immediately</div>
+      <div class="opt" onclick="quizAnswer(this, true)">Re-run with --plugins-detection aggressive to find plugins passive mode missed</div>
+      <div class="opt" onclick="quizAnswer(this, false)">Report "no vulnerabilities found" in your pentest report</div>
+    </div>
+    <div class="feedback"></div>
+  </div>
+</section>
+
+<!-- RELATED TERMS -->
+<section class="chapter">
+  <div class="related-terms">
+    <h4>🔗 Related in the vault</h4>
+    <div class="tags">
+      <a href="wordpress.html">🌐 WordPress</a>
+      <a href="curl.html">💻 curl</a>
+      <a href="xml-rpc.html">📡 XML-RPC</a>
+      <a href="brute-force.html">🔨 Brute Force</a>
+      <a href="wp-config.html">🔑 wp-config.php</a>
+    </div>
+  </div>
+</section>
+
+<footer class="site-foot">
+  <p class="coffee-line">One command. Full recon. That's the WPScan way. ☕</p>
+</footer>
+
+<script src="../assets/glossary.js"></script>
+<script src="../assets/app.js"></script>
+</body>
+</html>

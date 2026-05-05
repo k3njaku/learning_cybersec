@@ -489,6 +489,33 @@ window.GLOSSARY = {
     page: "wget.html",
     related: ["scp", "reverse-shell", "ssh"]
   },
+  "wordpress": {
+    name: "WordPress",
+    aliases: ["wp", "wordpress-cms", "wp-cms"],
+    category: "Technology",
+    blurb: "The CMS behind 43% of the web. 60K+ plugins. The #1 bug bounty target surface.",
+    short: "An open-source content management system (CMS) powering 43% of all websites. Its core is fairly hardened, but the plugin ecosystem (60,000+ plugins) is where 97% of vulnerabilities live. Every plugin = third-party code with its own attack surface. Key pentest targets: /wp-admin/, /wp-login.php, /xmlrpc.php, /wp-json/ REST API, /wp-content/uploads/, wp-config.php backups.",
+    page: "wordpress.html",
+    related: ["wpscan", "xml-rpc", "wp-config", "sql-injection"]
+  },
+  "wp-config": {
+    name: "wp-config.php",
+    aliases: ["wp-config", "wordpress-config", "wp-config.php"],
+    category: "Configuration",
+    blurb: "WordPress's brain — DB creds, auth keys, debug flags. If you find a backup, it's game over.",
+    short: "The main configuration file for WordPress, stored at the web root. Contains database credentials (host, user, password), authentication salts/keys, table prefix, and debug settings. Pentesters hunt for backup copies (.bak, .old, .save, .swp, ~) that the web server serves as plain text — instant database access.",
+    page: "wp-config.html",
+    related: ["wordpress", "sql-injection", "env-file"]
+  },
+  "wpscan": {
+    name: "WPScan",
+    aliases: ["wp-scan", "wordpress-scanner"],
+    category: "Tool",
+    blurb: "The #1 WordPress security scanner. Enumerates plugins, themes, users, and checks for known CVEs.",
+    short: "A free, open-source CLI tool purpose-built for WordPress security. Enumerates installed plugins + themes + their versions, discovers users, checks versions against the WPVulnDB database for known CVEs, and can brute-force credentials via wp-login or XML-RPC. Install: gem install wpscan. Basic usage: wpscan --url TARGET --enumerate vp,vt,u",
+    page: "wpscan.html",
+    related: ["wordpress", "xml-rpc", "curl"]
+  },
   "waf": {
     name: "WAF (Web Application Firewall)",
     aliases: ["web-application-firewall"],
@@ -497,6 +524,16 @@ window.GLOSSARY = {
     short: "Software or hardware that inspects incoming HTTP requests and blocks ones that look malicious (SQLi keywords, XSS payloads, etc.). Helpful as defense-in-depth, but NEVER a replacement for fixing the underlying vuln — WAFs can usually be bypassed with encoding tricks.",
     page: "waf.html",
     related: ["encoding", "bypass", "sql-injection"]
+  },
+
+  "xml-rpc": {
+    name: "XML-RPC (xmlrpc.php)",
+    aliases: ["xmlrpc", "xmlrpc.php", "xml-rpc-api"],
+    category: "Protocol / Attack Surface",
+    blurb: "WordPress's legacy remote API. Brute force amplifier, SSRF vector, pingback DDoS — should be disabled.",
+    short: "An older remote procedure call protocol that WordPress exposes at /xmlrpc.php. Allows remote publishing, pingbacks, and multicall batching. Security problems: (1) wp.getUsersBlogs allows brute-forcing passwords — multicall batches 500+ attempts in one request, bypassing rate limits. (2) pingback.ping enables SSRF and DDoS amplification. (3) It's enabled by default and most sites never disable it. Test: curl -X POST target/xmlrpc.php -d '<methodCall><methodName>system.listMethods</methodName></methodCall>'",
+    page: "xml-rpc.html",
+    related: ["wordpress", "wpscan", "brute-force"]
   },
 
   /* ---------- X ---------- */
@@ -529,7 +566,7 @@ window.GLOSSARY = {
   function glossaryBase() {
     const path = window.location.pathname;
     if (path.includes('/glossary/')) return './';
-    const m = path.match(/\/(topics|labs|tryhackme)\/(.+)/);
+    const m = path.match(/\/(topics|labs|tryhackme|htb-academy)\/(.+)/);
     if (m) {
       const segs = m[2].split('/');
       const dirs = segs.length - 1;
