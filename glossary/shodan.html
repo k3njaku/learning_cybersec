@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Shodan — The Hacker's Search Engine ☕</title>
+<link rel="stylesheet" href="../assets/styles.css" />
+</head>
+<body data-page-slug="shodan">
+
+<div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
+
+<div class="topbar">
+  <a class="logo" href="../index.html">☕ CYBERSEC.VAULT</a>
+  <nav>
+    <a href="../index.html">Home</a>
+    <a href="../index.html#topics-web">Topics</a>
+    <a href="../index.html#topics-python">Python</a>
+    <a href="index.html" class="active">Glossary</a>
+    <a href="../tryhackme/index.html">THM</a>
+    <a href="../htb-academy/index.html">HTB</a>
+    <a href="../labs/portswigger/index.html">Labs</a>
+  </nav>
+  <div class="search-wrap">
+    <input type="text" class="search" placeholder="Search (press /)..." />
+    <div class="search-results"></div>
+  </div>
+</div>
+
+<div class="breadcrumb">
+  <a href="../index.html">Home</a>
+  <span class="sep">›</span>
+  <a href="index.html">Glossary</a>
+  <span class="sep">›</span>
+  <span>Shodan</span>
+</div>
+
+<!-- HERO -->
+<section class="hero" style="min-height: 45vh;">
+  <div class="hero-content">
+    <span class="coffee-badge">🔍 OSINT · recon · the hacker's search engine</span>
+    <h1>Shodan 🌐</h1>
+    <p class="subtitle">Google indexes web pages. Shodan indexes <em>everything else</em>.<br>Servers, webcams, databases, industrial controls — if it's connected, Shodan already found it.</p>
+    <div class="tagline">"The most dangerous search engine on the internet." — CNN 🎯</div>
+  </div>
+</section>
+
+<!-- WHAT IT IS -->
+<section class="chapter">
+  <div class="chapter-num">Chapter 01 // Definition</div>
+  <h2><span class="emoji">📖</span> What is Shodan?</h2>
+  <p class="lead"><strong>Shodan</strong> is a search engine for internet-connected devices. While Google crawls web pages (HTML, text, links), Shodan crawls <strong>IP addresses</strong> — connecting to 200+ ports on every public IP and saving the <strong>service banners</strong> that come back.</p>
+
+  <p>A service banner is the "hello, I'm…" message a server sends when you connect. It reveals what software is running, what version, sometimes the OS, sometimes even default credentials left in the response.</p>
+
+  <p>Shodan stores all of this in a searchable database. That means you can ask questions like:</p>
+  <ul>
+    <li>"Show me every <span class="term" data-term="wordpress">WordPress</span> site in Germany"</li>
+    <li>"Find all MongoDB databases with no authentication"</li>
+    <li>"List every Apache 2.4.49 server" (the path traversal CVE)</li>
+    <li>"Show webcams running on port 554 in Brazil"</li>
+  </ul>
+
+  <div class="paper">
+    <h4>📝 The night-drive analogy</h4>
+    <p>Imagine driving down <strong>every single street in a city</strong> at night, slowly, with a notepad. Every house with its lights on — you write down what you can see through the windows. "House #42 has a Samsung TV, a Nest thermostat, and the front door is unlocked."</p>
+    <p>You're not breaking in. You're just <em>looking</em>. But now you have a directory of every house, what's inside, and which ones forgot to lock the door.</p>
+    <p><span class="highlight">That's Shodan.</span> It drives down every IP address, knocks on 200+ ports, and writes down what answers. The scary part? It does this for the <em>entire internet</em>. Continuously.</p>
+  </div>
+</section>
+
+<div class="divider">how it works</div>
+
+<!-- HOW IT WORKS -->
+<section class="chapter">
+  <div class="chapter-num">Chapter 02 // Under the hood</div>
+  <h2><span class="emoji">⚙️</span> How Shodan crawls the internet</h2>
+
+  <div class="grid cols-3">
+    <div class="card">
+      <h4>1. Scan every IP</h4>
+      <p>Shodan's crawlers connect to all ~4.3 billion IPv4 addresses on 200+ common ports (22, 80, 443, 3306, 8080, 27017, etc.). No DNS needed — just raw IPs.</p>
+    </div>
+    <div class="card">
+      <h4>2. Grab the banner</h4>
+      <p>When a port responds, Shodan saves the <strong>service banner</strong> — the first bytes the server sends. This reveals software name, version, config, sometimes even data.</p>
+    </div>
+    <div class="card">
+      <h4>3. Index &amp; search</h4>
+      <p>Banners get indexed with metadata: IP, port, country, org (ASN), hostnames, SSL certs, HTTP headers, HTML titles. You search this database like Google.</p>
+    </div>
+  </div>
+
+  <div class="callout info">
+    <strong>💡 Key insight:</strong> Shodan doesn't exploit anything. It just <em>connects</em> and <em>records</em> what's publicly visible. If your MongoDB is exposed on port 27017 with no auth, that's YOUR misconfiguration — Shodan just noticed it. So did every attacker.
+  </div>
+</section>
+
+<div class="divider">installation</div>
+
+<!-- INSTALLATION -->
+<section class="chapter">
+  <div class="chapter-num">Chapter 03 // Getting started</div>
+  <h2><span class="emoji">⚡</span> Install the Shodan CLI</h2>
+
+  <p>Shodan has a web UI at <code class="inline">shodan.io</code>, but the CLI is where the real power lives.</p>
+
+  <div class="code">
+<span class="com"># Step 1: Install via pip (use a venv!)</span>
+<span class="kw">pip</span> install <span class="str">shodan</span>
+
+<span class="com"># Step 2: Initialize with your API key (grab from account.shodan.io)</span>
+<span class="kw">shodan</span> init <span class="str">YOUR_API_KEY</span>
+
+<span class="com"># Step 3: Verify it works</span>
+<span class="kw">shodan</span> info
+  </div>
+
+  <div class="callout info">
+    <strong>💡 Free account:</strong> Create one at <code class="inline">shodan.io</code> — you get an API key immediately. Free tier is limited (100 results per search, no filters like <code class="inline">vuln:</code>), but enough to learn. The $49 one-time membership unlocks everything.
+  </div>
+</section>
+
+<div class="divider">the 5 commands you need</div>
+
+<!-- KEY COMMANDS -->
+<section class="chapter">
+  <div class="chapter-num">Chapter 04 // Essential commands</div>
+  <h2><span class="emoji">🛠️</span> The 5 most useful Shodan CLI commands</h2>
+
+  <div class="code">
+<span class="com"># 1. SEARCH — find devices matching a query</span>
+<span class="kw">shodan</span> search <span class="str">"apache country:US port:443"</span>
+
+<span class="com"># 2. HOST — deep-dive on a single IP (ports, vulns, history)</span>
+<span class="kw">shodan</span> host <span class="str">8.8.8.8</span>
+
+<span class="com"># 3. DOMAIN — DNS records + subdomains for a domain</span>
+<span class="kw">shodan</span> domain <span class="str">example.com</span>
+
+<span class="com"># 4. COUNT — how many results match a query (no results shown)</span>
+<span class="kw">shodan</span> count <span class="str">"product:nginx country:DE"</span>
+
+<span class="com"># 5. STATS — breakdown by top countries, orgs, ports, etc.</span>
+<span class="kw">shodan</span> stats <span class="str">"http.html:wp-content"</span>
+  </div>
+
+  <p><code class="inline">search</code> is your bread and butter. <code class="inline">host</code> is for target deep-dives. <code class="inline">domain</code> expands attack surface during recon. <code class="inline">count</code> and <code class="inline">stats</code> help you scope how big a problem is before diving in.</p>
+</section>
+
+<div class="divider">filters</div>
+
+<!-- FILTERS TABLE -->
+<section class="chapter">
+  <div class="chapter-num">Chapter 05 // Key search filters</div>
+  <h2><span class="emoji">🎯</span> Filters — the real power of Shodan</h2>
+
+  <p>Raw searches are noisy. Filters turn Shodan into a scalpel.</p>
+
+  <div style="overflow-x:auto;">
+    <table style="width:100%; border-collapse: collapse; font-family: var(--mono); font-size: 13px;">
+      <thead>
+        <tr style="background: var(--panel-2);">
+          <th style="padding:10px; text-align:left; border:1px solid rgba(255,255,255,0.08);">Filter</th>
+          <th style="padding:10px; text-align:left; border:1px solid rgba(255,255,255,0.08);">What it does</th>
+          <th style="padding:10px; text-align:left; border:1px solid rgba(255,255,255,0.08);">Example</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td style="padding:8px 10px; border:1px solid rgba(255,255,255,0.08); color: var(--accent);">port:</td><td style="padding:8px 10px; border:1px solid rgba(255,255,255,0.08); color: var(--ink-dim);">Filter by open port</td><td style="padding:8px 10px; border:1px solid rgba(255,255,255,0.08); color: var(--ink-dim);">port:3306 (MySQL)</td></tr>
+        <tr><td style="padding:8px 10px; border:1px solid rgba(255,255,255,0.08); color: var(--accent);">country:</td><td style="padding:8px 10px; border:1px solid rgba(255,255,255,0.08); color: var(--ink-dim);">2-letter country code</td><td style="padding:8px 10px; border:1px solid rgba(255,255,255,0.08); color: var(--ink-dim);">country:US</td></tr>
+        <tr><td style="padding:8px 10px; border:1px solid rgba(255,255,255,0.08); color: var(--accent);">org:</td><td style="padding:8px 10px; border:1px solid rgba(255,255,255,0.08); color: var(--ink-dim);">Organization / ISP name</td><td style="padding:8px 10px; border:1px solid rgba(255,255,255,0.08); color: var(--ink-dim);">org:"Amazon"</td></tr>
+        <tr><td style="padding:8px 10px; border:1px solid rgba(255,255,255,0.08); color: var(--accent);">hostname:</td><td style="padding:8px 10px; border:1px solid rgba(255,255,255,0.08); color: var(--ink-dim);">Reverse DNS hostname</td><td style="padding:8px 10px; border:1px solid rgba(255,255,255,0.08); color: var(--ink-dim);">hostname:.gov</td></tr>
+        <tr><td style="padding:8px 10px; border:1px solid rgba(255,255,255,0.08); color: var(--accent);">http.html:</td><td style="padding:8px 10px; border:1px solid rgba(255,255,255,0.08); color: var(--ink-dim);">Search inside HTML body</td><td style="padding:8px 10px; border:1px solid rgba(255,255,255,0.08); color: var(--ink-dim);">http.html:wp-content</td></tr>
+        <tr><td style="padding:8px 10px; border:1px solid rgba(255,255,255,0.08); color: var(--accent);">http.title:</td><td style="padding:8px 10px; border:1px solid rgba(255,255,255,0.08); color: var(--ink-dim);">Search page &lt;title&gt; tag</td><td style="padding:8px 10px; border:1px solid rgba(255,255,255,0.08); color: var(--ink-dim);">http.title:"Dashboard"</td></tr>
+        <tr><td style="padding:8px 10px; border:1px solid rgba(255,255,255,0.08); color: var(--accent);">product:</td><td style="padding:8px 10px; border:1px solid rgba(255,255,255,0.08); color: var(--ink-dim);">Software name from banner</td><td style="padding:8px 10px; border:1px solid rgba(255,255,255,0.08); color: var(--ink-dim);">product:nginx</td></tr>
+        <tr><td style="padding:8px 10px; border:1px solid rgba(255,255,255,0.08); color: var(--accent);">version:</td><td style="padding:8px 10px; border:1px solid rgba(255,255,255,0.08); color: var(--ink-dim);">Software version</td><td style="padding:8px 10px; border:1px solid rgba(255,255,255,0.08); color: var(--ink-dim);">product:apache version:2.4.49</td></tr>
+        <tr><td style="padding:8px 10px; border:1px solid rgba(255,255,255,0.08); color: var(--accent);">vuln:</td><td style="padding:8px 10px; border:1px solid rgba(255,255,255,0.08); color: var(--ink-dim);">Has a specific CVE (paid only)</td><td style="padding:8px 10px; border:1px solid rgba(255,255,255,0.08); color: var(--ink-dim);">vuln:CVE-2021-44228</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p style="margin-top: 14px;">Combine filters freely: <code class="inline">http.html:wp-content country:US port:443</code> = all HTTPS WordPress sites in the US. That's your target list built in 2 seconds.</p>
+</section>
+
+<div class="divider">bug bounty uses</div>
+
+<!-- BUG BOUNTY -->
+<section class="chapter">
+  <div class="chapter-num">Chapter 06 // Bug bounty recon</div>
+  <h2><span class="emoji">💰</span> Shodan for bug bounty hunters</h2>
+
+  <p>Shodan is a recon <em>multiplier</em>. Here's how hunters actually use it:</p>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <h4>🌐 Find <span class="term" data-term="wordpress">WordPress</span> targets</h4>
+      <div class="code" style="font-size: 12px;">
+shodan search "http.html:wp-content org:\"Target Corp\""
+      </div>
+      <p style="font-size: 13px; color: var(--ink-dim); margin-top: 8px;">Then run <span class="term" data-term="wpscan">WPScan</span> on every hit. WordPress + outdated plugins = easy wins.</p>
+    </div>
+    <div class="card">
+      <h4>🚪 Find exposed admin panels</h4>
+      <div class="code" style="font-size: 12px;">
+shodan search "http.title:\"Dashboard\" org:\"Target Corp\""
+      </div>
+      <p style="font-size: 13px; color: var(--ink-dim); margin-top: 8px;">Admin panels on non-standard ports that Burp never found. Bonus points if they have default creds.</p>
+    </div>
+    <div class="card">
+      <h4>🗄️ Expand attack surface</h4>
+      <div class="code" style="font-size: 12px;">
+shodan domain target.com
+shodan host 203.0.113.50
+      </div>
+      <p style="font-size: 13px; color: var(--ink-dim); margin-top: 8px;">Discover subdomains, related IPs, and services the program scope didn't explicitly mention but didn't exclude either.</p>
+    </div>
+    <div class="card">
+      <h4>🔓 Find exposed databases</h4>
+      <div class="code" style="font-size: 12px;">
+shodan search "port:27017 -authentication org:\"Target\""
+      </div>
+      <p style="font-size: 13px; color: var(--ink-dim); margin-top: 8px;">MongoDB, Elasticsearch, Redis — if auth is missing, that's a critical finding.</p>
+    </div>
+  </div>
+</section>
+
+<div class="divider">free vs paid</div>
+
+<!-- FREE VS PAID -->
+<section class="chapter">
+  <div class="chapter-num">Chapter 07 // Free tier vs membership</div>
+  <h2><span class="emoji">💳</span> What you get for free — and what costs $49</h2>
+
+  <div style="overflow-x:auto;">
+    <table style="width:100%; border-collapse: collapse; font-family: var(--mono); font-size: 13px;">
+      <thead>
+        <tr style="background: var(--panel-2);">
+          <th style="padding:10px; text-align:left; border:1px solid rgba(255,255,255,0.08);">Feature</th>
+          <th style="padding:10px; text-align:left; border:1px solid rgba(255,255,255,0.08);">Free</th>
+          <th style="padding:10px; text-align:left; border:1px solid rgba(255,255,255,0.08);">Membership ($49 one-time)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td style="padding:8px 10px; border:1px solid rgba(255,255,255,0.08); color: var(--ink);">Search results</td><td style="padding:8px 10px; border:1px solid rgba(255,255,255,0.08); color: var(--warn);">100 per query</td><td style="padding:8px 10px; border:1px solid rgba(255,255,255,0.08); color: var(--accent);">Unlimited</td></tr>
+        <tr><td style="padding:8px 10px; border:1px solid rgba(255,255,255,0.08); color: var(--ink);">Search filters</td><td style="padding:8px 10px; border:1px solid rgba(255,255,255,0.08); color: var(--warn);">Basic only</td><td style="padding:8px 10px; border:1px solid rgba(255,255,255,0.08); color: var(--accent);">All filters (vuln:, tag:, etc.)</td></tr>
+        <tr><td style="padding:8px 10px; border:1px solid rgba(255,255,255,0.08); color: var(--ink);">API queries/month</td><td style="padding:8px 10px; border:1px solid rgba(255,255,255,0.08); color: var(--warn);">100 credits</td><td style="padding:8px 10px; border:1px solid rgba(255,255,255,0.08); color: var(--accent);">100 credits (more on higher plans)</td></tr>
+        <tr><td style="padding:8px 10px; border:1px solid rgba(255,255,255,0.08); color: var(--ink);">CLI download</td><td style="padding:8px 10px; border:1px solid rgba(255,255,255,0.08); color: var(--warn);">No bulk export</td><td style="padding:8px 10px; border:1px solid rgba(255,255,255,0.08); color: var(--accent);">Export to JSON/CSV</td></tr>
+        <tr><td style="padding:8px 10px; border:1px solid rgba(255,255,255,0.08); color: var(--ink);">Network monitoring</td><td style="padding:8px 10px; border:1px solid rgba(255,255,255,0.08); color: var(--warn);">❌</td><td style="padding:8px 10px; border:1px solid rgba(255,255,255,0.08); color: var(--accent);">Monitor up to 16 IPs</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p style="margin-top: 14px;">For learning and CTFs, free is fine. For serious bug bounty recon, the $49 membership pays for itself with one medium-severity finding.</p>
+</section>
+
+<div class="divider">think about it</div>
+
+<!-- BRAIN POWER -->
+<section class="chapter">
+  <div class="chapter-num">Chapter 08 // Ethics</div>
+  <h2><span class="emoji">⚖️</span> The legal line</h2>
+
+  <div class="callout danger">
+    <strong>⚠️ Legal warning:</strong> Searching Shodan is legal — it's a public search engine indexing publicly available data. But <strong>acting on what you find</strong> requires authorization. Connecting to an exposed database you don't own? Illegal. Exploiting a vuln Shodan revealed? Illegal (unless it's in a bug bounty scope). Shodan is a <em>map</em>. Walking into someone's house because the map showed their door was open is still trespassing.
+  </div>
+
+  <div class="brain-power">
+    <div class="label">🧠 Brain Power</div>
+    <div class="question">Shodan shows 50,000 MongoDB databases with no authentication. What can you <em>ethically</em> do with this information?</div>
+    <button class="reveal-btn" onclick="toggleAnswer(this)">Reveal answer</button>
+    <div class="answer">
+      <p><strong>Ethical options:</strong></p>
+      <ul>
+        <li><strong>Report</strong> to the org if they have a security contact or bug bounty program</li>
+        <li><strong>Report</strong> to CERT/CC or the relevant national CERT for coordinated disclosure</li>
+        <li><strong>Research</strong> — publish aggregate statistics ("X% of MongoDB instances are unprotected") without revealing specific IPs</li>
+        <li><strong>Learn</strong> — set up your OWN vulnerable MongoDB, find it with Shodan, and practice the full attack chain legally in your own lab</li>
+      </ul>
+      <p><strong>NOT ethical:</strong> connecting to any of those 50K databases, downloading their data, "just checking" what's inside, or selling the list. Even with good intentions, unauthorized access is a crime in most jurisdictions (CFAA in the US, Computer Misuse Act in the UK, etc.).</p>
+    </div>
+  </div>
+</section>
+
+<div class="divider">quiz</div>
+
+<!-- QUIZ -->
+<section class="chapter">
+  <div class="quiz">
+    <h4>🎯 Quick Check</h4>
+    <div class="q">What does Shodan actually index?</div>
+    <div class="options">
+      <div class="opt" onclick="quizAnswer(this, false)">Web pages and their content (like Google)</div>
+      <div class="opt" onclick="quizAnswer(this, true)">Service banners — what software runs on what port on every IP</div>
+      <div class="opt" onclick="quizAnswer(this, false)">Only vulnerabilities and CVEs</div>
+      <div class="opt" onclick="quizAnswer(this, false)">Social media profiles and leaked credentials</div>
+    </div>
+    <div class="feedback"></div>
+  </div>
+</section>
+
+<!-- DEEPER DIVE LINK -->
+<section class="chapter">
+  <div class="callout success">
+    <strong>📚 Want the full tutorial?</strong> This glossary page is just the overview. For a hands-on walkthrough with real queries, Python scripting, and bug bounty workflows, check out the <a href="../topics/web/shodan-cli/index.html" style="color: var(--accent); font-weight: 700;">Shodan CLI full topic page →</a>
+  </div>
+</section>
+
+<!-- RELATED TERMS -->
+<section class="chapter">
+  <div class="related-terms">
+    <h4>🔗 Related in the vault</h4>
+    <div class="tags">
+      <a href="wordpress.html">🌐 WordPress</a>
+      <a href="wpscan.html">🔍 WPScan</a>
+      <a href="curl.html">💻 curl</a>
+      <a href="../topics/web/shodan-cli/index.html">🔎 Shodan CLI (full topic)</a>
+    </div>
+  </div>
+</section>
+
+<footer class="site-foot">
+  <p class="coffee-line">The internet never forgets to leave its doors open. Shodan just keeps track. ☕</p>
+</footer>
+
+<script src="../assets/glossary.js"></script>
+<script src="../assets/app.js"></script>
+</body>
+</html>

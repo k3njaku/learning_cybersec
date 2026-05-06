@@ -62,6 +62,17 @@ window.SITE_TOPICS = [
     tags: ["WordPress", "Bug Bounty", "Plugins", "CVE", "WPScan"]
   },
   {
+    slug: "shodan-cli",
+    lane: "web",
+    name: "Shodan CLI",
+    icon: "🔍",
+    blurb: "Google searches web pages. Shodan searches EVERYTHING ELSE — servers, cameras, databases, IoT.",
+    path: "topics/web/shodan-cli/index.html",
+    subpages: [],
+    progress: 0.1,
+    tags: ["Recon", "OSINT", "Bug Bounty", "CLI", "IoT"]
+  },
+  {
     slug: "textile-scraper",
     lane: "python",
     name: "Project: Textile Scraper 🧵",

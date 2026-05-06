@@ -359,6 +359,15 @@ window.GLOSSARY = {
     page: "requests.html",
     related: ["pip", "venv", "http-request", "http-status-code", "user-agent"]
   },
+  "shodan": {
+    name: "Shodan",
+    aliases: ["shodan-cli", "shodan.io", "shodan-api"],
+    category: "Tool / OSINT",
+    blurb: "The search engine for hackers. Google indexes web pages. Shodan indexes everything else — servers, cameras, databases, IoT.",
+    short: "A search engine that crawls the entire internet and indexes service banners — what software is running on what port on every IP. Find exposed databases (port:3306), webcams (webcamXP), WordPress sites (http.html:wp-content), vulnerable servers (vuln:CVE-xxxx). CLI: pip install shodan. Key commands: shodan search, shodan host, shodan domain, shodan count. Free tier = 100 results. $49 membership = unlimited.",
+    page: "shodan.html",
+    related: ["wordpress", "wpscan", "curl"]
+  },
   "reverse-shell": {
     name: "Reverse Shell",
     aliases: ["reverse-shell"],
