@@ -120,10 +120,10 @@ mkdir -p "$OUTPUT_DIR"
 
 # ─── BANNER ───
 echo ""
-echo -e "${BOLD}${CYAN}╔═══════════════════════════════════════════════════════╗${NC}"
-echo -e "${BOLD}${CYAN}║   WP-VULN-SCANNER — WordPress Exploit Scanner        ║${NC}"
-echo -e "${BOLD}${CYAN}║   CVE-2020-11738 (Duplicator) + CVE-2024-2876 (ES)   ║${NC}"
-echo -e "${BOLD}${CYAN}╚═══════════════════════════════════════════════════════╝${NC}"
+echo -e "${BOLD}${CYAN}+-------------------------------------------------------+${NC}"
+echo -e "${BOLD}${CYAN}|   WP-VULN-SCANNER -- WordPress Exploit Scanner        |${NC}"
+echo -e "${BOLD}${CYAN}|   CVE-2020-11738 (Duplicator) + CVE-2024-2876 (ES)    |${NC}"
+echo -e "${BOLD}${CYAN}+-------------------------------------------------------+${NC}"
 echo ""
 echo -e "${DIM}Targets: ${#TARGETS[@]} | Timeout: ${TIMEOUT}s | Output: ${OUTPUT_DIR}${NC}"
 echo -e "${DIM}Mode: $(if $SCAN_ONLY; then echo "SCAN ONLY"; elif $EXPLOIT_ALL; then echo "SCAN + AUTO-EXPLOIT"; else echo "SCAN + PROMPT"; fi)${NC}"
@@ -459,9 +459,9 @@ done
 
 # ─── SUMMARY ───
 
-echo -e "${BOLD}${CYAN}════════════════════════════════════════${NC}"
+echo -e "${BOLD}${CYAN}========================================${NC}"
 echo -e "${BOLD}SCAN COMPLETE${NC}"
-echo -e "${CYAN}════════════════════════════════════════${NC}"
+echo -e "${CYAN}========================================${NC}"
 echo ""
 echo -e "  Targets scanned:    ${BOLD}$total${NC}"
 echo -e "  WordPress found:    ${BOLD}$wp_count${NC}"
