@@ -56,7 +56,8 @@ window.SITE_TOPICS = [
       { name: "📖 CVE Encyclopedia (14+ exploits)", path: "topics/web/wordpress-pentesting/cve-encyclopedia.html" },
       { name: "💀 Exploit: Duplicator Path Traversal (CVE-2020-11738)", path: "topics/web/wordpress-pentesting/exploit-duplicator.html" },
       { name: "💉 Exploit: Email Subscribers SQLi (CVE-2024-2876)", path: "topics/web/wordpress-pentesting/exploit-email-subscribers-sqli.html" },
-      { name: "🔍 Discovery & Mass Scanning — finding vuln WP at scale", path: "topics/web/wordpress-pentesting/discovery-and-mass-scanning.html" }
+      { name: "🔍 Discovery & Mass Scanning — finding vuln WP at scale", path: "topics/web/wordpress-pentesting/discovery-and-mass-scanning.html" },
+      { name: "🔓 Exploit: User Verification Auth Bypass (CVE-2025-12374)", path: "topics/web/wordpress-pentesting/exploit-user-verification-auth-bypass.html" }
     ],
     progress: 0.2,
     tags: ["WordPress", "Bug Bounty", "Plugins", "CVE", "WPScan"]
