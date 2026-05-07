@@ -192,6 +192,16 @@ window.SITE_HTB = {
           htbUrl: "https://academy.hackthebox.com/module/9/section/47",
           completed: false,
           tags: ["mindset", "problem-solving", "simplicity"]
+        },
+        {
+          slug: "04-talent",
+          name: "Talent",
+          icon: "🎸",
+          blurb: "Talent isn't a gift — it's a trained thought process. You build it by confronting hard problems repeatedly.",
+          path: "htb-academy/learning-process/04-talent.html",
+          htbUrl: "https://academy.hackthebox.com/module/9/section/48",
+          completed: false,
+          tags: ["mindset", "talent", "growth"]
         }
       ]
     }

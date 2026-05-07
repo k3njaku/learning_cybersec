@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Talent — HTB · Learning Process ☕</title>
+<link rel="stylesheet" href="../../assets/styles.css" />
+<style>
+  /* Skill transfer visualizer */
+  .skill-transfer {
+    background: #0a0f13;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px;
+    margin: 18px 0;
+  }
+  .skill-transfer .person-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-top: 14px;
+  }
+  @media (max-width: 600px) { .skill-transfer .person-grid { grid-template-columns: 1fr; } }
+  .skill-transfer .person-card {
+    background: rgba(0,0,0,0.4);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+  }
+  .skill-transfer .person-card h4 { margin-bottom: 12px; }
+  .skill-transfer .skill-bar-wrap {
+    margin: 6px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .skill-transfer .skill-label {
+    font-size: 11px;
+    font-family: var(--mono);
+    color: var(--ink-dim);
+    min-width: 90px;
+  }
+  .skill-transfer .skill-bar {
+    flex: 1;
+    height: 8px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .skill-transfer .skill-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.8s ease;
+  }
+  .skill-transfer .skill-pct {
+    font-size: 11px;
+    font-family: var(--mono);
+    min-width: 35px;
+    text-align: right;
+  }
+  .talent-reveal {
+    padding: 14px;
+    margin-top: 14px;
+    border-radius: 6px;
+    font-size: 14px;
+    display: none;
+  }
+  .talent-reveal.open { display: block; }
+
+  /* Myth-busting cards */
+  .myth-card {
+    position: relative;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .myth-card:hover { border-color: var(--accent); }
+  .myth-card .myth-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 2px 8px;
+    border-radius: 8px;
+    display: inline-block;
+    margin-bottom: 6px;
+  }
+  .myth-label.myth { background: rgba(255,46,99,0.15); color: var(--accent-2); }
+  .myth-label.reality { background: rgba(0,255,157,0.15); color: var(--accent); }
+</style>
+</head>
+<body data-page-slug="htb-learning-process-04">
+
+<div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
+
+<div class="topbar">
+  <a class="logo" href="../../index.html">☕ CYBERSEC.VAULT</a>
+  <nav>
+    <a href="../../index.html">Home</a>
+    <a href="../../index.html#topics-web">Topics</a>
+    <a href="../../index.html#topics-python">Python</a>
+    <a href="../../glossary/index.html">Glossary</a>
+    <a href="../../tryhackme/index.html">THM</a>
+    <a href="../index.html" class="active">HTB</a>
+    <a href="../../labs/portswigger/index.html">Labs</a>
+  </nav>
+  <div class="search-wrap">
+    <input type="text" class="search" placeholder="Search (press /)..." />
+    <div class="search-results"></div>
+  </div>
+</div>
+
+<div class="breadcrumb">
+  <a href="../../index.html">Home</a>
+  <span class="sep">›</span>
+  <a href="../index.html">HTB Academy</a>
+  <span class="sep">›</span>
+  <a href="../index.html#modules">Learning Process</a>
+  <span class="sep">›</span>
+  <span>Talent</span>
+</div>
+
+<!-- HERO -->
+<section class="hero" style="min-height: 55vh;">
+  <div class="hero-content">
+    <span class="coffee-badge">🎸 htb academy · learning process · section 4/20</span>
+    <h1><span style="color: var(--accent);">Talent</span> Is a Trained Thought Process</h1>
+    <p class="subtitle">Nobody is born a hacker. Nobody is born a pilot. Nobody is born a musician.<br>Talent is what happens when you keep confronting hard problems until your brain rewires itself.</p>
+    <div class="tagline">"Calling someone talented is basically a status assignment, not a birth certificate." 🧠</div>
+    <div style="margin-top: 24px; display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+      <a href="https://academy.hackthebox.com/module/9/section/48" target="_blank" rel="noopener" class="cta-btn ghost">↗ Open on HTB Academy</a>
+      <a href="03-occams-razor.html" class="cta-btn ghost">← Section 3</a>
+    </div>
+  </div>
+</section>
+
+<!-- TL;DR -->
+<section class="chapter" id="tldr">
+  <div class="chapter-num">TL;DR</div>
+  <h2><span class="emoji">⚡</span> The three takeaways</h2>
+  <div class="grid cols-3">
+    <div class="card">
+      <h4>🧒 Children learn faster — here's why</h4>
+      <p>Kids don't overcomplicate things. They haven't built the mental hurdles adults have. They just engage with the problem directly.</p>
+    </div>
+    <div class="card">
+      <h4>🔄 Talent = repeated confrontation</h4>
+      <p>Talent isn't born. It's what grows when you keep throwing yourself at challenges. The thinking PATTERN develops, not just the individual skill.</p>
+    </div>
+    <div class="card">
+      <h4>🥁 The drummer learning bass guitar</h4>
+      <p>A drummer already has rhythm, timing, and musical thinking. Learning bass looks like "natural talent" to outsiders — but it's <strong>skill transfer</strong>.</p>
+    </div>
+  </div>
+</section>
+
+<div class="divider">the myth</div>
+
+<!-- CONCEPT 01: TALENT IS NOT INNATE -->
+<section class="chapter" id="concept-myth">
+  <div class="chapter-num">Concept 01 // The myth of innate talent</div>
+  <h2><span class="emoji">🚫</span> "They're just naturally talented"</h2>
+
+  <p class="lead">We all know people who seem to be "naturally good" at things. Most people believe talent is innate — something genetic, something you're born with. HTB pushes back hard on this.</p>
+
+  <div class="callout danger" style="font-size: 1.05rem;">
+    <strong>"Talent itself is not innate — the ability to solve particular problems with excellence results from thought processes developed primarily in early childhood."</strong>
+  </div>
+
+  <p>The official definition says talent is a "natural aptitude or skill." But HTB challenges the word "natural" — because talent requires <strong>application to a skill</strong>. You can't have a "natural talent" for something you've never practiced.</p>
+
+  <div class="paper">
+    <h4>📝 The airplane test</h4>
+    <p>HTB asks a question that shuts down the "born with it" argument:</p>
+    <p><em>"Who among the several million students on Hack The Box can naturally fly an airplane?"</em></p>
+    <p>Answer: <strong>nobody</strong>. Not a single one. Starting and taking off an airplane requires technical knowledge of the controls and physics. Maybe someone with luck manages to start the engine and drive a few meters — but actually flying? That requires considerable training and practice.</p>
+    <p><span class="highlight">If talent were truly innate, at least ONE person out of millions would be able to fly a plane without training. The fact that nobody can proves the point: talent comes from practice, not birth.</span></p>
+  </div>
+
+  <h3>🎭 Myth vs. reality</h3>
+  <div class="grid cols-2">
+    <div class="card" style="border-left: 3px solid var(--accent-2);">
+      <div class="myth-label myth">MYTH</div>
+      <h4>"Masters of their craft are born"</h4>
+      <p>This is a misconception that comes from our interpretive ability as humans. When we see someone perform at an elite level, our brain shortcuts to "they must be naturally gifted."</p>
+      <p style="color: var(--accent-2); font-size: 13px;">We see the performance. We don't see the 10,000 hours of practice behind it.</p>
+    </div>
+    <div class="card" style="border-left: 3px solid var(--accent);">
+      <div class="myth-label reality">REALITY</div>
+      <h4>Talent = highly efficient + exceptional performance</h4>
+      <p>Talented people are defined as those who perform <strong>highly efficiently</strong> and <strong>exceptionally well</strong> in their individual fields. The efficiency comes from trained thought patterns, not genetics.</p>
+      <p style="color: var(--accent); font-size: 13px;">Efficiency is a pattern you build. Not a gene you inherit.</p>
+    </div>
+  </div>
+</section>
+
+<div class="divider">how it builds</div>
+
+<!-- CONCEPT 02: HOW TALENT DEVELOPS -->
+<section class="chapter" id="concept-development">
+  <div class="chapter-num">Concept 02 // How talent actually develops</div>
+  <h2><span class="emoji">🔄</span> Constant confrontation → trained patterns</h2>
+
+  <p class="lead">HTB's key mechanism: talent grows from <strong>constant or persistent confrontation</strong> with problems. Not from a single moment. Not from reading a book once. From repeated, active engagement.</p>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <h4>🧩 It's not about the specific situation</h4>
+      <p>You don't need to face the exact same problem twice. What develops is the <strong>thinking pattern</strong> — the approach to solving problems in general. Each confrontation expands your comfort zone and repertoire.</p>
+    </div>
+    <div class="card">
+      <h4>🧠 It's a trained thought process</h4>
+      <p>Talent, in essence, is a <strong>trained and adapted thought process</strong> and the associated thought patterns for specific fields and situations. Your brain literally rewires itself through practice.</p>
+    </div>
+  </div>
+
+  <div class="callout success">
+    <strong>☕ The good news:</strong> We have influence on our thought processes and thought patterns. We can shape them according to our decisions. This means we can <strong>develop and train talent for any field we want.</strong> Including pentesting. Including bug bounty. Including whatever you decide is worth your time.
+  </div>
+
+  <div class="brain-power">
+    <div class="label">🧠 Brain Power</div>
+    <div class="question">Think about something you're "good at" right now — maybe a video game, cooking, a sport, coding. Can you trace it back to the moment it started? Was there a phase where you were terrible at it but kept going anyway?</div>
+    <button class="reveal-btn" onclick="toggleAnswer(this)">Think first, then click</button>
+    <div class="answer">
+      <p>If you're honest, every skill you have went through a phase where you were bad at it. The difference between a skill you "have" and one you "don't have" isn't talent — it's that you kept confronting one and gave up on the other.</p>
+      <p>The kid who seems "naturally talented" at video games? They've been playing since age 5. That's 10+ years of pattern development. Of course they look effortless to you.</p>
+      <p>This applies directly to hacking: you won't be "naturally good" at finding SQLi bugs. But after 50 labs, 20 CTFs, and 100 hours of Burp Suite, your brain will pattern-match injection points without conscious effort. That's when people will call you "talented."</p>
+    </div>
+  </div>
+</section>
+
+<div class="divider">skill transfer</div>
+
+<!-- CONCEPT 03: THE DRUMMER ANALOGY -->
+<section class="chapter" id="concept-drummer">
+  <div class="chapter-num">Concept 03 // The drummer and the bass guitar</div>
+  <h2><span class="emoji">🥁</span> Why some people learn faster (it's not what you think)</h2>
+
+  <p class="lead">HTB uses a brilliant analogy here. A guitarist learning bass guitar will pick it up faster than someone who's never played any instrument. That's obvious. But then they complicate it:</p>
+
+  <div class="callout info" style="font-size: 1.05rem;">
+    <strong>A drummer learning bass guitar will ALSO learn faster than a complete beginner — even though drums and bass are completely different instruments.</strong>
+  </div>
+
+  <p>Why? Because the drummer already has:</p>
+  <ul>
+    <li><strong>Rhythm and timing</strong> — the foundational skill for any instrument</li>
+    <li><strong>Sense of when to highlight and support</strong> — musical awareness</li>
+    <li><strong>Coordination under pressure</strong> — performing live</li>
+    <li><strong>Ear training</strong> — recognizing patterns in sound</li>
+  </ul>
+
+  <p>Put the drummer and a total beginner in the same bass guitar class. The drummer will be perceived as "talented." But it's not talent — it's <strong>skill transfer</strong>. The thinking patterns from one domain carry over to another.</p>
+
+  <!-- INTERACTIVE: SKILL TRANSFER VISUALIZER -->
+  <div class="skill-transfer">
+    <h4 style="margin-bottom: 10px;">🧪 Skill transfer visualizer</h4>
+    <p style="color: var(--ink-dim); font-size: 13px; margin-bottom: 14px;">Click a person to see their starting skill levels for learning bass guitar.</p>
+
+    <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 14px;">
+      <button class="chip" onclick="showPerson('beginner')" id="btn-beginner">Total beginner</button>
+      <button class="chip" onclick="showPerson('guitarist')" id="btn-guitarist">Guitarist</button>
+      <button class="chip" onclick="showPerson('drummer')" id="btn-drummer">Drummer</button>
+      <button class="chip evil" onclick="showPerson('pentester')" id="btn-pentester">Pentester (you!)</button>
+    </div>
+
+    <div class="person-grid" id="skill-display" style="display:none;">
+      <div class="person-card" id="skill-card">
+        <h4 id="person-name"></h4>
+        <p id="person-desc" style="font-size: 13px; color: var(--ink-dim); margin-bottom: 14px;"></p>
+        <div id="skill-bars"></div>
+      </div>
+      <div class="person-card">
+        <h4>🎯 Transferable skills</h4>
+        <p id="transfer-text" style="font-size: 13px; color: var(--ink-dim);"></p>
+      </div>
+    </div>
+
+    <div class="talent-reveal" id="transfer-insight"></div>
+  </div>
+</section>
+
+<div class="divider">childhood & you</div>
+
+<!-- CONCEPT 04: CHILDHOOD + IMPLICATIONS -->
+<section class="chapter" id="concept-childhood">
+  <div class="chapter-num">Concept 04 // Why kids learn faster + what it means for you</div>
+  <h2><span class="emoji">🧒</span> Children don't overcomplicate</h2>
+
+  <p class="lead">HTB points out that children develop talent more effortlessly than adults. Not because kids' brains are "better" — but because they haven't built the complex mental hurdles that adults have.</p>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <h4>🧒 How a child learns</h4>
+      <p>A child encounters something new. If it's fun (or at least presented as fun by parents), they engage. They don't ask "am I talented enough?" They just <strong>do</strong>.</p>
+      <p style="color: var(--accent); font-size: 13px;">No imposter syndrome. No overthinking. Pure engagement with the problem.</p>
+    </div>
+    <div class="card">
+      <h4>🧑 How an adult "learns"</h4>
+      <p>An adult encounters something new. They immediately assess: "Am I smart enough? Is this too hard? What if I fail? Others seem to get it faster — maybe I'm not talented."</p>
+      <p style="color: var(--accent-2); font-size: 13px;">90% of the energy goes into self-doubt instead of the actual problem.</p>
+    </div>
+  </div>
+
+  <p>HTB also makes a point about <strong>parental influence</strong>: how a child develops talent depends largely on the parents. If something is presented as fun and engaging, the child forms new thought patterns around it. This is why some kids seem "naturally" good at math or music — their environment made it engaging early.</p>
+
+  <div class="callout danger">
+    <strong>🔥 The implication for you right now:</strong> You're an adult learner. You can't go back to childhood. But you CAN decide to engage with cybersecurity the way a child would — with curiosity, without self-judgment, and with persistent confrontation. Every lab you do, every CTF challenge you attempt (even the ones you fail) is building thought patterns. That IS talent forming.
+  </div>
+</section>
+
+<div class="divider">pentesting parallel</div>
+
+<!-- CONCEPT 05: PENTESTING APPLICATION -->
+<section class="chapter" id="concept-pentesting">
+  <div class="chapter-num">Concept 05 // This applies to YOU right now</div>
+  <h2><span class="emoji">🎯</span> Building hacker talent</h2>
+
+  <p class="lead">HTB considers <strong>all of its students talented</strong> — because they understand that any individuality in thinking patterns will help solve different situations. The problem isn't talent. It's that pentesting situations are so varied that it's hard to identify talents early.</p>
+
+  <div class="paper">
+    <h4>📝 The pentester as a drummer learning bass</h4>
+    <p>Think about what you already know. Maybe you're a developer — you understand how apps are built, which means you intuitively know where they break. Maybe you're a sysadmin — you understand network configs, which means you know what's usually misconfigured.</p>
+    <p>Maybe you play video games competitively — you already have pattern recognition under pressure, systematic thinking, and the ability to exploit rule systems.</p>
+    <p><span class="highlight">Every skill you've ever built is a drumstick for the bass guitar of pentesting. You're not starting from zero. You're transferring patterns.</span></p>
+  </div>
+
+  <div class="grid cols-3">
+    <div class="card">
+      <h4>🧑‍💻 Developer → Pentester</h4>
+      <p>You know how code works, so you know how it breaks. SQL queries, API endpoints, auth flows — you've built them, now you break them.</p>
+      <p style="color: var(--accent); font-size: 12px;">Transferable: code reading, debugging mindset, understanding data flow</p>
+    </div>
+    <div class="card">
+      <h4>🖥️ Sysadmin → Pentester</h4>
+      <p>You've configured firewalls, set up servers, managed permissions. You know what gets forgotten — because you've forgotten it yourself.</p>
+      <p style="color: var(--accent); font-size: 12px;">Transferable: networking, OS internals, misconfig awareness</p>
+    </div>
+    <div class="card">
+      <h4>🎮 Gamer → Pentester</h4>
+      <p>You've exploited game mechanics, found glitches, min-maxed stats. Pentesting is just a different game with higher stakes.</p>
+      <p style="color: var(--accent); font-size: 12px;">Transferable: pattern recognition, persistence, creative problem-solving</p>
+    </div>
+  </div>
+</section>
+
+<div class="divider">section questions</div>
+
+<!-- QUESTIONS -->
+<section class="chapter" id="questions">
+  <div class="chapter-num">Questions</div>
+  <h2><span class="emoji">🎯</span> Section 4 answers</h2>
+
+  <div class="card" style="margin-bottom: 14px;">
+    <div class="card-badge">SECTION NOTE</div>
+    <h4>No graded questions in this section</h4>
+    <p style="color: var(--ink-dim); font-size: 0.92rem;">Section 4 is conceptual. The key takeaway: <strong>talent is trained, not born. You build it through persistent confrontation with problems.</strong></p>
+    <details style="margin-top: 12px;">
+      <summary style="cursor:pointer; color: var(--accent-2); font-family: var(--mono); font-size: 13px;">▸ Show the core principles to remember</summary>
+      <div style="margin-top: 10px; padding: 14px; background: rgba(0,0,0,0.3); border-left: 3px solid var(--accent); border-radius: 4px; font-size: 14px;">
+        <strong style="color: var(--accent); font-family: var(--mono); font-size: 12px;">KEY PRINCIPLES:</strong>
+        <ul style="margin-top: 8px;">
+          <li>Talent is NOT innate — it's a trained and adapted thought process</li>
+          <li>It develops from <strong>constant confrontation</strong> with challenges</li>
+          <li>Skills transfer between domains (the drummer → bass guitar effect)</li>
+          <li>Children learn faster because they don't overcomplicate — emulate that</li>
+          <li>You're not starting from zero — your existing skills are transferable</li>
+        </ul>
+      </div>
+    </details>
+  </div>
+</section>
+
+<!-- RETENTION QUIZ -->
+<section class="chapter" id="quiz">
+  <div class="chapter-num">Retention Check</div>
+  <h2><span class="emoji">🎯</span> Did it stick?</h2>
+
+  <div class="quiz">
+    <h4>🧠 What is talent, according to HTB?</h4>
+    <div class="q">HTB defines talent as:</div>
+    <div class="options">
+      <div class="opt" onclick="quizAnswer(this, false)">A natural aptitude you're born with — some people just have it</div>
+      <div class="opt" onclick="quizAnswer(this, true)">A trained and adapted thought process that develops through persistent confrontation with problems</div>
+      <div class="opt" onclick="quizAnswer(this, false)">The ability to learn faster than others due to genetics</div>
+      <div class="opt" onclick="quizAnswer(this, false)">Something only children can develop — adults can't build new talents</div>
+    </div>
+    <div class="feedback"></div>
+  </div>
+
+  <div class="quiz" style="margin-top: 24px;">
+    <h4>🥁 Why does a drummer learn bass guitar faster than a complete beginner?</h4>
+    <div class="q">The drummer picks up bass quickly because:</div>
+    <div class="options">
+      <div class="opt" onclick="quizAnswer(this, false)">Drummers have a genetic advantage for all musical instruments</div>
+      <div class="opt" onclick="quizAnswer(this, false)">Bass guitar is easy — anyone would learn it fast</div>
+      <div class="opt" onclick="quizAnswer(this, true)">The drummer already has transferable thinking patterns — rhythm, timing, musical awareness</div>
+      <div class="opt" onclick="quizAnswer(this, false)">The drummer memorized the same notes that bass uses</div>
+    </div>
+    <div class="feedback"></div>
+  </div>
+
+  <div class="quiz" style="margin-top: 24px;">
+    <h4>🧒 Why do children develop talent more effortlessly than adults?</h4>
+    <div class="q">According to HTB, children learn faster because:</div>
+    <div class="options">
+      <div class="opt" onclick="quizAnswer(this, false)">Children's brains are physically more capable than adult brains</div>
+      <div class="opt" onclick="quizAnswer(this, false)">Children have more free time to practice</div>
+      <div class="opt" onclick="quizAnswer(this, false)">Children are genetically optimized for learning new things</div>
+      <div class="opt" onclick="quizAnswer(this, true)">Children haven't built complex mental hurdles — they engage directly without overthinking</div>
+    </div>
+    <div class="feedback"></div>
+  </div>
+</section>
+
+<!-- RELATED TERMS -->
+<section class="chapter">
+  <div class="related-terms">
+    <h4>🔗 Related in the vault</h4>
+    <div class="tags">
+      <a href="01-way-of-thinking.html">💭 Section 1: Way of Thinking</a>
+      <a href="02-think-outside-the-box.html">📦 Section 2: Think Outside the Box</a>
+      <a href="03-occams-razor.html">🪒 Section 3: Occam's Razor</a>
+      <a href="../index.html">🟩 HTB Academy Hub</a>
+      <a href="../../labs/portswigger/index.html">🧪 PortSwigger Labs (build YOUR talent)</a>
+    </div>
+  </div>
+</section>
+
+<footer class="site-foot">
+  <p class="coffee-line">Nobody is born a hacker. You become one, one lab at a time. ☕</p>
+  <p style="font-size: 12px;">Original section: <a href="https://academy.hackthebox.com/module/9/section/48" target="_blank" rel="noopener">HTB Academy · Learning Process · Section 4</a></p>
+</footer>
+
+<script src="../../assets/glossary.js"></script>
+<script src="../../assets/app.js"></script>
+<script>
+  var people = {
+    beginner: {
+      name: '👤 Total beginner',
+      desc: 'Never played any musical instrument. Starting from absolute zero.',
+      skills: [
+        { label: 'Rhythm', pct: 5, color: 'var(--danger)' },
+        { label: 'Timing', pct: 5, color: 'var(--danger)' },
+        { label: 'Coordination', pct: 10, color: 'var(--danger)' },
+        { label: 'Ear training', pct: 5, color: 'var(--danger)' },
+        { label: 'String technique', pct: 0, color: 'var(--ink-mute)' },
+        { label: 'Music theory', pct: 5, color: 'var(--danger)' }
+      ],
+      transfer: 'Almost nothing transfers. Every fundamental must be learned from scratch — rhythm, timing, finger coordination, reading music. This person will be perceived as "untalented" even though they simply have no prior patterns to build on.',
+      insight: '❌ This is NOT a lack of talent. It\'s a lack of prior pattern development. Give this person 2 years of consistent practice and they\'ll be indistinguishable from the "talented" drummer.'
+    },
+    guitarist: {
+      name: '🎸 Guitarist (5 years)',
+      desc: 'Has been playing electric guitar for 5 years. Strong foundations.',
+      skills: [
+        { label: 'Rhythm', pct: 70, color: 'var(--accent)' },
+        { label: 'Timing', pct: 75, color: 'var(--accent)' },
+        { label: 'Coordination', pct: 80, color: 'var(--accent)' },
+        { label: 'Ear training', pct: 65, color: 'var(--warn)' },
+        { label: 'String technique', pct: 85, color: 'var(--accent)' },
+        { label: 'Music theory', pct: 60, color: 'var(--warn)' }
+      ],
+      transfer: 'Massive transfer. String technique directly applies (same instrument family). Rhythm, timing, and music theory all carry over. This person will learn bass quickly and everyone will say they\'re "naturally talented at bass."',
+      insight: '✅ The guitarist\'s "talent" for bass is really just 5 years of guitar patterns being applied to a cousin instrument. The transfer is obvious because the domains are closely related.'
+    },
+    drummer: {
+      name: '🥁 Drummer (5 years)',
+      desc: 'Has been drumming for 5 years. Different instrument family entirely.',
+      skills: [
+        { label: 'Rhythm', pct: 95, color: 'var(--accent)' },
+        { label: 'Timing', pct: 90, color: 'var(--accent)' },
+        { label: 'Coordination', pct: 85, color: 'var(--accent)' },
+        { label: 'Ear training', pct: 60, color: 'var(--warn)' },
+        { label: 'String technique', pct: 0, color: 'var(--ink-mute)' },
+        { label: 'Music theory', pct: 40, color: 'var(--warn)' }
+      ],
+      transfer: 'This is the interesting one. Zero string technique transfers. But the THINKING PATTERNS — rhythm, timing, coordination, performance under pressure — all transfer powerfully. The drummer will be perceived as talented even though they\'ve never touched a string instrument.',
+      insight: '🔥 THIS is HTB\'s key example. The drummer has zero direct skill in strings, but their THINKING PATTERNS from drums accelerate everything else. <strong>The transfer happens at the pattern level, not the technique level.</strong> This is exactly how a gamer or developer can seem "naturally talented" at pentesting.'
+    },
+    pentester: {
+      name: '🔴 You (learning pentesting)',
+      desc: 'Your existing skills — whatever they are — transfer more than you think.',
+      skills: [
+        { label: 'Problem-solving', pct: 70, color: 'var(--accent)' },
+        { label: 'Pattern matching', pct: 60, color: 'var(--warn)' },
+        { label: 'Persistence', pct: 75, color: 'var(--accent)' },
+        { label: 'Technical curiosity', pct: 85, color: 'var(--accent)' },
+        { label: 'Exploit knowledge', pct: 25, color: 'var(--danger)' },
+        { label: 'Tool proficiency', pct: 30, color: 'var(--warn)' }
+      ],
+      transfer: 'You\'re HERE — reading this — which means you have curiosity, persistence, and a willingness to learn. Those are the FOUNDATIONAL patterns. Exploit knowledge and tool proficiency are the string technique — they\'ll come with labs and practice. Your thinking patterns are already forming.',
+      insight: '🚀 You are the drummer. Pentesting is the bass guitar. Your existing problem-solving patterns (from coding, gaming, school, debugging, life) will make you seem "talented" once the domain-specific skills catch up. <strong>Keep confronting the problems. The talent is already forming.</strong>'
+    }
+  };
+
+  function showPerson(key) {
+    var p = people[key];
+    var display = document.getElementById('skill-display');
+    var name = document.getElementById('person-name');
+    var desc = document.getElementById('person-desc');
+    var bars = document.getElementById('skill-bars');
+    var transfer = document.getElementById('transfer-text');
+    var insight = document.getElementById('transfer-insight');
+
+    display.style.display = 'grid';
+
+    // Highlight active button
+    document.querySelectorAll('.chip').forEach(function(c) { c.style.opacity = '0.5'; });
+    var btn = document.getElementById('btn-' + key);
+    if (btn) btn.style.opacity = '1';
+
+    name.textContent = p.name;
+    desc.textContent = p.desc;
+    transfer.innerHTML = p.transfer;
+
+    // Build skill bars
+    bars.innerHTML = '';
+    p.skills.forEach(function(s) {
+      var wrap = document.createElement('div');
+      wrap.className = 'skill-bar-wrap';
+      wrap.innerHTML =
+        '<span class="skill-label">' + s.label + '</span>' +
+        '<div class="skill-bar"><div class="skill-fill" style="width:0%;background:' + s.color + ';"></div></div>' +
+        '<span class="skill-pct" style="color:' + s.color + ';">' + s.pct + '%</span>';
+      bars.appendChild(wrap);
+    });
+
+    // Animate bars
+    setTimeout(function() {
+      var fills = bars.querySelectorAll('.skill-fill');
+      p.skills.forEach(function(s, i) {
+        fills[i].style.width = s.pct + '%';
+      });
+    }, 50);
+
+    // Show insight
+    insight.innerHTML = p.insight;
+    insight.style.background = 'rgba(0,0,0,0.4)';
+    insight.style.borderLeft = '3px solid var(--accent)';
+    insight.className = 'talent-reveal open';
+  }
+</script>
+</body>
+</html>
