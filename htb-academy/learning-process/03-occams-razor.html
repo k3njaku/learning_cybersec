@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Occam's Razor — HTB · Learning Process ☕</title>
+<link rel="stylesheet" href="../../assets/styles.css" />
+<style>
+  /* Troubleshooting simulator */
+  .troubleshoot-sim {
+    background: #0a0f13;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px;
+    margin: 18px 0;
+  }
+  .troubleshoot-sim .scenario-box {
+    background: #000;
+    border-left: 3px solid var(--accent-2);
+    padding: 14px;
+    border-radius: 4px;
+    margin-bottom: 14px;
+    font-size: 14px;
+  }
+  .troubleshoot-sim .option-grid {
+    display: grid;
+    gap: 10px;
+    margin-top: 14px;
+  }
+  .troubleshoot-sim .ts-option {
+    padding: 14px 16px;
+    background: rgba(0,0,0,0.4);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 14px;
+    position: relative;
+  }
+  .troubleshoot-sim .ts-option:hover { border-color: var(--accent); background: rgba(0,255,157,0.05); }
+  .troubleshoot-sim .ts-option .step-tag {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 2px 8px;
+    border-radius: 8px;
+    display: inline-block;
+    margin-bottom: 6px;
+  }
+  .ts-option.simple .step-tag { background: rgba(0,255,157,0.15); color: var(--accent); }
+  .ts-option.medium .step-tag { background: rgba(255,182,39,0.15); color: var(--warn); }
+  .ts-option.complex .step-tag { background: rgba(255,46,99,0.15); color: var(--accent-2); }
+  .ts-option.selected { opacity: 1 !important; }
+  .ts-option.correct { border-color: var(--accent) !important; background: rgba(0,255,157,0.08) !important; }
+  .ts-option.wrong { border-color: var(--danger) !important; background: rgba(255,0,0,0.05) !important; opacity: 0.6; }
+  .ts-result {
+    margin-top: 14px;
+    padding: 14px;
+    border-radius: 6px;
+    font-size: 14px;
+    display: none;
+  }
+  .ts-result.open { display: block; }
+
+  /* Complexity scale */
+  .complexity-scale {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    margin: 20px 0;
+    position: relative;
+    height: 50px;
+  }
+  .complexity-scale .bar {
+    flex: 1;
+    height: 8px;
+    background: linear-gradient(90deg, var(--accent), var(--warn), var(--accent-2), var(--danger));
+    border-radius: 4px;
+  }
+  .complexity-scale .marker {
+    position: absolute;
+    top: -8px;
+    transform: translateX(-50%);
+    font-size: 12px;
+    text-align: center;
+    font-family: var(--mono);
+  }
+  .complexity-scale .marker::after {
+    content: '▼';
+    display: block;
+    font-size: 14px;
+    margin-top: 2px;
+  }
+</style>
+</head>
+<body data-page-slug="htb-learning-process-03">
+
+<div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
+
+<div class="topbar">
+  <a class="logo" href="../../index.html">☕ CYBERSEC.VAULT</a>
+  <nav>
+    <a href="../../index.html">Home</a>
+    <a href="../../index.html#topics-web">Topics</a>
+    <a href="../../index.html#topics-python">Python</a>
+    <a href="../../glossary/index.html">Glossary</a>
+    <a href="../../tryhackme/index.html">THM</a>
+    <a href="../index.html" class="active">HTB</a>
+    <a href="../../labs/portswigger/index.html">Labs</a>
+  </nav>
+  <div class="search-wrap">
+    <input type="text" class="search" placeholder="Search (press /)..." />
+    <div class="search-results"></div>
+  </div>
+</div>
+
+<div class="breadcrumb">
+  <a href="../../index.html">Home</a>
+  <span class="sep">›</span>
+  <a href="../index.html">HTB Academy</a>
+  <span class="sep">›</span>
+  <a href="../index.html#modules">Learning Process</a>
+  <span class="sep">›</span>
+  <span>Occam's Razor</span>
+</div>
+
+<!-- HERO -->
+<section class="hero" style="min-height: 55vh;">
+  <div class="hero-content">
+    <span class="coffee-badge">🪒 htb academy · learning process · section 3/20</span>
+    <h1>Occam's <span style="color: var(--accent);">Razor</span></h1>
+    <p class="subtitle">The simplest explanation is always the most probable.<br>Stop tearing apart the motherboard when the power strip is switched off.</p>
+    <div class="tagline">"When you hear hoofbeats, think horses — not zebras." 🐴</div>
+    <div style="margin-top: 24px; display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+      <a href="https://academy.hackthebox.com/module/9/section/47" target="_blank" rel="noopener" class="cta-btn ghost">↗ Open on HTB Academy</a>
+      <a href="02-think-outside-the-box.html" class="cta-btn ghost">← Section 2</a>
+    </div>
+  </div>
+</section>
+
+<!-- TL;DR -->
+<section class="chapter" id="tldr">
+  <div class="chapter-num">TL;DR</div>
+  <h2><span class="emoji">⚡</span> The three takeaways</h2>
+  <div class="grid cols-3">
+    <div class="card">
+      <h4>🪒 Simplest = most probable</h4>
+      <p>Occam's Razor: the most straightforward theory is preferable to all others. Don't jump to exotic explanations when a simple one exists.</p>
+    </div>
+    <div class="card">
+      <h4>🔌 Check the power strip</h4>
+      <p>Computer not turning on? Before replacing the PSU, CPU, or motherboard — check if the power strip is switched off. The boring answer is usually the right one.</p>
+    </div>
+    <div class="card">
+      <h4>🧩 Concepts > individual steps</h4>
+      <p>Understand the overall concept first. Individual techniques are steps — the concept is the map. Without the map, you can't adapt to new situations.</p>
+    </div>
+  </div>
+</section>
+
+<div class="divider">the principle</div>
+
+<!-- CONCEPT 01: WHAT IS OCCAM'S RAZOR -->
+<section class="chapter" id="concept-principle">
+  <div class="chapter-num">Concept 01 // The principle</div>
+  <h2><span class="emoji">🪒</span> What is Occam's Razor?</h2>
+  <p class="lead">One of the central principles of modern scientific theory. Simple but nuclear:</p>
+
+  <div class="callout danger" style="font-size: 1.05rem;">
+    <strong>"The most straightforward theory is preferable to all others of several sufficient possible explanations for the same state of facts. In other words: The simplest explanation is always the most probable."</strong>
+  </div>
+
+  <p>Named after William of Ockham (14th century friar), the idea is: don't multiply explanations beyond necessity. If two theories explain the same evidence, go with the simpler one first.</p>
+
+  <div class="paper">
+    <h4>📝 The dead computer analogy</h4>
+    <p>Your computer stopped working. Here are some possibilities:</p>
+    <ul>
+      <li>The power supply is faulty</li>
+      <li>The CPU has issues</li>
+      <li>The motherboard is fried</li>
+      <li>The power strip is switched off</li>
+    </ul>
+    <p>Most people jump to <strong>process of elimination</strong> — they start taking the computer apart, testing each component. This already leads them in the wrong direction.</p>
+    <p>The <strong>Occam's Razor</strong> approach? Ask: <em>"Why is the computer not getting power?"</em> — then check the simplest thing first. Walk over to the power strip. Flip the switch. Done.</p>
+    <p><span class="highlight">The most boring explanation was also the most probable. And it took 5 seconds instead of 5 hours.</span></p>
+  </div>
+</section>
+
+<div class="divider">the wrong approach</div>
+
+<!-- CONCEPT 02: ELIMINATION TRAP -->
+<section class="chapter" id="concept-elimination">
+  <div class="chapter-num">Concept 02 // The elimination trap</div>
+  <h2><span class="emoji">🚫</span> Process of elimination is a trap</h2>
+
+  <p class="lead">HTB makes a critical distinction here. Most people's instinct when facing a problem is to <strong>eliminate</strong> possible causes one by one. This sounds logical. It isn't.</p>
+
+  <div class="grid cols-2">
+    <div class="card" style="border-left: 3px solid var(--danger);">
+      <h4>❌ Process of elimination</h4>
+      <p>You list all possible causes, then test each one, crossing off failures.</p>
+      <p style="color: var(--danger); font-size: 13px;"><strong>Problem:</strong> You start with the most complex possibilities because they seem more "likely." You spend 4 hours disassembling the computer before checking if it's plugged in.</p>
+      <p style="color: var(--ink-dim); font-size: 13px;">This is how most beginners troubleshoot. It's slow, exhausting, and usually wrong.</p>
+    </div>
+    <div class="card" style="border-left: 3px solid var(--accent);">
+      <h4>✅ Occam's Razor approach</h4>
+      <p>You ask: <strong>what's the simplest possible explanation?</strong> Then test that first.</p>
+      <p style="color: var(--accent); font-size: 13px;"><strong>Benefit:</strong> You check the power strip in 5 seconds. If that's not it, you move to the next simplest cause. Each test takes minimal effort.</p>
+      <p style="color: var(--ink-dim); font-size: 13px;">This is how experienced pentesters and sysadmins troubleshoot. Fast, efficient, methodical.</p>
+    </div>
+  </div>
+
+  <div class="brain-power">
+    <div class="label">🧠 Brain Power</div>
+    <div class="question">You're on a pentest. A web app returns a 500 error when you add a single quote to a parameter. Your colleague says "the WAF is blocking us." But what would Occam's Razor say?</div>
+    <button class="reveal-btn" onclick="toggleAnswer(this)">Think first, then click</button>
+    <div class="answer">
+      <p>Occam's Razor says: <strong>the simplest explanation is that the single quote broke a SQL query.</strong> A 500 Internal Server Error on a quote is textbook SQL injection behavior. The WAF theory is more complex (requires the WAF to be configured to return 500 specifically on quotes, which is unusual).</p>
+      <p>Test the simple theory first: try <code class="inline">' OR 1=1--</code>. If it works, you just found SQLi. If it doesn't, THEN consider the WAF.</p>
+      <p>This is Occam's Razor in pentesting: <strong>don't assume exotic defenses until you've ruled out basic vulnerabilities.</strong></p>
+    </div>
+  </div>
+</section>
+
+<div class="divider">interactive</div>
+
+<!-- PLAYGROUND: TROUBLESHOOTING SIMULATOR -->
+<section class="chapter" id="playground">
+  <div class="chapter-num">Playground</div>
+  <h2><span class="emoji">🧪</span> Troubleshooting simulator</h2>
+  <p class="lead">Apply Occam's Razor. Pick the <strong>simplest check first</strong> — not the most dramatic one.</p>
+
+  <div class="troubleshoot-sim" id="sim1">
+    <div class="scenario-box">
+      <strong>Scenario 1:</strong> You're pentesting a web app. After running Nmap, you find port 80 (HTTP) is open but the website shows a blank page. What do you check first?
+    </div>
+    <div class="option-grid">
+      <div class="ts-option complex" onclick="checkScenario('sim1', this, false, 'complex')">
+        <div class="step-tag">complex</div>
+        <div>🔍 The server might be using a WAF that blocks your IP — configure a VPN and try again from a different country</div>
+      </div>
+      <div class="ts-option medium" onclick="checkScenario('sim1', this, false, 'medium')">
+        <div class="step-tag">medium</div>
+        <div>🔧 The web server config is broken — try fuzzing for hidden directories with gobuster</div>
+      </div>
+      <div class="ts-option simple" onclick="checkScenario('sim1', this, true, 'simple')">
+        <div class="step-tag">simple</div>
+        <div>🌐 View the page source — maybe the HTML is there but CSS/JS isn't loading, or the page redirects with JS</div>
+      </div>
+    </div>
+    <div class="ts-result" id="sim1-result"></div>
+  </div>
+
+  <div class="troubleshoot-sim" id="sim2">
+    <div class="scenario-box">
+      <strong>Scenario 2:</strong> Your reverse shell isn't connecting back. You have RCE confirmed (you can run <code class="inline">id</code> via the web vuln). What's the Occam's Razor check?
+    </div>
+    <div class="option-grid">
+      <div class="ts-option medium" onclick="checkScenario('sim2', this, false, 'medium')">
+        <div class="step-tag">medium</div>
+        <div>🛡️ The target has an egress firewall blocking outbound connections — try an ICMP tunnel or DNS exfiltration</div>
+      </div>
+      <div class="ts-option simple" onclick="checkScenario('sim2', this, true, 'simple')">
+        <div class="step-tag">simple</div>
+        <div>🔌 Check if your listener is actually running and on the right port — run <code class="inline">ss -tlnp</code> on your attack box</div>
+      </div>
+      <div class="ts-option complex" onclick="checkScenario('sim2', this, false, 'complex')">
+        <div class="step-tag">complex</div>
+        <div>🕵️ The target's AV/EDR is catching the reverse shell payload — rewrite it with custom obfuscation</div>
+      </div>
+    </div>
+    <div class="ts-result" id="sim2-result"></div>
+  </div>
+
+  <div class="troubleshoot-sim" id="sim3">
+    <div class="scenario-box">
+      <strong>Scenario 3:</strong> You found creds in a database dump: <code class="inline">admin:5f4dcc3b5aa765d61d8327deb882cf99</code>. The admin panel rejects the hash as a password. What do you do first?
+    </div>
+    <div class="option-grid">
+      <div class="ts-option complex" onclick="checkScenario('sim3', this, false, 'complex')">
+        <div class="step-tag">complex</div>
+        <div>💻 Write a custom brute-force script that tries different hash algorithms and salting methods</div>
+      </div>
+      <div class="ts-option simple" onclick="checkScenario('sim3', this, true, 'simple')">
+        <div class="step-tag">simple</div>
+        <div>🔎 Google the hash — it's MD5, and <code class="inline">5f4dcc3b5aa765d61d8327deb882cf99</code> is literally "password"</div>
+      </div>
+      <div class="ts-option medium" onclick="checkScenario('sim3', this, false, 'medium')">
+        <div class="step-tag">medium</div>
+        <div>🧮 Set up hashcat with a massive wordlist and rule-based attack for maximum coverage</div>
+      </div>
+    </div>
+    <div class="ts-result" id="sim3-result"></div>
+  </div>
+</section>
+
+<div class="divider">in practice</div>
+
+<!-- CONCEPT 03: OCCAM'S RAZOR IN PRACTICE -->
+<section class="chapter" id="concept-practice">
+  <div class="chapter-num">Concept 03 // In practice</div>
+  <h2><span class="emoji">🎯</span> Occam's Razor in practice</h2>
+
+  <p class="lead">HTB makes a subtle but important point: using Occam's Razor sounds easier than it is. The simplest explanation isn't <em>always</em> correct — but it's the <strong>most probable</strong> starting point.</p>
+
+  <div class="callout info">
+    <strong>💡 Key nuance from HTB:</strong> "We must also distinguish between the individual details and mechanisms and the general picture or concept." In other words — understand the CONCEPT first, then worry about specific techniques.
+  </div>
+
+  <h3>🧩 Concepts vs. individual steps</h3>
+  <p>HTB uses SQL injection as the example. Once you understand the <em>concept</em> of SQLi (user input gets treated as code), you can spot it anywhere — even if the specific syntax differs between MySQL, PostgreSQL, and MSSQL.</p>
+
+  <div class="grid cols-2">
+    <div class="card" style="border-left: 3px solid var(--danger);">
+      <h4>😵 Memorizing steps</h4>
+      <p>"On MySQL, use <code class="inline">UNION SELECT</code> with <code class="inline">information_schema.tables</code>..."</p>
+      <p style="color: var(--ink-dim); font-size: 13px;">Works until you face a PostgreSQL backend. Then you're stuck.</p>
+    </div>
+    <div class="card" style="border-left: 3px solid var(--accent);">
+      <h4>🧠 Understanding the concept</h4>
+      <p>"User input gets concatenated into a SQL query. If I can break the query syntax, I can inject my own commands."</p>
+      <p style="color: var(--ink-dim); font-size: 13px;">Works on ANY database. The syntax differs but the concept is the same.</p>
+    </div>
+  </div>
+
+  <h3>🔑 The pentesting version</h3>
+  <p>HTB's key insight for pentesting specifically:</p>
+
+  <div class="callout danger" style="font-size: 1.05rem;">
+    <strong>"The simplest explanation for the best approach to penetration testing is that we work with the information we can get."</strong>
+  </div>
+
+  <p>Every pentest is unique. Same systems, different configurations. You can't memorize your way through it. You gather information, form the simplest hypothesis, test it, and iterate. That's Occam's Razor applied to hacking.</p>
+
+  <div class="paper">
+    <h4>📝 The "looking back" effect</h4>
+    <p>HTB mentions something every pentester experiences: once you've found the solution, <strong>it always seems obvious in hindsight.</strong></p>
+    <p>"Looking back, it always seems easy once we know the solution. The art, after all, is not to get some flag but to find the way to it."</p>
+    <p>That's because the CONCEPT was simple all along — it was the <em>process of finding it</em> that was hard. Occam's Razor helps you find it faster by starting with the simplest possibilities.</p>
+  </div>
+</section>
+
+<div class="divider">real world</div>
+
+<!-- CONCEPT 04: REAL WORLD EXAMPLES -->
+<section class="chapter" id="concept-realworld">
+  <div class="chapter-num">Concept 04 // Real-world Occam's Razor</div>
+  <h2><span class="emoji">📰</span> When simplicity cracked the case</h2>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <div class="card-badge">BUG BOUNTY</div>
+      <h4>🔓 Facebook OAuth bypass (2013)</h4>
+      <p>Researcher Nir Goldshlager found a way to take over ANY Facebook account. The root cause? Facebook's OAuth redirect validation could be bypassed by simply appending <code class="inline">%23</code> (URL-encoded #) to the redirect URI.</p>
+      <p style="color: var(--accent); font-size: 13px;">Occam's Razor: before trying exotic token manipulation, he just tested if the redirect URL validation was strict. It wasn't.</p>
+    </div>
+    <div class="card">
+      <div class="card-badge">INCIDENT</div>
+      <h4>💀 Equifax breach (2017)</h4>
+      <p>147 million SSNs leaked. Exotic zero-day? Nope. An <strong>unpatched Apache Struts server</strong> — a known CVE with a patch available for months. The simplest explanation: they just didn't update.</p>
+      <p style="color: var(--accent); font-size: 13px;">Occam's Razor: the biggest breach wasn't sophisticated. It was a missing patch.</p>
+    </div>
+    <div class="card">
+      <div class="card-badge">CTF</div>
+      <h4>🏁 Overcomplicating CTF challenges</h4>
+      <p>Every CTF player has spent hours trying to reverse-engineer a binary only to realize the flag was in the HTTP response headers. Or trying to crack a hash when it was just base64 encoding.</p>
+      <p style="color: var(--accent); font-size: 13px;">Occam's Razor: always check the obvious stuff first. <code class="inline">strings binary | grep flag</code> before loading Ghidra.</p>
+    </div>
+    <div class="card">
+      <div class="card-badge">SYSADMIN</div>
+      <h4>🖥️ "The whole network is down!"</h4>
+      <p>Classic scenario: sysadmin gets paged at 3 AM. "Everything is down!" They start checking routers, switches, DNS, DHCP... turns out someone tripped over the Ethernet cable in the server room.</p>
+      <p style="color: var(--accent); font-size: 13px;">Occam's Razor: check the physical layer first. Always.</p>
+    </div>
+  </div>
+</section>
+
+<div class="divider">section questions</div>
+
+<!-- QUESTIONS -->
+<section class="chapter" id="questions">
+  <div class="chapter-num">Questions</div>
+  <h2><span class="emoji">🎯</span> Section 3 answers</h2>
+
+  <div class="card" style="margin-bottom: 14px;">
+    <div class="card-badge">SECTION NOTE</div>
+    <h4>No graded questions in this section</h4>
+    <p style="color: var(--ink-dim); font-size: 0.92rem;">Section 3 is conceptual — no CTF-style answers to submit. The key takeaway: <strong>start with the simplest explanation and work up in complexity.</strong></p>
+    <details style="margin-top: 12px;">
+      <summary style="cursor:pointer; color: var(--accent-2); font-family: var(--mono); font-size: 13px;">▸ Show the core principle to remember</summary>
+      <div style="margin-top: 10px; padding: 14px; background: rgba(0,0,0,0.3); border-left: 3px solid var(--accent); border-radius: 4px; font-size: 14px;">
+        <strong style="color: var(--accent); font-family: var(--mono); font-size: 12px;">OCCAM'S RAZOR:</strong>
+        <p style="margin-top: 8px;">"The simplest explanation for the best approach to penetration testing is that we work with the information we can get."</p>
+        <p style="margin-top: 8px; color: var(--ink-dim);"><strong>Translation:</strong> Don't overthink. Don't over-tool. Gather info, form the simplest hypothesis, test it, iterate. That's the entire methodology.</p>
+      </div>
+    </details>
+  </div>
+</section>
+
+<!-- RETENTION QUIZ -->
+<section class="chapter" id="quiz">
+  <div class="chapter-num">Retention Check</div>
+  <h2><span class="emoji">🎯</span> Did it stick?</h2>
+
+  <div class="quiz">
+    <h4>🪒 What does Occam's Razor tell us?</h4>
+    <div class="q">Applied to problem-solving in cybersecurity, Occam's Razor means:</div>
+    <div class="options">
+      <div class="opt" onclick="quizAnswer(this, false)">Always use the simplest tool available</div>
+      <div class="opt" onclick="quizAnswer(this, true)">Start with the simplest explanation and test that first before moving to complex theories</div>
+      <div class="opt" onclick="quizAnswer(this, false)">Complex vulnerabilities don't exist — everything is simple</div>
+      <div class="opt" onclick="quizAnswer(this, false)">Never use automated tools — manual testing is simpler</div>
+    </div>
+    <div class="feedback"></div>
+  </div>
+
+  <div class="quiz" style="margin-top: 24px;">
+    <h4>🧩 Concepts vs. steps — why does it matter?</h4>
+    <div class="q">HTB says understanding the CONCEPT is more important than memorizing individual steps because:</div>
+    <div class="options">
+      <div class="opt" onclick="quizAnswer(this, false)">Individual steps are too hard to remember</div>
+      <div class="opt" onclick="quizAnswer(this, false)">Concepts are easier to write in exam answers</div>
+      <div class="opt" onclick="quizAnswer(this, true)">Every pentest is unique — concepts let you adapt to new situations, memorized steps don't</div>
+      <div class="opt" onclick="quizAnswer(this, false)">HTB wants you to skip the details and focus on theory only</div>
+    </div>
+    <div class="feedback"></div>
+  </div>
+
+  <div class="quiz" style="margin-top: 24px;">
+    <h4>🔌 The dead computer scenario</h4>
+    <div class="q">Your computer won't turn on. Applying Occam's Razor, what should you check FIRST?</div>
+    <div class="options">
+      <div class="opt" onclick="quizAnswer(this, false)">Open the case and test the power supply with a multimeter</div>
+      <div class="opt" onclick="quizAnswer(this, false)">Boot from a USB to rule out OS corruption</div>
+      <div class="opt" onclick="quizAnswer(this, true)">Check if the power strip is switched on and the cable is plugged in</div>
+      <div class="opt" onclick="quizAnswer(this, false)">Replace the CMOS battery on the motherboard</div>
+    </div>
+    <div class="feedback"></div>
+  </div>
+</section>
+
+<!-- RELATED TERMS -->
+<section class="chapter">
+  <div class="related-terms">
+    <h4>🔗 Related in the vault</h4>
+    <div class="tags">
+      <a href="01-way-of-thinking.html">💭 Section 1: Way of Thinking</a>
+      <a href="02-think-outside-the-box.html">📦 Section 2: Think Outside the Box</a>
+      <a href="../index.html">🟩 HTB Academy Hub</a>
+      <a href="../../glossary/sql-injection.html">💉 SQL Injection</a>
+      <a href="../../topics/web/wordpress-pentesting/index.html">🔧 WordPress Pentesting (Occam's in action)</a>
+    </div>
+  </div>
+</section>
+
+<footer class="site-foot">
+  <p class="coffee-line">The simplest explanation is almost always the right one. Check the power strip before you blame the motherboard. ☕</p>
+  <p style="font-size: 12px;">Original section: <a href="https://academy.hackthebox.com/module/9/section/47" target="_blank" rel="noopener">HTB Academy · Learning Process · Section 3</a></p>
+</footer>
+
+<script src="../../assets/glossary.js"></script>
+<script src="../../assets/app.js"></script>
+<script>
+  var scenarioFeedback = {
+    sim1: {
+      correct: '🪒 <strong>Occam\'s Razor wins.</strong> A blank page is most likely an HTML/CSS/JS loading issue — not a WAF or broken config. View source takes 2 seconds. If the HTML is there, it\'s a frontend problem. If it\'s truly empty, THEN you dig deeper. Always check the simplest thing first.',
+      wrong_medium: '⚠️ <strong>Too aggressive too soon.</strong> Fuzzing for directories when you haven\'t even looked at the page source is like disassembling the computer before checking the power strip. View source first — it takes 2 seconds.',
+      wrong_complex: '❌ <strong>Way too complex.</strong> A blank page is almost never a WAF issue. WAFs block or modify requests — they don\'t serve blank pages. You\'re building an elaborate theory when the answer is probably "the CSS file path is wrong." Check the simple thing first.'
+    },
+    sim2: {
+      correct: '🪒 <strong>Occam\'s Razor wins.</strong> 90% of "my reverse shell isn\'t connecting" problems = the listener isn\'t running, wrong port, or wrong IP. <code class="inline">ss -tlnp</code> takes 1 second. Check that BEFORE assuming egress filtering or EDR evasion.',
+      wrong_medium: '⚠️ <strong>Jumping to conclusions.</strong> An egress firewall is possible, but it\'s way more likely that your listener is on the wrong port or your IP address has a typo. Check the basics first.',
+      wrong_complex: '❌ <strong>Massive overreaction.</strong> Rewriting your payload with custom obfuscation because the shell won\'t connect? That\'s spending 4 hours when the answer might be "I forgot to start netcat." Occam\'s Razor: simplest check first.'
+    },
+    sim3: {
+      correct: '🪒 <strong>Occam\'s Razor wins.</strong> Before setting up hashcat or writing custom scripts, just Google the hash. <code class="inline">5f4dcc3b5aa765d61d8327deb882cf99</code> is the MD5 of "password" — it\'s in every rainbow table on the internet. 2-second search vs. hours of cracking. Always try the simple thing first.',
+      wrong_medium: '⚠️ <strong>Too much horsepower.</strong> Hashcat is the right tool eventually, but you skipped the 2-second check: Googling the hash. Many hashes (especially common passwords) are already in online databases like CrackStation.',
+      wrong_complex: '❌ <strong>Way overkill.</strong> Writing a custom brute-force script? This hash has been cracked and indexed on every rainbow table site since 2005. Google it first. Occam\'s Razor: the simplest check is a web search.'
+    }
+  };
+
+  function checkScenario(simId, el, isCorrect, difficulty) {
+    var result = document.getElementById(simId + '-result');
+    var options = el.parentElement.querySelectorAll('.ts-option');
+
+    // Disable all options
+    options.forEach(function(opt) {
+      opt.style.pointerEvents = 'none';
+      opt.style.opacity = '0.4';
+    });
+    el.style.opacity = '1';
+
+    if (isCorrect) {
+      el.classList.add('correct');
+      result.style.background = 'rgba(0,255,157,0.08)';
+      result.style.borderLeft = '3px solid var(--accent)';
+      result.innerHTML = scenarioFeedback[simId].correct;
+    } else {
+      el.classList.add('wrong');
+      // Highlight correct answer
+      options.forEach(function(opt) {
+        if (opt.classList.contains('simple') && simId !== 'sim3') { opt.classList.add('correct'); opt.style.opacity = '1'; }
+        if (simId === 'sim3' && opt.textContent.indexOf('Google') > -1) { opt.classList.add('correct'); opt.style.opacity = '1'; }
+      });
+      result.style.background = 'rgba(255,0,0,0.05)';
+      result.style.borderLeft = '3px solid var(--danger)';
+      result.innerHTML = scenarioFeedback[simId]['wrong_' + difficulty];
+    }
+    result.className = 'ts-result open';
+  }
+</script>
+</body>
+</html>

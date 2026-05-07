@@ -412,7 +412,7 @@ window.GLOSSARY = {
     category: "Web Vulnerability",
     blurb: "Sneaking SQL commands into user input so they get executed by the database.",
     short: "A vulnerability where attacker-controlled input gets concatenated into a SQL query. The database then executes the attacker's SQL alongside the app's. Can leak data, bypass auth, destroy tables, or even lead to RCE.",
-    page: "sql-injection-term.html",
+    page: "sql-injection.html",
     related: ["blind-sqli", "union-attack", "single-quote", "parameterized-query"]
   },
   "ssn": {

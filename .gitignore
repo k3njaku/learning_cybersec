@@ -23,6 +23,9 @@ desktop.ini
 /tmp/
 node_modules/
 
+# Scan results / loot from lab testing
+wp-scan-results/
+
 # Local secrets (just in case)
 .env
 .env.local

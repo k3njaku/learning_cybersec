@@ -182,6 +182,16 @@ window.SITE_HTB = {
           htbUrl: "https://academy.hackthebox.com/module/9/section/46",
           completed: false,
           tags: ["mindset", "assumptions"]
+        },
+        {
+          slug: "03-occams-razor",
+          name: "Occam's Razor",
+          icon: "🪒",
+          blurb: "The simplest explanation is usually correct. Stop overcomplicating — simplify first, then dig deeper.",
+          path: "htb-academy/learning-process/03-occams-razor.html",
+          htbUrl: "https://academy.hackthebox.com/module/9/section/47",
+          completed: false,
+          tags: ["mindset", "problem-solving", "simplicity"]
         }
       ]
     }

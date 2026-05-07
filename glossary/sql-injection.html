@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>SQL Injection — The OG Web Hack That Won't Die ☕</title>
+<link rel="stylesheet" href="../assets/styles.css" />
+</head>
+<body data-page-slug="sql-injection">
+
+<div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
+
+<div class="topbar">
+  <a class="logo" href="../index.html">☕ CYBERSEC.VAULT</a>
+  <nav>
+    <a href="../index.html">Home</a>
+    <a href="../index.html#topics-web">Topics</a>
+    <a href="../index.html#topics-python">Python</a>
+    <a href="index.html" class="active">Glossary</a>
+    <a href="../tryhackme/index.html">THM</a>
+    <a href="../htb-academy/index.html">HTB</a>
+    <a href="../labs/portswigger/index.html">Labs</a>
+  </nav>
+  <div class="search-wrap">
+    <input type="text" class="search" placeholder="Search (press /)..." />
+    <div class="search-results"></div>
+  </div>
+</div>
+
+<div class="breadcrumb">
+  <a href="../index.html">Home</a>
+  <span class="sep">›</span>
+  <a href="index.html">Glossary</a>
+  <span class="sep">›</span>
+  <span>SQL Injection</span>
+</div>
+
+<!-- HERO -->
+<section class="hero" style="min-height: 45vh;">
+  <div class="hero-content">
+    <span class="coffee-badge">💉 web vulnerability · OWASP #3 · injection</span>
+    <h1>SQL Injection 💉</h1>
+    <p class="subtitle">Sneaking SQL commands into user input so the database executes YOUR code.<br>The oldest web hack in the book — and still in the OWASP Top 10 after 25+ years.</p>
+    <div class="tagline">"Give me a login form and a single quote, and I'll give you the entire database." ☕</div>
+  </div>
+</section>
+
+<!-- WHAT IT IS -->
+<section class="chapter">
+  <div class="chapter-num">Chapter 01 // Definition</div>
+  <h2><span class="emoji">📖</span> What is SQL Injection?</h2>
+  <p class="lead">SQL Injection (SQLi) is when an attacker slips SQL commands into input fields — login forms, search bars, URL parameters — and the database blindly executes them alongside the app's own queries.</p>
+
+  <div class="paper">
+    <h4>📝 The Restaurant Analogy</h4>
+    <p>Imagine you're at a restaurant. You write your order on a slip of paper: <strong>"1 coffee"</strong>. The waiter takes it to the kitchen.</p>
+    <p>Now imagine you write: <strong>"1 coffee; also give me everything from the safe"</strong>. A dumb kitchen that reads the slip literally would hand over the coffee AND the safe contents.</p>
+    <p>That's SQLi. The "slip" is user input. The "kitchen" is the database. The semicolon is where your order ends and the attack begins.</p>
+  </div>
+
+  <p>The root cause is always the same: <strong>string concatenation</strong>. When the app builds SQL queries by gluing user input directly into the query string, the database can't tell the difference between data and commands.</p>
+
+  <div class="code evil">
+    <span class="com">-- What the developer wrote:</span><br>
+    <span class="kw">SELECT</span> * <span class="kw">FROM</span> users <span class="kw">WHERE</span> username = <span class="str">'</span><span class="inject">" + userInput + "</span><span class="str">'</span>;<br><br>
+    <span class="com">-- What the attacker typed in the username field:</span><br>
+    <span class="inject">' OR 1=1 --</span><br><br>
+    <span class="com">-- What the database actually executes:</span><br>
+    <span class="kw">SELECT</span> * <span class="kw">FROM</span> users <span class="kw">WHERE</span> username = <span class="str">''</span> <span class="inject">OR 1=1 --</span><span class="str">'</span>;
+  </div>
+
+  <p>The <code class="inline">' OR 1=1 --</code> closes the string, adds a condition that's always true, and comments out the rest. Every row in the table comes back. Auth bypassed.</p>
+</section>
+
+<div class="divider">types of sqli</div>
+
+<!-- TYPES -->
+<section class="chapter">
+  <div class="chapter-num">Chapter 02 // The Three Flavors</div>
+  <h2><span class="emoji">🎭</span> Types of SQL Injection</h2>
+
+  <div class="grid cols-3">
+    <div class="card">
+      <h4>💬 In-Band (Classic)</h4>
+      <p>The result comes back directly in the HTTP response. You see the data on the page.</p>
+      <p><strong>UNION-based:</strong> Append a <code class="inline">UNION SELECT</code> to pull data from other tables into the same response.</p>
+      <p><strong>Error-based:</strong> Force database errors that leak data in error messages.</p>
+    </div>
+    <div class="card">
+      <h4>🕵️ Blind SQLi</h4>
+      <p>No data in the response — but you can infer it.</p>
+      <p><strong>Boolean-based:</strong> Ask true/false questions. "Is the first char of the admin password > 'm'?" Page changes = yes.</p>
+      <p><strong>Time-based:</strong> Use <code class="inline">SLEEP(5)</code>. If the response takes 5 seconds, the condition was true.</p>
+    </div>
+    <div class="card">
+      <h4>📡 Out-of-Band (OAST)</h4>
+      <p>Exfiltrate data through a side channel — DNS lookups, HTTP requests to your server.</p>
+      <p>Used when in-band and blind don't work (e.g., async queries, no visible response difference).</p>
+    </div>
+  </div>
+</section>
+
+<div class="divider">why it matters</div>
+
+<!-- WHY IT MATTERS -->
+<section class="chapter">
+  <div class="chapter-num">Chapter 03 // Impact</div>
+  <h2><span class="emoji">💥</span> Why SQLi is Still Devastating in 2024</h2>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <h4>🔓 Authentication Bypass</h4>
+      <p><code class="inline">' OR 1=1 --</code> in a login form = instant admin access. No password needed.</p>
+    </div>
+    <div class="card">
+      <h4>📦 Data Exfiltration</h4>
+      <p>Dump entire databases: usernames, passwords, credit cards, SSNs, emails. Everything.</p>
+    </div>
+    <div class="card">
+      <h4>✏️ Data Manipulation</h4>
+      <p><code class="inline">UPDATE</code>, <code class="inline">INSERT</code>, <code class="inline">DELETE</code> — modify prices, grant admin roles, wipe tables.</p>
+    </div>
+    <div class="card">
+      <h4>💻 Remote Code Execution</h4>
+      <p>On some databases (MySQL <code class="inline">INTO OUTFILE</code>, MSSQL <code class="inline">xp_cmdshell</code>), SQLi escalates to full OS command execution.</p>
+    </div>
+  </div>
+
+  <div class="brain-power">
+    <h4>🧠 Brain Power</h4>
+    <p>If you find a blind time-based SQLi on a login page, but the app has 2FA enabled — can you still bypass authentication? Why or why not?</p>
+    <details>
+      <summary>Think first, then click</summary>
+      <p>Yes — if the SQLi is in the authentication query itself, you can make it return a valid user row without knowing the password. Whether 2FA stops you depends on WHERE the 2FA check happens. If it's a separate step AFTER the SQL query validates credentials, you'd still need to bypass 2FA. But if the app just checks "did the query return a row?" and grants a session, 2FA might never trigger.</p>
+    </details>
+  </div>
+</section>
+
+<div class="divider">real world</div>
+
+<!-- REAL WORLD -->
+<section class="chapter">
+  <div class="chapter-num">Chapter 04 // Hall of Shame</div>
+  <h2><span class="emoji">📰</span> Legendary SQLi Breaches</h2>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <div class="card-badge danger">2008</div>
+      <h4>Heartland Payment Systems</h4>
+      <p>SQLi led to 130 million credit/debit card numbers stolen. At the time, the largest data breach in US history. Albert Gonzalez got 20 years in prison.</p>
+    </div>
+    <div class="card">
+      <div class="card-badge danger">2011</div>
+      <h4>Sony PlayStation Network</h4>
+      <p>77 million accounts compromised. Names, addresses, emails, passwords, credit cards. PSN was down for 23 days. Cost Sony an estimated $171 million.</p>
+    </div>
+    <div class="card">
+      <div class="card-badge danger">2015</div>
+      <h4>TalkTalk Telecom</h4>
+      <p>A 15-year-old used SQLi to steal personal data of 157,000 customers. TalkTalk was fined £400,000 and lost 101,000 subscribers.</p>
+    </div>
+    <div class="card">
+      <div class="card-badge danger">2019</div>
+      <h4>Fortnite (Epic Games)</h4>
+      <p>SQLi vulnerability in an old, forgotten Epic Games website could have been chained to steal Fortnite accounts. Reported via bug bounty before exploitation.</p>
+    </div>
+  </div>
+</section>
+
+<div class="divider">playground</div>
+
+<!-- INTERACTIVE DEMO -->
+<section class="chapter">
+  <div class="chapter-num">Chapter 05 // Try It</div>
+  <h2><span class="emoji">🎮</span> SQLi Payload Builder</h2>
+  <p>See how different inputs change the final SQL query the database would execute:</p>
+
+  <div class="playground">
+    <label><strong>Username field:</strong></label>
+    <div class="url-bar">
+      <input type="text" id="sqli-input" placeholder="Type a username or payload..." value="admin" style="width:100%;" oninput="updateSqliDemo()">
+    </div>
+
+    <div class="preset-chips" style="margin:1rem 0;">
+      <span class="chip" onclick="document.getElementById('sqli-input').value='admin';updateSqliDemo()">admin</span>
+      <span class="chip evil" onclick="document.getElementById('sqli-input').value=&quot;' OR 1=1 --&quot;;updateSqliDemo()">' OR 1=1 --</span>
+      <span class="chip evil" onclick="document.getElementById('sqli-input').value=&quot;' UNION SELECT username,password FROM users --&quot;;updateSqliDemo()">' UNION SELECT ...</span>
+      <span class="chip evil" onclick="document.getElementById('sqli-input').value=&quot;'; DROP TABLE users; --&quot;;updateSqliDemo()">'; DROP TABLE users; --</span>
+      <span class="chip evil" onclick="document.getElementById('sqli-input').value=&quot;' OR SLEEP(5) --&quot;;updateSqliDemo()">' OR SLEEP(5) --</span>
+    </div>
+
+    <label><strong>Resulting SQL query:</strong></label>
+    <div class="query-preview" id="sqli-query">
+      SELECT * FROM users WHERE username = 'admin' AND password = '***';
+    </div>
+
+    <div class="result-box" id="sqli-result">
+      <strong>Status:</strong> Normal query — returns the admin row if password matches.
+    </div>
+  </div>
+</section>
+
+<script>
+function updateSqliDemo() {
+  var input = document.getElementById('sqli-input').value;
+  var escaped = input.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  var queryEl = document.getElementById('sqli-query');
+  var resultEl = document.getElementById('sqli-result');
+
+  queryEl.innerHTML = "SELECT * FROM users WHERE username = '<span style=\"color:var(--accent-2);font-weight:bold;\">" + escaped + "</span>' AND password = '***';";
+
+  if (input.includes("' OR 1=1")) {
+    resultEl.innerHTML = "<strong>⚠️ AUTH BYPASS!</strong> The <code class='inline'>OR 1=1</code> makes the WHERE clause always true. Every row is returned. The app sees a valid result and logs you in as the first user (usually admin).";
+  } else if (input.includes("UNION SELECT")) {
+    resultEl.innerHTML = "<strong>⚠️ DATA EXFILTRATION!</strong> The UNION appends results from another table (users) to the original query. Usernames and passwords leak into the response.";
+  } else if (input.includes("DROP TABLE")) {
+    resultEl.innerHTML = "<strong>💀 DESTRUCTIVE!</strong> The semicolon ends the first query, then <code class='inline'>DROP TABLE</code> deletes the entire users table. Game over. (Stacked queries must be supported by the DB driver.)";
+  } else if (input.includes("SLEEP")) {
+    resultEl.innerHTML = "<strong>⏱️ BLIND TIME-BASED!</strong> If the response takes 5 seconds, the injection worked. You can't see data directly, but you can ask yes/no questions one character at a time.";
+  } else if (input.includes("'")) {
+    resultEl.innerHTML = "<strong>🔍 Interesting...</strong> That single quote might break the SQL syntax. If you see a database error, the field is likely injectable!";
+  } else {
+    resultEl.innerHTML = "<strong>✅ Normal query</strong> — returns the matching row if the password is correct. No injection here.";
+  }
+}
+</script>
+
+<div class="divider">defense</div>
+
+<!-- DEFENSE -->
+<section class="chapter">
+  <div class="chapter-num">Chapter 06 // How to Prevent SQLi</div>
+  <h2><span class="emoji">🛡️</span> The Fix: Parameterized Queries</h2>
+
+  <p>The #1 defense is <strong>parameterized queries</strong> (aka <span class="term" data-term="parameterized-query">prepared statements</span>). They separate SQL structure from data, so user input can NEVER be interpreted as SQL commands.</p>
+
+  <div class="code safe">
+    <span class="com">// ❌ VULNERABLE — string concatenation</span><br>
+    query = <span class="str">"SELECT * FROM users WHERE username = '"</span> + username + <span class="str">"'"</span>;<br><br>
+    <span class="com">// ✅ SAFE — parameterized query (Python example)</span><br>
+    cursor.execute(<span class="str">"SELECT * FROM users WHERE username = %s"</span>, (username,))
+  </div>
+
+  <p>Other layers of defense:</p>
+  <ul>
+    <li><strong>Input validation:</strong> Whitelist expected characters. A username shouldn't contain quotes or semicolons.</li>
+    <li><strong>Least privilege:</strong> The database user the app connects with should NOT have DROP, CREATE, or FILE permissions.</li>
+    <li><strong>WAF rules:</strong> Web Application Firewalls can catch common SQLi patterns — but they're bypassable and should never be your only defense.</li>
+    <li><strong>ORM usage:</strong> Frameworks like Django, Rails, and Laravel use parameterized queries by default. But raw queries in ORMs are still vulnerable!</li>
+    <li><strong>Error handling:</strong> Never show raw database errors to users. They leak table names, column names, and DB version info.</li>
+  </ul>
+
+  <div class="callout info">
+    <strong>💡 The golden rule:</strong> NEVER trust user input. NEVER concatenate it into queries. Use parameterized queries everywhere, every time, no exceptions.
+  </div>
+</section>
+
+<div class="divider">tools</div>
+
+<!-- TOOLS -->
+<section class="chapter">
+  <div class="chapter-num">Chapter 07 // Attacker's Toolkit</div>
+  <h2><span class="emoji">🧰</span> SQLi Tools of the Trade</h2>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <h4>🗡️ sqlmap</h4>
+      <p>The king of automated SQLi. Detects and exploits SQLi in URL params, POST data, cookies, headers. Supports 30+ database types. Can dump entire databases, read/write files, and pop shells.</p>
+      <div class="code">sqlmap -u <span class="str">"http://target.com/page?id=1"</span> --dbs</div>
+    </div>
+    <div class="card">
+      <h4>🔍 Burp Suite</h4>
+      <p>Intercept requests, modify parameters, and test for SQLi manually. The Intruder tool can fuzz parameters with SQLi payloads. Scanner auto-detects SQLi.</p>
+    </div>
+    <div class="card">
+      <h4>📝 Manual Testing</h4>
+      <p>Start with a single quote <code class="inline">'</code>. If you get a SQL error, dig deeper. Try <code class="inline">' OR 1=1 --</code>, then UNION-based, then blind techniques.</p>
+    </div>
+    <div class="card">
+      <h4>📋 PayloadsAllTheThings</h4>
+      <p>GitHub repo with hundreds of SQLi payloads organized by database type, bypass technique, and WAF evasion. Your cheat sheet for the field.</p>
+    </div>
+  </div>
+</section>
+
+<!-- QUIZ -->
+<section class="chapter">
+  <div class="quiz">
+    <h4>🎯 Retention Quiz</h4>
+    <div class="q">What is the PRIMARY defense against SQL injection?</div>
+    <div class="options">
+      <div class="opt" onclick="quizAnswer(this, false)">Input validation with regex</div>
+      <div class="opt" onclick="quizAnswer(this, true)">Parameterized queries (prepared statements)</div>
+      <div class="opt" onclick="quizAnswer(this, false)">Web Application Firewall (WAF)</div>
+      <div class="opt" onclick="quizAnswer(this, false)">Escaping special characters</div>
+    </div>
+    <div class="feedback"></div>
+  </div>
+</section>
+
+<!-- RELATED TERMS -->
+<section class="chapter">
+  <div class="related-terms">
+    <h4>🔗 Related in the vault</h4>
+    <div class="tags">
+      <a href="blind-sqli.html">🕵️ Blind SQLi</a>
+      <a href="single-quote.html">✏️ Single Quote</a>
+      <a href="parameterized-query.html">🛡️ Parameterized Query</a>
+      <a href="union-attack.html">🔗 UNION Attack</a>
+      <a href="../topics/web/wordpress-pentesting/exploit-email-subscribers-sqli.html">💉 WP Email Subscribers SQLi</a>
+      <a href="../labs/portswigger/index.html">🧪 PortSwigger SQLi Labs</a>
+    </div>
+  </div>
+</section>
+
+<footer class="site-foot">
+  <p class="coffee-line">25 years old and still in the OWASP Top 10. Respect your elders. ☕</p>
+</footer>
+
+<script src="../assets/glossary.js"></script>
+<script src="../assets/app.js"></script>
+</body>
+</html>
