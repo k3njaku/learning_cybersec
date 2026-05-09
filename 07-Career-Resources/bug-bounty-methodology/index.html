@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Bug Bounty Methodology — From Recon to $$$  ☕</title>
+<link rel="stylesheet" href="../../assets/styles.css"/>
+</head>
+<body data-page-slug="bug-bounty-methodology">
+
+<div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
+
+<div class="topbar">
+  <a class="logo" href="../../index.html">☕ CYBERSEC.VAULT</a>
+  <nav>
+    <a href="../../index.html">Home</a>
+    <a href="../index.html" class="active">Career</a>
+    <a href="../../glossary/index.html">Glossary</a>
+  </nav>
+  <div class="search-wrap">
+    <input type="text" class="search" placeholder="Search (press /)..."/>
+    <div class="search-results"></div>
+  </div>
+</div>
+
+<div class="breadcrumb">
+  <a href="../../index.html">Home</a><span class="sep">›</span>
+  <a href="../index.html">07-Career-Resources</a><span class="sep">›</span>
+  <span>Bug Bounty Methodology</span>
+</div>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-content">
+    <span class="coffee-badge">💰 Real Methodology · Real Payouts · Step by Step</span>
+    <h1>Bug Bounty Hunting</h1>
+    <p class="subtitle">The exact methodology used to find real vulnerabilities in real programs.<br>
+    From reading the policy to writing the report. No fluff.</p>
+    <div class="tagline">"You don't need to be the best hacker. You need to be more thorough than the developer."</div>
+    <br>
+    <button class="cta-btn" onclick="document.getElementById('picking').scrollIntoView({behavior:'smooth'})">Start hunting 💰</button>
+    <p style="margin-top:18px; font-size:12px; color:var(--ink-dim);">Recon workflow · Subdomain enumeration · Burp tips · Report templates</p>
+  </div>
+</section>
+
+<!-- ═══════════════ CHAPTER 1: PICKING A PROGRAM ═══════════════ -->
+<section class="chapter" id="picking">
+  <div class="chapter-num">Chapter 01 // Choose Your Target</div>
+  <h2><span class="emoji">🎯</span> Picking the right program</h2>
+
+  <p class="lead">The biggest mistake beginners make is picking Google or Facebook first. Yes, the payouts are huge. Also, 10,000 professional hackers are looking at them every day. You need lower competition.</p>
+
+  <h3>The best platforms to start</h3>
+  <div class="grid cols-2">
+    <a class="card is-link" href="https://hackerone.com" target="_blank">
+      <div class="card-badge">Largest</div>
+      <h4>🔵 HackerOne</h4>
+      <p style="color:var(--ink-dim);">Biggest public platform. Hundreds of programs. Great for beginners because many programs have "managed" triage — real humans respond fast. Has a "Hacker101 CTF" that earns you private invites.</p>
+    </a>
+    <a class="card is-link" href="https://bugcrowd.com" target="_blank">
+      <h4>🟠 Bugcrowd</h4>
+      <p style="color:var(--ink-dim);">Good variety of programs. Has a reputation system — more reputation = more private program access. Points-based system is motivating for newcomers.</p>
+    </a>
+    <a class="card is-link" href="https://intigriti.com" target="_blank">
+      <h4>🟣 Intigriti</h4>
+      <p style="color:var(--ink-dim);">European-focused. Less competition than HackerOne for the same quality programs. Growing fast. Excellent for European tech companies.</p>
+    </a>
+    <a class="card is-link" href="https://yeswehack.com" target="_blank">
+      <h4>🟡 YesWeHack</h4>
+      <p style="color:var(--ink-dim);">Strong European presence. Many programs from companies that just launched bounty programs — these are gold because competition is minimal.</p>
+    </a>
+  </div>
+
+  <h3>How to pick a specific program</h3>
+  <div class="playground">
+    <div class="playground-header"><h4>📋 Program Selection Checklist</h4></div>
+    <div style="display:grid; gap:8px;" id="program-checklist">
+      <!-- filled by JS -->
+    </div>
+  </div>
+
+  <div class="code safe">
+# What to look for in a good beginner program:
+
+✅ Public program (no invite needed)
+✅ Wide scope — more endpoints = more chances to find bugs
+✅ "No previous findings" rate below 90% (still finding new bugs)
+✅ Average response time under 5 days
+✅ Has paid out recently (check "Thank you" page / recent activity)
+✅ Program has been running &lt; 2 years (less saturated)
+✅ Tech stack you know (if you know PHP, find PHP apps)
+
+❌ AVOID for beginners:
+❌ "Out of scope: everything except /contact" — too narrow
+❌ Programs that haven't paid anyone in 6+ months
+❌ "Hall of fame only" programs — you're here for money
+❌ Programs with 10,000+ researchers already signed up
+  </div>
+</section>
+
+<div class="divider">// // //</div>
+
+<!-- ═══════════════ CHAPTER 2: READ THE POLICY ═══════════════ -->
+<section class="chapter" id="policy">
+  <div class="chapter-num">Chapter 02 // READ THE POLICY (Seriously)</div>
+  <h2><span class="emoji">📜</span> The policy is your bible</h2>
+
+  <p class="lead">Before you touch a single endpoint, read the security policy 3 times. Testing out-of-scope assets is illegal. Duplicate reports don't pay. Understanding the policy is 20% of the work.</p>
+
+  <div class="brain-power">
+    <div class="label">Why does this matter so much?</div>
+    <p class="question">If you find a critical SQL injection on api.company.com, but that subdomain is out of scope, what happens when you report it?</p>
+    <button class="reveal-btn" onclick="this.nextElementSibling.classList.toggle('open')">Reveal answer</button>
+    <div class="answer">
+      <p>Your report gets <strong>closed as out-of-scope</strong>. No bounty. No credit. Potentially a warning if you continued testing after noticing the subdomain wasn't in scope. Worse: you may have violated the Computer Fraud and Abuse Act even though you meant well.</p>
+      <p style="margin-top:10px; color:var(--accent);">Always verify scope first. Always.</p>
+    </div>
+  </div>
+
+  <h3>What to extract from every policy</h3>
+  <div class="code">
+Reading a bug bounty policy — extract these:
+
+1. SCOPE (In-scope)
+   → Which domains/subdomains can I test?
+   → Which mobile apps? (iOS/Android)
+   → Which API endpoints?
+   → Any IP ranges?
+
+2. OUT OF SCOPE
+   → Specific domains to NEVER touch
+   → Specific vulnerability types they won't pay for
+   → Rate limiting / DOS attacks usually excluded
+   → Social engineering usually excluded
+
+3. SEVERITY TIERS + PAYOUTS
+   → Critical: $X,XXX–$XX,XXX
+   → High: $XXX–$X,XXX
+   → Medium: $XX–$XXX
+   → Low: $XX–$XXX or hall of fame only
+
+4. RULES OF ENGAGEMENT
+   → Can I use automated scanners? (many say NO)
+   → Can I create accounts?
+   → Can I test production or only staging?
+   → How to handle found credentials/PII?
+
+5. RESPONSE TIMES
+   → First response: X business days
+   → Triage: X business days
+   → Payout: X days after triage
+  </div>
+</section>
+
+<div class="divider">// // //</div>
+
+<!-- ═══════════════ CHAPTER 3: RECON ═══════════════ -->
+<section class="chapter" id="recon">
+  <div class="chapter-num">Chapter 03 // Reconnaissance</div>
+  <h2><span class="emoji">🔍</span> Recon — The skill that separates good hunters</h2>
+
+  <p class="lead">The best bug bounty hunters don't just test the main app at company.com. They find subdomains, forgotten endpoints, old apps, and infrastructure that nobody else is testing. That's where the bugs live.</p>
+
+  <h3>Phase 1: Subdomain Enumeration</h3>
+  <div class="code">
+<span class="com">## Tool: amass (comprehensive, passive + active)</span>
+amass enum -passive -d target.com -o amass_out.txt
+amass enum -active -d target.com -o amass_active.txt
+
+<span class="com">## Tool: subfinder (fast, passive)</span>
+subfinder -d target.com -o subfinder_out.txt
+
+<span class="com">## Tool: assetfinder</span>
+assetfinder --subs-only target.com &gt; assetfinder_out.txt
+
+<span class="com">## Combine and deduplicate all results:</span>
+cat amass_out.txt subfinder_out.txt assetfinder_out.txt | sort -u &gt; all_subs.txt
+wc -l all_subs.txt   <span class="com"># how many unique subdomains?</span>
+
+<span class="com">## Filter to only LIVE subdomains (most important step):</span>
+cat all_subs.txt | httpx -silent -status-code -title -tech-detect -o live_subs.txt
+<span class="com"># httpx: github.com/projectdiscovery/httpx</span>
+
+<span class="com">## See what's actually running:</span>
+cat live_subs.txt | grep "200"   <span class="com"># HTTP 200 = alive</span>
+cat live_subs.txt | grep "401"   <span class="com"># 401 = auth required — interesting!</span>
+cat live_subs.txt | grep "403"   <span class="com"># 403 = forbidden — also interesting!</span>
+  </div>
+
+  <h3>Phase 2: Content Discovery</h3>
+  <div class="code">
+<span class="com">## Directory fuzzing on every live subdomain:</span>
+gobuster dir -u https://TARGET -w /usr/share/wordlists/dirbuster/directory-list-2.3-medium.txt \
+  -x php,asp,aspx,jsp,html,txt,json,config,bak,old \
+  -t 50 -o gobuster_out.txt
+
+<span class="com">## ffuf (faster alternative):</span>
+ffuf -u https://TARGET/FUZZ \
+  -w /usr/share/seclists/Discovery/Web-Content/raft-large-directories.txt \
+  -mc 200,301,302,401,403 \
+  -t 100
+
+<span class="com">## Parameter discovery:</span>
+arjun -u https://TARGET/api/user -oT params.txt
+<span class="com"># Finds hidden parameters that aren't in the HTML</span>
+
+<span class="com">## JavaScript file analysis (huge goldmine):</span>
+cat live_subs.txt | subjs | sort -u &gt; all_js.txt
+<span class="com"># Now search JS files for API keys, endpoints, secrets:</span>
+cat all_js.txt | xargs curl -s | grep -E "(api_key|secret|password|token|endpoint)" -i
+  </div>
+
+  <h3>Phase 3: Google Dorks (Passive recon)</h3>
+  <div class="code safe">
+<span class="com">## Find admin panels:</span>
+site:target.com inurl:admin
+site:target.com inurl:login
+site:target.com intitle:"dashboard"
+
+<span class="com">## Find exposed files:</span>
+site:target.com ext:pdf | ext:xlsx | ext:docx
+site:target.com ext:log | ext:txt | ext:conf
+site:target.com ext:sql | ext:env | ext:bak
+
+<span class="com">## Find subdomains Google knows about:</span>
+site:*.target.com -site:www.target.com
+
+<span class="com">## Find leaked credentials on GitHub:</span>
+"target.com" "password" site:github.com
+"target.com" "api_key" site:github.com
+org:targetcompany "secret" filename:.env
+  </div>
+
+  <h3>Phase 4: Technology Fingerprinting</h3>
+  <div class="code">
+<span class="com">## Wappalyzer (browser extension) — see tech stack instantly</span>
+<span class="com">## Or use Nuclei for automated tech detection:</span>
+nuclei -l live_subs.txt -t technologies/ -o tech_detect.txt
+
+<span class="com">## whatweb (CLI alternative):</span>
+whatweb https://target.com
+
+<span class="com">## Why does this matter?</span>
+<span class="com">## If you see: WordPress 5.6 → check WPScan for known CVEs</span>
+<span class="com">## If you see: Joomla 3.9 → check exploit-db</span>
+<span class="com">## If you see: jQuery 1.8 → check known XSS vulnerabilities</span>
+<span class="com">## If you see: PHP 7.2 → might be vulnerable to deserialization</span>
+  </div>
+</section>
+
+<div class="divider">// // //</div>
+
+<!-- ═══════════════ CHAPTER 4: TESTING METHODOLOGY ═══════════════ -->
+<section class="chapter" id="testing">
+  <div class="chapter-num">Chapter 04 // Testing — The Core Loop</div>
+  <h2><span class="emoji">🔁</span> The bug hunter's core loop</h2>
+
+  <p class="lead">Every bug bounty veteran has some version of this loop. Do it for every endpoint, every parameter, every function you find.</p>
+
+  <div class="playground">
+    <div class="playground-header"><h4>🔁 The Core Testing Loop</h4></div>
+    <div style="display:grid; gap:8px;">
+      <div style="display:flex; gap:12px; align-items:flex-start; padding:12px; background:rgba(0,255,157,0.04); border-radius:8px; border-left:3px solid var(--accent);">
+        <span style="font-family:var(--mono); color:var(--accent); font-weight:700; min-width:24px;">1.</span>
+        <div>
+          <div style="font-weight:700; margin-bottom:4px;">Map the app's functionality</div>
+          <div style="color:var(--ink-dim); font-size:0.9rem;">Click everything. Create accounts. Browse every page. Let Burp capture all traffic. What does this app DO? What data does it handle? Where does it accept input?</div>
+        </div>
+      </div>
+      <div style="display:flex; gap:12px; align-items:flex-start; padding:12px; background:rgba(0,212,255,0.04); border-radius:8px; border-left:3px solid var(--accent-3);">
+        <span style="font-family:var(--mono); color:var(--accent-3); font-weight:700; min-width:24px;">2.</span>
+        <div>
+          <div style="font-weight:700; margin-bottom:4px;">Identify ALL input points</div>
+          <div style="color:var(--ink-dim); font-size:0.9rem;">URL params, POST body, headers (User-Agent, Referer, X-Forwarded-For), cookies, JSON body keys, file uploads, GraphQL fields, WebSocket messages. Every input is an attack surface.</div>
+        </div>
+      </div>
+      <div style="display:flex; gap:12px; align-items:flex-start; padding:12px; background:rgba(255,182,39,0.04); border-radius:8px; border-left:3px solid var(--warn);">
+        <span style="font-family:var(--mono); color:var(--warn); font-weight:700; min-width:24px;">3.</span>
+        <div>
+          <div style="font-weight:700; margin-bottom:4px;">Apply vulnerability tests to each input</div>
+          <div style="color:var(--ink-dim); font-size:0.9rem;">For every input: try XSS, SQLi, SSTI, SSRF, IDOR, path traversal, command injection. Use Burp Repeater. Change one thing at a time. Document everything.</div>
+        </div>
+      </div>
+      <div style="display:flex; gap:12px; align-items:flex-start; padding:12px; background:rgba(255,46,99,0.04); border-radius:8px; border-left:3px solid var(--accent-2);">
+        <span style="font-family:var(--mono); color:var(--accent-2); font-weight:700; min-width:24px;">4.</span>
+        <div>
+          <div style="font-weight:700; margin-bottom:4px;">Analyze the response for anomalies</div>
+          <div style="color:var(--ink-dim); font-size:0.9rem;">Different response time? Different length? Error message with stack trace? Different HTTP status? Reflection of your input? These are all signals. Chase them.</div>
+        </div>
+      </div>
+      <div style="display:flex; gap:12px; align-items:flex-start; padding:12px; background:rgba(0,255,157,0.04); border-radius:8px; border-left:3px solid var(--accent);">
+        <span style="font-family:var(--mono); color:var(--accent); font-weight:700; min-width:24px;">5.</span>
+        <div>
+          <div style="font-weight:700; margin-bottom:4px;">Escalate + document + repeat</div>
+          <div style="color:var(--ink-dim); font-size:0.9rem;">Found something? Escalate the impact as much as possible. Can you exfiltrate data? Affect other users? Chain with another vuln? Then document everything for the report.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <h3>High-value areas to focus on</h3>
+  <div class="grid cols-2">
+    <div class="card">
+      <div class="card-badge warn">High ROI</div>
+      <h4>💰 Authentication &amp; Authorization</h4>
+      <ul style="color:var(--ink-dim); padding-left:20px; font-size:0.9rem; margin-top:8px;">
+        <li>Password reset flows (token predictability, host header injection)</li>
+        <li>IDOR — change <code class="inline">user_id=123</code> to <code class="inline">user_id=124</code></li>
+        <li>JWT algorithm confusion (none, RS256→HS256)</li>
+        <li>OAuth misconfigurations (state parameter, redirect_uri)</li>
+        <li>Account takeover via email case insensitivity</li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="card-badge warn">High ROI</div>
+      <h4>💰 File Upload Functionality</h4>
+      <ul style="color:var(--ink-dim); padding-left:20px; font-size:0.9rem; margin-top:8px;">
+        <li>Upload PHP/JSP webshell → RCE</li>
+        <li>SVG with embedded XSS → stored XSS</li>
+        <li>Path traversal in filename → overwrite files</li>
+        <li>SSRF via file URL reference</li>
+        <li>XXE via XML/DOCX/XLSX files</li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="card-badge">Good ROI</div>
+      <h4>🔍 API Endpoints</h4>
+      <ul style="color:var(--ink-dim); padding-left:20px; font-size:0.9rem; margin-top:8px;">
+        <li>Unauthenticated endpoints (<code class="inline">/api/v1/users</code>)</li>
+        <li>Mass assignment (send extra JSON fields)</li>
+        <li>GraphQL introspection → find hidden mutations</li>
+        <li>API versioning (<code class="inline">/api/v2/</code> might fix v3 bugs)</li>
+        <li>Rate limiting absent → brute force</li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="card-badge">Good ROI</div>
+      <h4>🔍 Business Logic</h4>
+      <ul style="color:var(--ink-dim); padding-left:20px; font-size:0.9rem; margin-top:8px;">
+        <li>Negative quantities in e-commerce (get refunded more)</li>
+        <li>Race conditions (buy premium while cancelling)</li>
+        <li>Coupon code reuse (apply same code twice)</li>
+        <li>Skip steps in multi-step workflows</li>
+        <li>Free trial → paid feature access</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>Burp Suite Tips — Your most important tool</h3>
+  <div class="code">
+<span class="com">## Essential Burp workflow:</span>
+1. Set up FoxyProxy in Firefox → point to 127.0.0.1:8080
+2. Install Burp CA cert (Proxy → Options → CA Certificate)
+3. Browse the entire app — let Burp capture everything
+4. Check Proxy → HTTP history — see every request
+
+<span class="com">## Must-use Burp features:</span>
+Repeater     → Modify and replay individual requests
+Intruder     → Fuzz parameters with wordlists (brute force)
+Comparer     → Compare two responses to spot differences
+Decoder      → Decode/encode base64, URL encoding, etc.
+Sequencer    → Analyze token randomness (session ID quality)
+Scanner      → Active scan (Pro only, but try Community passive)
+
+<span class="com">## Useful Burp extensions (BApp Store, free):</span>
+→ Autorize         detect IDOR/authorization issues automatically
+→ Param Miner      find hidden parameters
+→ JWT Editor       attack JWT tokens
+→ GAP              find endpoints in JS/HTML
+→ Turbo Intruder   fast fuzzing (bypass rate limits)
+→ Logger++         advanced logging
+  </div>
+</section>
+
+<div class="divider">// // //</div>
+
+<!-- ═══════════════ CHAPTER 5: IDOR ═══════════════ -->
+<section class="chapter" id="idor">
+  <div class="chapter-num">Chapter 05 // IDOR — Easiest High-Severity Bug</div>
+  <h2><span class="emoji">🔐</span> IDOR — The Bug That Pays</h2>
+
+  <p class="lead">Insecure Direct Object Reference. You change an ID in a request from yours to someone else's and the server just... gives you their data. No exploit. No fancy payload. Just changing a number.</p>
+
+  <div class="playground">
+    <div class="playground-header"><h4>🎮 IDOR Playground — Simulate an Insecure API</h4></div>
+    <p style="color:var(--ink-dim); font-size:0.9rem; margin-bottom:12px;">This simulates an API that returns user profiles by ID. You're logged in as User 42. Try changing the ID.</p>
+
+    <div class="url-bar">
+      <span class="proto">GET</span>
+      <span class="key"> /api/v1/user/</span>
+      <input id="idor-id" type="number" value="42" min="1" max="50" oninput="simulateIDOR()" style="width:60px; color:var(--accent-2);"/>
+      <span style="color:var(--ink-mute);">/profile</span>
+    </div>
+
+    <div class="result-box" id="idor-result" style="margin-top:10px; min-height:100px;"></div>
+
+    <div class="preset-chips" style="margin-top:10px;">
+      <span style="color:var(--ink-mute); font-size:12px; align-self:center;">Try →</span>
+      <span class="chip" onclick="setIDOR(42)">Your account (42)</span>
+      <span class="chip evil" onclick="setIDOR(1)">User 1 (admin?)</span>
+      <span class="chip evil" onclick="setIDOR(13)">User 13</span>
+      <span class="chip evil" onclick="setIDOR(27)">User 27</span>
+    </div>
+
+    <div id="idor-alert" class="callout danger" style="display:none; margin-top:12px;">
+      <strong>🚨 IDOR Confirmed!</strong> You accessed another user's private profile data without authorization. In a real app, this could expose PII, payment info, private messages, or internal data.
+    </div>
+  </div>
+
+  <h3>Where to look for IDOR in real apps</h3>
+  <div class="code evil">
+<span class="com">## Common IDOR locations:</span>
+
+<span class="com"># URL parameters:</span>
+GET /invoice/download?id=1042
+GET /api/orders/5521
+GET /user/profile/johndoe    <span class="com"># ← username is also an IDOR target</span>
+
+<span class="com"># POST body:</span>
+POST /api/update-email
+{"user_id": 1042, "email": "new@email.com"}
+<span class="com"># Change user_id to another user's ID — does it change THEIR email?</span>
+
+<span class="com"># Headers:</span>
+X-User-ID: 1042     <span class="com"># some apps use headers for user context</span>
+
+<span class="com"># Encoded IDs (don't be fooled by base64):</span>
+GET /api/user/MTAyNA==    <span class="com"># base64 decode: 1024</span>
+<span class="com"># Decode → change ID → re-encode → send</span>
+
+<span class="com"># GUIDs look random but test anyway:</span>
+GET /api/document/f47ac10b-58cc-4372-a567-0e02b2c3d479
+<span class="com"># Get another valid GUID from another account, then test</span>
+  </div>
+
+  <h3>Real bounty: IDOR on HackerOne ($3,500)</h3>
+  <div class="callout danger">
+    <strong>💰 Real Bug Bounty Report — Shopify IDOR ($3,500)</strong><br>
+    A researcher found that the Shopify mobile app API endpoint <code class="inline">/api/orders/{order_id}</code> accepted any order ID without checking if the order belonged to the authenticated store. By enumerating order IDs, any attacker could read ANY merchant's order details — customer names, addresses, products purchased, payment methods. Reward: $3,500.
+  </div>
+</section>
+
+<div class="divider">// // //</div>
+
+<!-- ═══════════════ CHAPTER 6: THE REPORT ═══════════════ -->
+<section class="chapter" id="report">
+  <div class="chapter-num">Chapter 06 // Writing The Report</div>
+  <h2><span class="emoji">📝</span> The report is 50% of the bounty</h2>
+
+  <p class="lead">A clear, professional report gets triaged and paid fast. A vague, lazy report gets "Needs more info" and sits for weeks. Here's the exact template that works.</p>
+
+  <div class="paper right">
+    <h4>Golden report rules 📋</h4>
+    <ul>
+      <li>Assume the reader has <span class="highlight">no context</span> about what you found</li>
+      <li>Every step must be <span class="highlight">reproducible</span> — a junior dev should be able to follow it</li>
+      <li>Include <span class="highlight">screenshots</span> for every step — a picture says 1000 words</li>
+      <li>State the <span class="highlight">impact clearly</span> — what can an attacker actually DO?</li>
+      <li>Don't overstate severity — a self-XSS is not critical</li>
+      <li>Include a <span class="highlight">remediation suggestion</span> — programs love this</li>
+    </ul>
+  </div>
+
+  <h3>The Perfect Report Template</h3>
+  <div class="code safe">
+## Title
+[Severity] — Brief one-line description
+Example: "Stored XSS in /profile/bio allows session hijacking"
+
+## Vulnerability Description
+2–3 sentences explaining WHAT the vulnerability is
+and WHY it's dangerous. No fluff.
+
+## Severity: Critical / High / Medium / Low
+CVSS score if you have it. Justify your rating.
+
+## Affected Asset
+https://target.com/vulnerable/endpoint
+
+## Steps to Reproduce
+1. Create an account at https://target.com/register
+2. Navigate to Settings → Profile → Edit Bio
+3. In the "Bio" field, enter the following payload:
+   &lt;img src=x onerror="alert(document.cookie)"&gt;
+4. Click Save
+5. Navigate to https://target.com/profile/YOUR_USERNAME
+6. Observe: alert popup appears with session cookie contents
+
+## Proof of Concept
+[Screenshot 1: Payload entered in bio field]
+[Screenshot 2: Alert popup firing with cookie contents]
+[Screenshot 3: Cookie value matches your actual session cookie]
+
+## Impact
+An attacker can steal the session cookie of any user who visits
+the victim's profile page. With the session cookie, the attacker
+can log in as the victim and:
+- Access all private data
+- Change account email/password
+- Make purchases or transfers
+- Perform any action the victim can perform
+
+Estimated affected users: all (public profiles are visible to anyone)
+
+## Remediation
+Sanitize user input before storing, and encode output before
+rendering in HTML. Use htmlspecialchars() in PHP or equivalent.
+Implement a Content Security Policy (CSP) header to limit
+script execution sources.
+
+## References
+- OWASP XSS Prevention: https://owasp.org/www-community/attacks/xss/
+- CWE-79: Improper Neutralization of Input
+  </div>
+
+  <div class="callout success">
+    <strong>💡 Screenshot tip:</strong> Use a tool like ShareX (Windows) or Flameshot (Linux) to annotate screenshots with arrows and text. It makes your report look professional and the triage team will love you.
+  </div>
+
+  <h3>Severity rating guide (CVSS simplified)</h3>
+  <div class="grid cols-2">
+    <div class="card">
+      <div class="card-badge danger">Critical ($$$$$)</div>
+      <h4>💀 Critical Severity</h4>
+      <ul style="color:var(--ink-dim); padding-left:20px; font-size:0.9rem; margin-top:8px;">
+        <li>RCE — Remote Code Execution on server</li>
+        <li>SQLi with data exfiltration (any table)</li>
+        <li>Authentication bypass (no password needed)</li>
+        <li>Stored XSS affecting ALL users automatically</li>
+        <li>SSRF to internal AWS metadata (cloud creds)</li>
+        <li>Account takeover without any user interaction</li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="card-badge danger">High ($$$$)</div>
+      <h4>🔴 High Severity</h4>
+      <ul style="color:var(--ink-dim); padding-left:20px; font-size:0.9rem; margin-top:8px;">
+        <li>Stored XSS (requires victim action)</li>
+        <li>IDOR exposing other users' PII/data</li>
+        <li>Privilege escalation (user → admin)</li>
+        <li>Insecure direct object reference — critical data</li>
+        <li>CSRF for high-impact action (change email)</li>
+        <li>SQL injection (error-based, limited exfil)</li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="card-badge warn">Medium ($$$)</div>
+      <h4>🟡 Medium Severity</h4>
+      <ul style="color:var(--ink-dim); padding-left:20px; font-size:0.9rem; margin-top:8px;">
+        <li>Reflected XSS (requires user to click link)</li>
+        <li>IDOR exposing non-sensitive metadata</li>
+        <li>Open redirect (can be used in phishing)</li>
+        <li>Missing rate limiting on sensitive endpoints</li>
+        <li>Sensitive data in URL (logged by proxies)</li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="card-badge">Low ($$)</div>
+      <h4>⚪ Low Severity</h4>
+      <ul style="color:var(--ink-dim); padding-left:20px; font-size:0.9rem; margin-top:8px;">
+        <li>Self-XSS (only affects yourself)</li>
+        <li>Missing security headers (CSP, HSTS)</li>
+        <li>Information disclosure (version numbers)</li>
+        <li>Username enumeration</li>
+        <li>Email enumeration in password reset</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<div class="divider">// // //</div>
+
+<!-- ═══════════════ CHAPTER 7: TOOLS STACK ═══════════════ -->
+<section class="chapter" id="tools">
+  <div class="chapter-num">Chapter 07 // Your Full Tool Stack</div>
+  <h2><span class="emoji">🔧</span> Complete Bug Bounty Toolkit</h2>
+
+  <div class="code safe">
+<span class="com">## ─── RECON TOOLS ─────────────────────────────────────────</span>
+amass          Subdomain enumeration (passive + active + brute)
+subfinder      Fast passive subdomain enum
+assetfinder    Quick subdomain + related domains
+httpx          Probe live hosts (status codes, titles, tech)
+dnsx           DNS toolkit
+shodan CLI     Internet-wide port scanning results
+
+<span class="com">## ─── CONTENT DISCOVERY ───────────────────────────────────</span>
+gobuster       Directory + DNS brute force
+ffuf           Fast web fuzzer (more flexible than gobuster)
+feroxbuster    Recursive content discovery
+arjun          Hidden parameter discovery
+subjs          Extract JS endpoints from URLs
+gf             Grep patterns for vuln-prone code
+waybackurls    Historical URLs from Wayback Machine
+gau            Get all URLs (Wayback + Common Crawl + AlienVault)
+
+<span class="com">## ─── PROXIES / INTERCEPTION ──────────────────────────────</span>
+Burp Suite     The gold standard proxy + scanner
+OWASP ZAP      Free alternative to Burp Pro
+
+<span class="com">## ─── VULNERABILITY-SPECIFIC ─────────────────────────────</span>
+sqlmap         Automated SQLi detection + exploitation
+dalfox         XSS scanner + PoC generator
+nuclei         Template-based scanner (1000s of templates)
+nikto          Basic web server scanner
+wpscan         WordPress vulnerability scanner
+nmap + NSE     Port scanning + service enumeration
+jwt_tool       JWT attack toolkit
+ssrfmap        SSRF exploitation framework
+
+<span class="com">## ─── INSTALL EVERYTHING AT ONCE (Kali/Debian): ──────────</span>
+sudo apt install -y amass subfinder httpx gobuster ffuf arjun
+pip3 install jwt_tool
+go install github.com/hahwul/dalfox/v2@latest
+go install github.com/projectdiscovery/nuclei/v3/cmd/nuclei@latest
+go install github.com/tomnomnom/gau@latest
+go install github.com/tomnomnom/waybackurls@latest
+  </div>
+</section>
+
+<section class="chapter">
+  <h3>🚀 What to do right now</h3>
+  <div class="grid cols-3">
+    <a class="card is-link" href="https://hackerone.com/bug-bounty-programs" target="_blank">
+      <h4>🟢 Join HackerOne</h4>
+      <p>Browse programs. Pick one. Read the policy. Start recon today.</p>
+      <div class="card-badge">Step 1</div>
+    </a>
+    <a class="card is-link" href="https://portswigger.net/web-security" target="_blank">
+      <h4>🔶 PortSwigger Labs</h4>
+      <p>Practice every vulnerability type on free interactive labs before hunting.</p>
+      <div class="card-badge">Step 2</div>
+    </a>
+    <a class="card is-link" href="../../02-Web-App-Attacks/xss/index.html">
+      <h4>💉 XSS Guide</h4>
+      <p>Start with XSS — it's common, pays well, and the skills transfer everywhere.</p>
+      <div class="card-badge">Step 3</div>
+    </a>
+  </div>
+</section>
+
+<script src="../../assets/app.js"></script>
+<script src="../../assets/glossary.js"></script>
+<script>
+// Program checklist
+const pChecks = [
+  "Is this program PUBLIC (no invite required)?",
+  "Is the scope WIDE enough (multiple domains/endpoints)?",
+  "Has the program paid out in the last 3 months?",
+  "Is the average response time under 5 days?",
+  "Is the tech stack something you know?",
+  "Are automated scanners ALLOWED? (read the rules)",
+  "Is there a staging environment for testing?",
+  "Are there more than 3 open bounties on the activity feed?",
+];
+const cl = document.getElementById('program-checklist');
+let pdone = 0;
+pChecks.forEach((c, i) => {
+  const d = document.createElement('div');
+  d.style.cssText = 'display:flex; align-items:center; gap:10px; padding:8px 6px; cursor:pointer; border-radius:6px; font-size:13px; transition:background 0.1s;';
+  d.innerHTML = `<div id="pc-${i}" style="width:16px; height:16px; border:1px solid rgba(0,255,157,0.3); border-radius:3px; flex-shrink:0;"></div><span id="pt-${i}" style="color:var(--ink-dim);">${c}</span>`;
+  d.onmouseover = () => d.style.background = 'rgba(0,255,157,0.04)';
+  d.onmouseout = () => d.style.background = '';
+  d.onclick = () => {
+    const box = document.getElementById('pc-'+i);
+    const txt = document.getElementById('pt-'+i);
+    const on = box.innerHTML !== '';
+    box.innerHTML = on ? '' : '✓';
+    box.style.background = on ? '' : 'var(--accent)';
+    box.style.color = '#000'; box.style.fontWeight = '700';
+    txt.style.textDecoration = on ? '' : 'line-through';
+    txt.style.color = on ? 'var(--ink-dim)' : 'var(--ink-mute)';
+  };
+  cl.appendChild(d);
+});
+
+// IDOR simulator
+const users = {
+  1:  { name:'admin', email:'admin@company.com', role:'Administrator', plan:'Enterprise', secret:'API_KEY=sk-prod-9xK2mN...', card:'**** **** **** 4242' },
+  13: { name:'sarah_k', email:'sarah.k@gmail.com', role:'User', plan:'Premium', secret:'SSN: 123-45-6789', card:'**** **** **** 8891' },
+  27: { name:'dev_test', email:'dev@company.com', role:'Developer', plan:'Pro', secret:'GitHub Token: ghp_xxx...', card:'**** **** **** 3310' },
+  42: { name:'you_user42', email:'your@email.com', role:'User', plan:'Free', secret:'(your own data)', card:'**** **** **** 1234' },
+};
+function simulateIDOR() {
+  const id = parseInt(document.getElementById('idor-id').value);
+  const u = users[id] || { name: `user${id}`, email: `user${id}@redacted.com`, role:'User', plan:'Free', secret:'(no special data)', card:'**** **** **** 0000' };
+  const isOwn = id === 42;
+  document.getElementById('idor-result').innerHTML = `
+    <div style="color:${isOwn?'var(--accent)':'var(--accent-2)'}; font-weight:700; margin-bottom:8px;">
+      HTTP 200 OK — ${isOwn ? '✅ Your data' : '🚨 Another user\'s data — IDOR!'}</div>
+    <table style="width:100%; font-size:13px; font-family:var(--mono);">
+      <tr><td style="color:var(--ink-mute); padding:4px 0;">user_id</td><td style="color:var(--ink);">${id}</td></tr>
+      <tr><td style="color:var(--ink-mute); padding:4px 0;">username</td><td style="color:var(--ink);">${u.name}</td></tr>
+      <tr><td style="color:var(--ink-mute); padding:4px 0;">email</td><td style="color:${isOwn?'var(--ink)':'var(--accent-2)'};">${u.email}</td></tr>
+      <tr><td style="color:var(--ink-mute); padding:4px 0;">role</td><td style="color:${u.role==='Administrator'?'var(--accent-2)':'var(--ink)'};">${u.role}</td></tr>
+      <tr><td style="color:var(--ink-mute); padding:4px 0;">plan</td><td style="color:var(--ink);">${u.plan}</td></tr>
+      <tr><td style="color:var(--ink-mute); padding:4px 0;">sensitive_data</td><td style="color:${isOwn?'var(--ink-mute)':'var(--accent-2)'};">${u.secret}</td></tr>
+      <tr><td style="color:var(--ink-mute); padding:4px 0;">payment_card</td><td style="color:var(--ink);">${u.card}</td></tr>
+    </table>`;
+  document.getElementById('idor-alert').style.display = isOwn ? 'none' : 'block';
+}
+function setIDOR(v) { document.getElementById('idor-id').value = v; simulateIDOR(); }
+simulateIDOR();
+</script>
+</body>
+</html>

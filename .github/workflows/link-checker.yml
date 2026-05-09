@@ -1,0 +1,43 @@
+name: Link Checker
+on:
+  schedule:
+    - cron: '0 0 * * 1'   # Every Monday 00:00 UTC
+  push:
+    branches: [main]
+  workflow_dispatch:       # Manual trigger
+
+jobs:
+  link-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check HTML links
+        uses: lycheeverse/lychee-action@v1
+        with:
+          args: |
+            --verbose
+            --no-progress
+            --accept 200,206,429
+            --timeout 20
+            --max-retries 3
+            './**/*.html'
+            './**/*.md'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        continue-on-error: true   # Don't fail build on dead links
+
+      - name: Create issue if links broken
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: '🔗 Broken links detected',
+              body: 'The weekly link checker found broken links. Check the Actions log.',
+              labels: ['bug', 'automated']
+            })
+
+

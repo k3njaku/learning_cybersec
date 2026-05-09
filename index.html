@@ -10,13 +10,15 @@
 
 <div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
 
-<!-- TOP BAR (every page has this) -->
+<!-- TOP BAR -->
 <div class="topbar">
   <a class="logo" href="index.html">☕ CYBERSEC.VAULT</a>
   <nav>
     <a href="index.html" class="active">Home</a>
-    <a href="index.html#topics-web">Topics</a>
-    <a href="index.html#topics-python">Python</a>
+    <a href="00-Prerequisites/index.html">Start Here</a>
+    <a href="index.html#topics-web">Web Attacks</a>
+    <a href="04-Privilege-Escalation/linux-privesc/index.html">PrivEsc</a>
+    <a href="07-Career-Resources/bug-bounty-methodology/index.html">Bug Bounty</a>
     <a href="glossary/index.html">Glossary</a>
     <a href="tryhackme/index.html">THM</a>
     <a href="htb-academy/index.html">HTB</a>
@@ -31,14 +33,72 @@
 <!-- HERO -->
 <section class="hero">
   <div class="hero-content">
-    <span class="coffee-badge">☕ web app pentest · bug bounty · random itches</span>
+    <span class="coffee-badge">☕ web app pentest · bug bounty · privesc · CTF</span>
     <h1>The Vault</h1>
-    <p class="subtitle">Built for the path to becoming a <strong style="color: var(--accent);">sick web app pentester</strong>.<br>Bug bounties are the mission. Side quests welcome.</p>
+    <p class="subtitle">Built for the path to becoming a <strong style="color: var(--accent);">sick web app pentester</strong>.<br>
+    Bug bounties are the mission. Side quests welcome.</p>
     <div class="tagline">"if it's not interactive, it doesn't count."</div>
     <div style="margin-top: 24px; display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
-      <a href="labs/portswigger/index.html" class="cta-btn">Start PortSwigger Labs 🧪</a>
-      <a href="topics/web/sql-injection/index.html" class="cta-btn ghost">SQLi Theory 💉</a>
-      <a href="glossary/index.html" class="cta-btn ghost">Glossary 📖</a>
+      <a href="00-Prerequisites/hacking-mindset/index.html" class="cta-btn">New? Start Here 🧠</a>
+      <a href="topics/web/sql-injection/index.html" class="cta-btn ghost">SQLi 💉</a>
+      <a href="02-Web-App-Attacks/xss/index.html" class="cta-btn ghost">XSS 🌐</a>
+      <a href="07-Career-Resources/bug-bounty-methodology/index.html" class="cta-btn ghost">Bug Bounty 💰</a>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ NEW: QUICK START PATHS ═══ -->
+<section class="chapter" id="paths">
+  <div class="chapter-num">Choose Your Path // 🗺️ Where do you want to go?</div>
+  <h2><span class="emoji">🎯</span> Pick a learning path</h2>
+  <p class="lead">Not sure where to start? Pick a goal and follow the path. Everything links together.</p>
+
+  <div class="grid cols-2" style="margin-top: 24px;">
+    <div class="card" style="border-color: rgba(0,255,157,0.4);">
+      <div class="card-badge">Most Popular</div>
+      <h4>💰 Bug Bounty Hunter</h4>
+      <p style="color: var(--ink-dim); margin-bottom: 14px;">Learn to find real vulnerabilities in real companies and get paid for it.</p>
+      <div style="font-family: var(--mono); font-size: 12px; color: var(--ink-mute); line-height: 2;">
+        <a href="00-Prerequisites/hacking-mindset/index.html" style="color: var(--accent-3);">① How To Start Hacking</a><br>
+        <a href="00-Prerequisites/linux-essentials/index.html" style="color: var(--accent-3);">② Linux Essentials</a><br>
+        <a href="topics/web/sql-injection/index.html" style="color: var(--accent-3);">③ SQL Injection</a><br>
+        <a href="02-Web-App-Attacks/xss/index.html" style="color: var(--accent-3);">④ XSS</a><br>
+        <a href="07-Career-Resources/bug-bounty-methodology/index.html" style="color: var(--accent-3);">⑤ Bug Bounty Methodology →</a>
+      </div>
+    </div>
+
+    <div class="card" style="border-color: rgba(255,46,99,0.4);">
+      <h4>🔓 OSCP / CTF Player</h4>
+      <p style="color: var(--ink-dim); margin-bottom: 14px;">Crack machines on HackTheBox and TryHackMe. Prep for OSCP certification.</p>
+      <div style="font-family: var(--mono); font-size: 12px; color: var(--ink-mute); line-height: 2;">
+        <a href="00-Prerequisites/linux-essentials/index.html" style="color: var(--accent-3);">① Linux Essentials</a><br>
+        <a href="topics/web/sql-injection/index.html" style="color: var(--accent-3);">② SQL Injection</a><br>
+        <a href="04-Privilege-Escalation/linux-privesc/index.html" style="color: var(--accent-3);">③ Linux PrivEsc</a><br>
+        <a href="tryhackme/index.html" style="color: var(--accent-3);">④ TryHackMe Rooms</a><br>
+        <a href="htb-academy/index.html" style="color: var(--accent-3);">⑤ HTB Academy →</a>
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>🐣 Complete Beginner</h4>
+      <p style="color: var(--ink-dim); margin-bottom: 14px;">Never used a terminal before. Start here, go slow, learn everything.</p>
+      <div style="font-family: var(--mono); font-size: 12px; color: var(--ink-mute); line-height: 2;">
+        <a href="00-Prerequisites/hacking-mindset/index.html" style="color: var(--accent-3);">① What is hacking? (read first)</a><br>
+        <a href="00-Prerequisites/linux-essentials/index.html" style="color: var(--accent-3);">② Linux terminal basics</a><br>
+        <a href="glossary/index.html" style="color: var(--accent-3);">③ Glossary (look up anything)</a><br>
+        <a href="tryhackme/index.html" style="color: var(--accent-3);">④ TryHackMe rooms →</a>
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>⚡ Already Have Skills</h4>
+      <p style="color: var(--ink-dim); margin-bottom: 14px;">Know the basics. Want to go deeper into specific attack techniques.</p>
+      <div style="font-family: var(--mono); font-size: 12px; color: var(--ink-mute); line-height: 2;">
+        <a href="02-Web-App-Attacks/xss/index.html" style="color: var(--accent-3);">→ XSS (3 types + live playgrounds)</a><br>
+        <a href="04-Privilege-Escalation/linux-privesc/index.html" style="color: var(--accent-3);">→ Linux PrivEsc (sudo, SUID, cron)</a><br>
+        <a href="07-Career-Resources/bug-bounty-methodology/index.html" style="color: var(--accent-3);">→ Bug Bounty methodology</a><br>
+        <a href="labs/portswigger/index.html" style="color: var(--accent-3);">→ PortSwigger labs →</a>
+      </div>
     </div>
   </div>
 </section>
@@ -50,7 +110,7 @@
   <div class="grid cols-3">
     <div class="card">
       <h4>📚 Topics</h4>
-      <p>Long-form interactive pages on big subjects: SQLi, XSS, CSRF, auth, etc. Each is a full experience with playgrounds + quizzes.</p>
+      <p>Long-form interactive pages on big subjects: SQLi, XSS, CSRF, PrivEsc, etc. Each is a full experience with playgrounds + quizzes.</p>
     </div>
     <div class="card">
       <h4>📖 Glossary</h4>
@@ -75,6 +135,54 @@
   </div>
 </section>
 
+<div class="divider">prerequisites · start here</div>
+
+<!-- ═══ NEW: PREREQUISITES SECTION ═══ -->
+<section class="chapter" id="prerequisites">
+  <div class="chapter-num">00 // 🐣 Before You Hack Anything</div>
+  <h2>🧱 Prerequisites</h2>
+  <p class="lead">The foundation that makes everything else click. Skip this and you'll get stuck every single time.</p>
+
+  <div class="grid cols-2">
+    <a class="card is-link" href="00-Prerequisites/hacking-mindset/index.html">
+      <div class="card-badge">Read First</div>
+      <h4>🧠 How To Start Hacking</h4>
+      <p>The hacker mindset. Roadmap from zero to first shell. VM setup, essential tools, free resources. Interactive learning path + quiz.</p>
+      <div style="font-family: var(--mono); font-size: 11px; color: var(--ink-mute); margin-top: 10px;">
+        <span style="margin-right:8px;">#beginner</span>
+        <span style="margin-right:8px;">#mindset</span>
+        <span style="margin-right:8px;">#roadmap</span>
+        <span style="margin-right:8px;">#setup</span>
+      </div>
+      <div class="progress"><div style="width: 100%;"></div></div>
+    </a>
+
+    <a class="card is-link" href="00-Prerequisites/linux-essentials/index.html">
+      <h4>🐧 Linux Essentials</h4>
+      <p>The terminal commands every hacker must know. File system, permissions, networking, processes, reverse shells. Live interactive terminal built in.</p>
+      <div style="font-family: var(--mono); font-size: 11px; color: var(--ink-mute); margin-top: 10px;">
+        <span style="margin-right:8px;">#linux</span>
+        <span style="margin-right:8px;">#terminal</span>
+        <span style="margin-right:8px;">#permissions</span>
+        <span style="margin-right:8px;">#beginner</span>
+      </div>
+      <div class="progress"><div style="width: 100%;"></div></div>
+    </a>
+
+    <div class="card" style="opacity: 0.55;">
+      <div class="card-badge warn">COMING</div>
+      <h4>🌐 Networking 101</h4>
+      <p>TCP/IP, DNS, HTTP request lifecycle, OSI model. How data travels the internet — and where attackers intercept it.</p>
+    </div>
+
+    <div class="card" style="opacity: 0.55;">
+      <div class="card-badge warn">COMING</div>
+      <h4>🔥 Burp Suite Setup</h4>
+      <p>Install, configure the proxy, import the CA cert. Everything to intercept HTTPS before you start hunting.</p>
+    </div>
+  </div>
+</section>
+
 <div class="divider">topics in the vault</div>
 
 <!-- PRIMARY LANE: WEB APP PENTESTING -->
@@ -84,7 +192,118 @@
   <p class="lead">This is the main grind. OWASP Top 10, Burp workflows, real-world CVEs, bug bounty methodology.</p>
 
   <div class="grid cols-2" id="topicsGridWeb">
-    <!-- Populated by script -->
+    <!-- Existing topics populated by script below -->
+  </div>
+
+  <!-- New live pages + remaining coming soon -->
+  <div class="grid cols-2" style="margin-top: 0;" id="webExtras">
+    <a class="card is-link" href="02-Web-App-Attacks/xss/index.html">
+      <div class="card-badge">LIVE ✅</div>
+      <h4>🌐 XSS (Cross-Site Scripting)</h4>
+      <p>Inject JS into other users' browsers. Reflected, Stored, and DOM-based — all 3 types with live playgrounds, cookie stealer demos, and real CVEs.</p>
+      <div style="font-family: var(--mono); font-size: 11px; color: var(--ink-mute); margin-top: 10px;">
+        <span style="margin-right:8px;">#xss</span>
+        <span style="margin-right:8px;">#owasp-a03</span>
+        <span style="margin-right:8px;">#intermediate</span>
+      </div>
+      <div class="progress"><div style="width: 100%;"></div></div>
+    </a>
+
+    <div class="card" style="opacity: 0.55;">
+      <div class="card-badge warn">COMING</div>
+      <h4>🎭 CSRF</h4>
+      <p>Trick a logged-in user's browser into making state-changing requests they didn't intend.</p>
+    </div>
+    <div class="card" style="opacity: 0.55;">
+      <div class="card-badge warn">COMING</div>
+      <h4>📡 SSRF</h4>
+      <p>Make the server send requests you want — internal services, cloud metadata, pivot points.</p>
+    </div>
+    <div class="card" style="opacity: 0.55;">
+      <div class="card-badge warn">COMING</div>
+      <h4>🔐 JWT Attacks</h4>
+      <p>Algorithm confusion, none-alg bypass, weak secret cracking. Broken auth is OWASP #7.</p>
+    </div>
+  </div>
+</section>
+
+<div class="divider">privilege escalation</div>
+
+<!-- ═══ NEW: PRIVILEGE ESCALATION SECTION ═══ -->
+<section class="chapter" id="privesc">
+  <div class="chapter-num">04 // 🪜 Post-Exploitation</div>
+  <h2>🔓 Privilege Escalation</h2>
+  <p class="lead">You have a shell. Now get root. The techniques that separate pentesters from script kiddies.</p>
+
+  <div class="grid cols-2">
+    <a class="card is-link" href="04-Privilege-Escalation/linux-privesc/index.html">
+      <div class="card-badge">LIVE ✅</div>
+      <h4>🐧 Linux PrivEsc</h4>
+      <p>sudo abuse, SUID exploitation, cron job hijacking, PATH abuse, capabilities, and passwords in plaintext. Interactive decision tree + 20-step checklist. Essential for OSCP.</p>
+      <div style="font-family: var(--mono); font-size: 11px; color: var(--ink-mute); margin-top: 10px;">
+        <span style="margin-right:8px;">#privesc</span>
+        <span style="margin-right:8px;">#oscp</span>
+        <span style="margin-right:8px;">#linux</span>
+        <span style="margin-right:8px;">#intermediate</span>
+      </div>
+      <div class="progress"><div style="width: 100%;"></div></div>
+    </a>
+
+    <div class="card" style="opacity: 0.55;">
+      <div class="card-badge warn">COMING</div>
+      <h4>🪟 Windows PrivEsc</h4>
+      <p>Token impersonation, AlwaysInstallElevated, unquoted service paths, registry attacks.</p>
+    </div>
+    <div class="card" style="opacity: 0.55;">
+      <div class="card-badge warn">COMING</div>
+      <h4>🚪 Persistence</h4>
+      <p>Backdoors, scheduled tasks, cron jobs, registry keys. Keep access after a reboot.</p>
+    </div>
+    <div class="card" style="opacity: 0.55;">
+      <div class="card-badge warn">COMING</div>
+      <h4>🔀 Lateral Movement</h4>
+      <p>Pass-the-hash, PsExec, WMI, SMB. Move from machine to machine inside a network.</p>
+    </div>
+  </div>
+</section>
+
+<div class="divider">career resources</div>
+
+<!-- ═══ NEW: CAREER RESOURCES ═══ -->
+<section class="chapter" id="career">
+  <div class="chapter-num">07 // 💼 Turn Skills Into Money</div>
+  <h2>💰 Career Resources</h2>
+  <p class="lead">The skills are only half of it. Here's how to get paid for them.</p>
+
+  <div class="grid cols-2">
+    <a class="card is-link" href="07-Career-Resources/bug-bounty-methodology/index.html">
+      <div class="card-badge">LIVE ✅</div>
+      <h4>💰 Bug Bounty Methodology</h4>
+      <p>The exact recon-to-report workflow used to find real bugs. Subdomain enum, content discovery, the core testing loop, live IDOR playground, copy-paste report template, severity guide.</p>
+      <div style="font-family: var(--mono); font-size: 11px; color: var(--ink-mute); margin-top: 10px;">
+        <span style="margin-right:8px;">#bugbounty</span>
+        <span style="margin-right:8px;">#methodology</span>
+        <span style="margin-right:8px;">#recon</span>
+        <span style="margin-right:8px;">#reporting</span>
+      </div>
+      <div class="progress"><div style="width: 100%;"></div></div>
+    </a>
+
+    <div class="card" style="opacity: 0.55;">
+      <div class="card-badge warn">COMING</div>
+      <h4>📜 Certifications Guide</h4>
+      <p>eJPT vs CEH vs OSCP vs PNPT. Which to get first, how long they take, realistic cost.</p>
+    </div>
+    <div class="card" style="opacity: 0.55;">
+      <div class="card-badge warn">COMING</div>
+      <h4>🎓 OSCP 90-Day Prep</h4>
+      <p>Day-by-day interactive study tracker. Labs, machines, and topics laid out in order.</p>
+    </div>
+    <div class="card" style="opacity: 0.55;">
+      <div class="card-badge warn">COMING</div>
+      <h4>💼 Interview Prep</h4>
+      <p>Common pentester interview questions with answers. Salary ranges. How to talk about your projects.</p>
+    </div>
   </div>
 </section>
 
@@ -93,22 +312,19 @@
   <div class="chapter-num">Weapons Lab // 🐍 Python Projects</div>
   <h2>🕷️ Python as a Weapon</h2>
   <p class="lead">Project-driven Python — every chapter ships working code. Used for scraping gigs AND cybersec scripting. No boring syntax drills.</p>
-
   <div class="grid cols-2" id="topicsGridPython">
-    <!-- Populated by script. -->
+    <!-- Populated by script -->
   </div>
 </section>
 
-<!-- SECONDARY: MISC / RANDOM ITCHES -->
+<!-- MISC -->
 <section class="chapter" id="topics-misc">
   <div class="chapter-num">Side Quests // 🎲 Random Itches</div>
   <h2>🧭 Whatever caught your attention</h2>
   <p class="lead">Networking, crypto, reverse engineering, OS internals — when your brain wants something different.</p>
-
   <div class="grid cols-2" id="topicsGridMisc">
-    <!-- Populated by script. Shows a placeholder if empty. -->
+    <!-- Populated by script -->
   </div>
-
   <div class="callout info" style="margin-top: 30px;">
     <strong>☕ How to add a new topic:</strong> paste a URL, notes, video transcript, or lab description in chat. I'll auto-detect whether it's web-pentest, python, or misc, and build it into the right lane.
   </div>
@@ -165,7 +381,16 @@
 <!-- FOOTER -->
 <footer class="site-foot">
   <p class="coffee-line">The more you break, the more you understand. ☕</p>
-  <p style="font-size: 12px;">Cybersec Learning Vault • Built for your ADHD brain • Private repo, public knowledge</p>
+  <p style="font-size: 12px; color: var(--ink-mute); margin-top: 6px;">
+    Cybersec Learning Vault · Interactive by design · Built for ADHD brains · Private knowledge, public repo
+  </p>
+  <p style="font-size: 11px; color: var(--ink-mute); margin-top: 4px;">
+    <a href="https://github.com/ExploitCraft/learning_cybersec" target="_blank" style="color: var(--ink-mute);">⭐ Star on GitHub</a>
+    &nbsp;·&nbsp;
+    <a href="CONTRIBUTING.md" style="color: var(--ink-mute);">Contribute</a>
+    &nbsp;·&nbsp;
+    <a href="glossary/index.html" style="color: var(--ink-mute);">Glossary</a>
+  </p>
 </footer>
 
 <script src="assets/glossary.js"></script>
@@ -173,8 +398,9 @@
 <script>
   // Render topics by lane
   (function () {
-    const webGrid = document.getElementById('topicsGridWeb');
-    const miscGrid = document.getElementById('topicsGridMisc');
+    const webGrid   = document.getElementById('topicsGridWeb');
+    const miscGrid  = document.getElementById('topicsGridMisc');
+    const pyGrid    = document.getElementById('topicsGridPython');
 
     const cardHTML = t => `
       <a class="card is-link" href="${t.path}">
@@ -188,36 +414,13 @@
         <div style="font-size: 11px; color: var(--ink-mute); font-family: var(--mono); margin-top: 4px;">${Math.round(t.progress * 100)}% of chapters explored</div>
       </a>`;
 
-    const pyGrid = document.getElementById('topicsGridPython');
     const topics = window.SITE_TOPICS || [];
-    const web = topics.filter(t => t.lane === 'web' || !t.lane);
-    const misc = topics.filter(t => t.lane === 'misc');
+    const web    = topics.filter(t => t.lane === 'web' || !t.lane);
+    const misc   = topics.filter(t => t.lane === 'misc');
     const python = topics.filter(t => t.lane === 'python');
 
-    // --- WEB LANE ---
+    // --- WEB LANE (existing data-driven cards only) ---
     webGrid.innerHTML = web.map(cardHTML).join('');
-    // Always show the web roadmap placeholders so upcoming bounty topics are visible
-    webGrid.innerHTML += `
-      <div class="card" style="opacity: 0.5;">
-        <div class="card-badge warn">COMING</div>
-        <h4>🔥 XSS (Cross-Site Scripting)</h4>
-        <p>Inject JS into other users' browsers. Cookie theft, session hijack, account takeover.</p>
-      </div>
-      <div class="card" style="opacity: 0.5;">
-        <div class="card-badge warn">COMING</div>
-        <h4>🎭 CSRF</h4>
-        <p>Trick a logged-in user's browser into making state-changing requests.</p>
-      </div>
-      <div class="card" style="opacity: 0.5;">
-        <div class="card-badge warn">COMING</div>
-        <h4>📡 SSRF</h4>
-        <p>Make the server send requests you want — internal services, cloud metadata, pivot.</p>
-      </div>
-      <div class="card" style="opacity: 0.5;">
-        <div class="card-badge warn">COMING</div>
-        <h4>🔐 Authentication / Access Control</h4>
-        <p>Broken auth, IDOR, JWT flaws, privilege escalation. High bounty impact.</p>
-      </div>`;
 
     // --- PYTHON LANE ---
     if (python.length === 0) {
@@ -253,14 +456,14 @@
     }
   })();
 
-  // THM preview — show paths with their latest rebuilt rooms
+  // THM preview
   (function () {
     const container = document.getElementById('thmPreview');
     const THM = window.SITE_THM || { paths: [] };
     container.innerHTML = THM.paths.map(p => {
       const roomCount = (p.rooms || []).length;
       const preview = roomCount === 0
-        ? `<p style="color: var(--ink-dim); font-size: 0.95rem; margin-top: 8px;">🎲 No rooms rebuilt yet in this path. When one bores you, drop me the URL.</p>`
+        ? `<p style="color: var(--ink-dim); font-size: 0.95rem; margin-top: 8px;">🎲 No rooms rebuilt yet in this path.</p>`
         : `<div class="grid cols-3" style="margin-top: 14px;">${
             p.rooms.slice(0, 3).map(r => `
               <a class="card is-link" href="${r.path}">
@@ -280,14 +483,14 @@
     }).join('');
   })();
 
-  // HTB Academy preview — show modules with their latest sections
+  // HTB Academy preview
   (function () {
     const container = document.getElementById('htbPreview');
     const HTB = window.SITE_HTB || { modules: [] };
     container.innerHTML = HTB.modules.map(m => {
       const sectionCount = (m.sections || []).length;
       const preview = sectionCount === 0
-        ? `<p style="color: var(--ink-dim); font-size: 0.95rem; margin-top: 8px;">🎲 No sections rebuilt yet. Capture a page PDF and drop it in chat.</p>`
+        ? `<p style="color: var(--ink-dim); font-size: 0.95rem; margin-top: 8px;">🎲 No sections rebuilt yet.</p>`
         : `<div class="grid cols-3" style="margin-top: 14px;">${
             m.sections.slice(0, 3).map(s => `
               <a class="card is-link" href="${s.path}">
@@ -307,7 +510,7 @@
     }).join('');
   })();
 
-  // Labs preview — show platforms with their latest tracks + labs
+  // Labs preview
   (function () {
     const container = document.getElementById('labsPreview');
     const LABS = window.SITE_LABS || { platforms: [] };
@@ -351,27 +554,22 @@
     }
     const G = window.GLOSSARY;
     const topicsBySlug = Object.fromEntries(window.SITE_TOPICS.map(t => [t.slug, t]));
-    // Flatten THM rooms into a slug → { room, pathName } map
-    // THM pages use data-page-slug="thm-<room-slug>"
     const thmBySlug = {};
     (window.SITE_THM?.paths || []).forEach(p => {
       (p.rooms || []).forEach(r => { thmBySlug['thm-' + r.slug] = { r, pathName: p.name }; });
     });
-    // Flatten HTB Academy sections: data-page-slug="htb-learning-process-01" etc.
     const htbBySlug = {};
     (window.SITE_HTB?.modules || []).forEach(mod => {
       (mod.sections || []).forEach(s => {
         htbBySlug['htb-' + mod.slug + '-' + s.slug.split('-')[0]] = { s, modName: mod.name };
       });
     });
-    // Flatten labs: data-page-slug="lab-ps-sqli-01" etc., so we match on path instead.
     const labsBySlug = {};
     (window.SITE_LABS?.platforms || []).forEach(plat => {
       (plat.tracks || []).forEach(tr => {
         (tr.labs || []).forEach(lab => {
-          // Common slug patterns the pages use
           labsBySlug['lab-' + plat.slug + '-' + tr.slug.replace(/-injection$/, '-sqli') + '-' + lab.slug.split('-')[0]] = { lab, plat, tr };
-          labsBySlug['lab-ps-sqli-' + lab.slug.split('-')[0]] = { lab, plat, tr }; // explicit form
+          labsBySlug['lab-ps-sqli-' + lab.slug.split('-')[0]] = { lab, plat, tr };
         });
       });
     });

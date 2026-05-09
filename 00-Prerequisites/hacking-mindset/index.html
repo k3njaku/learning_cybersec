@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>How To Start Hacking — Zero to First Shell ☕</title>
+<link rel="stylesheet" href="../../assets/styles.css"/>
+</head>
+<body data-page-slug="hacking-mindset">
+
+<div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
+
+<div class="topbar">
+  <a class="logo" href="../../index.html">☕ CYBERSEC.VAULT</a>
+  <nav>
+    <a href="../../index.html">Home</a>
+    <a href="../index.html" class="active">Prerequisites</a>
+    <a href="../../glossary/index.html">Glossary</a>
+    <a href="../../tryhackme/index.html">THM</a>
+  </nav>
+</div>
+
+<div class="breadcrumb">
+  <a href="../../index.html">Home</a><span class="sep">›</span>
+  <a href="../index.html">00-Prerequisites</a><span class="sep">›</span>
+  <span>How To Start Hacking</span>
+</div>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-content">
+    <span class="coffee-badge">🐣 Beginner · Read This First</span>
+    <h1>How To Start Hacking</h1>
+    <p class="subtitle">No, you don't need a $3,000 laptop. No, you don't need a CS degree.<br>
+    You need curiosity, a browser, and about 20 minutes of your life.</p>
+    <div class="tagline">"Hacking is asking 'what if?' and refusing to accept 'that's not possible.'"</div>
+    <br>
+    <button class="cta-btn" onclick="document.getElementById('mindset').scrollIntoView({behavior:'smooth'})">Let's go 🚀</button>
+  </div>
+</section>
+
+<!-- ═══════════════ CHAPTER 1: MINDSET ═══════════════ -->
+<section class="chapter" id="mindset">
+  <div class="chapter-num">Chapter 01 // The Mindset</div>
+  <h2><span class="emoji">🧠</span> What hacking actually is</h2>
+
+  <p class="lead">Hollywood lied to you. Hacking isn't typing furiously in a dark room while green code rains down the screen. It's something way more interesting.</p>
+
+  <p>Hacking is <strong>understanding systems so deeply you can make them do things they weren't designed to do.</strong> That's it. A locksmith who knows how to open a lock without the key is "hacking" that lock. A chef who uses a technique from physics to cook a perfect egg is "hacking" the kitchen.</p>
+
+  <div class="paper">
+    <h4>The Hacker's Questions 🔍</h4>
+    <ul>
+      <li>What does this system <span class="highlight">expect</span> as input?</li>
+      <li>What happens if I give it something <span class="highlight">unexpected</span>?</li>
+      <li>Who is the system <span class="highlight">trusting</span> and why?</li>
+      <li>What <span class="highlight">assumptions</span> did the developer make?</li>
+    </ul>
+    <p>Every vulnerability in history was found by someone who asked one of these questions.</p>
+  </div>
+
+  <h3>The 3 types of hackers (for real)</h3>
+  <div class="grid cols-3">
+    <div class="card">
+      <div class="card-badge">White Hat</div>
+      <h4>🤍 Ethical Hacker</h4>
+      <p>Has permission. Gets paid to find bugs before criminals do. Bug bounty hunters, pentesters, red team members. This is what you're training for.</p>
+    </div>
+    <div class="card">
+      <div class="card-badge warn">Grey Hat</div>
+      <h4>🩶 Curious Explorer</h4>
+      <p>No permission, but no malicious intent. Usually discloses findings. Legal grey area — not recommended, but historically where many discoveries happened.</p>
+    </div>
+    <div class="card">
+      <div class="card-badge danger">Black Hat</div>
+      <h4>🖤 Criminal</h4>
+      <p>Unauthorized access for personal gain. This is illegal everywhere. Prison time, career destroyed, FBI knocking. Not the path.</p>
+    </div>
+  </div>
+
+  <div class="callout danger">
+    <strong>🚨 The most important rule:</strong> Only hack systems you own or have <em>explicit written permission</em> to test. No exceptions. The techniques here are taught in the context of legal practice environments like TryHackMe, HackTheBox, and bug bounty programs.
+  </div>
+</section>
+
+<div class="divider">// // //</div>
+
+<!-- ═══════════════ CHAPTER 2: THE ACTUAL ROADMAP ═══════════════ -->
+<section class="chapter" id="roadmap">
+  <div class="chapter-num">Chapter 02 // Your Roadmap</div>
+  <h2><span class="emoji">🗺️</span> The real path from zero to hacker</h2>
+
+  <p class="lead">Here's the thing nobody tells you: there's no single path. But there IS an order that makes sense. Skip the fundamentals and you'll get stuck every time.</p>
+
+  <!-- INTERACTIVE ROADMAP -->
+  <div class="playground" id="roadmap-interactive">
+    <div class="playground-header">
+      <h4>🗺️ Interactive Roadmap — Click a stage to see what to learn</h4>
+    </div>
+    <div style="display:grid; gap:10px;">
+      <!-- Stage 1 -->
+      <div style="display:flex; gap:14px; align-items:flex-start; cursor:pointer; padding:14px; background:rgba(0,255,157,0.05); border:1px solid rgba(0,255,157,0.2); border-radius:8px;" onclick="toggleStage('s1')">
+        <div style="background:var(--accent); color:#000; font-weight:900; width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0;">1</div>
+        <div style="flex:1;">
+          <div style="font-weight:700; font-size:1.05rem;">Linux Basics + Networking Fundamentals</div>
+          <div style="color:var(--ink-dim); font-size:0.9rem;">4–6 weeks · Non-negotiable foundation</div>
+          <div id="s1" style="display:none; margin-top:12px;">
+            <p style="color:var(--ink-dim); margin-bottom:8px;">You need to be comfortable with a terminal before you can hack anything. Think of it as learning to walk before you run.</p>
+            <div class="code">
+# Commands you MUST know before moving on:
+ls -la          # list files (including hidden)
+cd /etc         # change directory
+cat /etc/passwd # read a file
+grep "root" file.txt  # search in files
+find / -name "*.conf" 2>/dev/null  # find files
+chmod +x script.sh   # make executable
+sudo -l         # what can I run as root?
+ps aux          # running processes
+netstat -tulpn  # open ports
+            </div>
+            <div class="callout info"><strong>📚 Resource:</strong> Linux Fundamentals on TryHackMe is FREE and the best starting point. Do parts 1, 2, and 3. → <a href="https://tryhackme.com/module/linux-fundamentals" target="_blank">tryhackme.com/module/linux-fundamentals</a></div>
+          </div>
+        </div>
+        <span style="color:var(--ink-mute); font-size:0.8rem;">click ▾</span>
+      </div>
+
+      <!-- Stage 2 -->
+      <div style="display:flex; gap:14px; align-items:flex-start; cursor:pointer; padding:14px; background:rgba(0,212,255,0.05); border:1px solid rgba(0,212,255,0.2); border-radius:8px;" onclick="toggleStage('s2')">
+        <div style="background:var(--accent-3); color:#000; font-weight:900; width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0;">2</div>
+        <div style="flex:1;">
+          <div style="font-weight:700; font-size:1.05rem;">How the Web Works (HTTP, DNS, Cookies)</div>
+          <div style="color:var(--ink-dim); font-size:0.9rem;">2–3 weeks · Required for web app hacking</div>
+          <div id="s2" style="display:none; margin-top:12px;">
+            <p style="color:var(--ink-dim); margin-bottom:8px;">Every web vulnerability is just the web working in a way it wasn't supposed to. You need to understand how it's <em>supposed</em> to work first.</p>
+            <div class="grid cols-2">
+              <div class="card">
+                <h4>What you need to understand:</h4>
+                <ul style="color:var(--ink-dim); padding-left:20px; font-size:0.9rem;">
+                  <li>HTTP request/response cycle</li>
+                  <li>GET vs POST requests</li>
+                  <li>What are cookies &amp; sessions?</li>
+                  <li>How DNS resolves domain names</li>
+                  <li>What is a web server / web app?</li>
+                  <li>Same-Origin Policy (critical for XSS/CSRF)</li>
+                </ul>
+              </div>
+              <div class="card">
+                <h4>Tools to install NOW:</h4>
+                <ul style="color:var(--ink-dim); padding-left:20px; font-size:0.9rem;">
+                  <li>🔥 <strong>Burp Suite Community</strong> (FREE) — intercept every HTTP request</li>
+                  <li>🦊 Firefox + FoxyProxy extension</li>
+                  <li>🐧 Kali Linux (VM or WSL)</li>
+                  <li>🐳 Docker Desktop (for labs)</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+        <span style="color:var(--ink-mute); font-size:0.8rem;">click ▾</span>
+      </div>
+
+      <!-- Stage 3 -->
+      <div style="display:flex; gap:14px; align-items:flex-start; cursor:pointer; padding:14px; background:rgba(255,182,39,0.05); border:1px solid rgba(255,182,39,0.2); border-radius:8px;" onclick="toggleStage('s3')">
+        <div style="background:var(--warn); color:#000; font-weight:900; width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0;">3</div>
+        <div style="flex:1;">
+          <div style="font-weight:700; font-size:1.05rem;">OWASP Top 10 — The Core Vulnerabilities</div>
+          <div style="color:var(--ink-dim); font-size:0.9rem;">4–8 weeks · This is where the fun starts</div>
+          <div id="s3" style="display:none; margin-top:12px;">
+            <p style="color:var(--ink-dim); margin-bottom:8px;">The OWASP Top 10 is the industry's list of the most common and dangerous web vulnerabilities. Learn every single one. These are what you'll find on bug bounty programs.</p>
+            <div class="code">
+A01: Broken Access Control      ← IDOR, privilege escalation
+A02: Cryptographic Failures     ← weak passwords, HTTP not HTTPS
+A03: Injection                  ← SQLi, Command injection, SSTI
+A04: Insecure Design            ← logic flaws, business logic bugs
+A05: Security Misconfiguration  ← open S3 buckets, default creds
+A06: Vulnerable Components      ← outdated libraries (CVEs)
+A07: Auth Failures              ← weak session management, JWT bugs
+A08: Software Integrity Failures← supply chain attacks
+A09: Logging Failures           ← you won't find these in bounties
+A10: SSRF                       ← cloud metadata endpoint leaks
+            </div>
+            <div class="callout success"><strong>✅ Where to practice:</strong> <a href="https://portswigger.net/web-security" target="_blank">PortSwigger Web Security Academy</a> — free, browser-based labs for every single vulnerability above. This is the best free resource on the planet.</div>
+          </div>
+        </div>
+        <span style="color:var(--ink-mute); font-size:0.8rem;">click ▾</span>
+      </div>
+
+      <!-- Stage 4 -->
+      <div style="display:flex; gap:14px; align-items:flex-start; cursor:pointer; padding:14px; background:rgba(255,46,99,0.05); border:1px solid rgba(255,46,99,0.2); border-radius:8px;" onclick="toggleStage('s4')">
+        <div style="background:var(--accent-2); color:#fff; font-weight:900; width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0;">4</div>
+        <div style="flex:1;">
+          <div style="font-weight:700; font-size:1.05rem;">CTFs + HackTheBox/TryHackMe Machines</div>
+          <div style="color:var(--ink-dim); font-size:0.9rem;">Ongoing · Real skills from real practice</div>
+          <div id="s4" style="display:none; margin-top:12px;">
+            <p style="color:var(--ink-dim); margin-bottom:8px;">Theory alone won't get you there. You need to break real (practice) systems. CTFs are competitions with intentionally vulnerable machines. You learn more from 1 hour of failing on HTB than 10 hours of reading.</p>
+            <div class="grid cols-2">
+              <div class="card">
+                <h4>🟢 Start Here (Beginner)</h4>
+                <ul style="color:var(--ink-dim); padding-left:20px; font-size:0.9rem;">
+                  <li><a href="https://tryhackme.com" target="_blank">TryHackMe</a> — guided, has hints</li>
+                  <li>Jr Penetration Tester path</li>
+                  <li>Complete Beginner path</li>
+                  <li>PicoCTF (browser-based CTFs)</li>
+                </ul>
+              </div>
+              <div class="card">
+                <h4>🔴 Level Up (Intermediate)</h4>
+                <ul style="color:var(--ink-dim); padding-left:20px; font-size:0.9rem;">
+                  <li><a href="https://hackthebox.com" target="_blank">HackTheBox</a> — harder, no hints</li>
+                  <li>IppSec's YouTube walkthroughs</li>
+                  <li>CTFtime.org — find competitions</li>
+                  <li>HTB Starting Point machines</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+        <span style="color:var(--ink-mute); font-size:0.8rem;">click ▾</span>
+      </div>
+
+      <!-- Stage 5 -->
+      <div style="display:flex; gap:14px; align-items:flex-start; cursor:pointer; padding:14px; background:rgba(0,255,157,0.05); border:1px solid rgba(0,255,157,0.15); border-radius:8px;" onclick="toggleStage('s5')">
+        <div style="background:linear-gradient(135deg,var(--accent),var(--accent-2)); color:#000; font-weight:900; width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0;">5</div>
+        <div style="flex:1;">
+          <div style="font-weight:700; font-size:1.05rem;">💰 Bug Bounty — Get Paid For Real</div>
+          <div style="color:var(--ink-dim); font-size:0.9rem;">After ~3–6 months of practice</div>
+          <div id="s5" style="display:none; margin-top:12px;">
+            <p style="color:var(--ink-dim); margin-bottom:8px;">Bug bounty programs pay real money for real vulnerabilities in real companies' systems. This is the endgame for web app hackers.</p>
+            <div class="code">
+Best platforms to start:
+→ HackerOne  (hackerone.com)   — largest, most public programs
+→ Bugcrowd   (bugcrowd.com)    — good for beginners
+→ Intigriti  (intigriti.com)   — European companies
+→ YesWeHack  (yeswehack.com)   — growing fast
+
+Start with programs that have:
+✓ "Public" scope (any tester can join)
+✓ Wide scope (many endpoints allowed)
+✓ A history of paying low-severity bugs
+✓ A "no previous findings" rate &lt; 90%
+
+NEVER test outside scope. Read the policy 3x.
+            </div>
+          </div>
+        </div>
+        <span style="color:var(--ink-mute); font-size:0.8rem;">click ▾</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider">// // //</div>
+
+<!-- ═══════════════ CHAPTER 3: YOUR FIRST MACHINE ═══════════════ -->
+<section class="chapter" id="first-machine">
+  <div class="chapter-num">Chapter 03 // Your First Machine</div>
+  <h2><span class="emoji">💻</span> Set up your hacking environment — right now</h2>
+
+  <p class="lead">Stop reading about hacking and start doing it. Here's the exact setup that gets you from zero to practicing in under an hour.</p>
+
+  <h3>Option A: Kali Linux VM (Recommended)</h3>
+  <p>Kali is a Linux distro built specifically for hacking. It comes pre-installed with 300+ security tools. You run it in a virtual machine so it's isolated from your main OS.</p>
+
+  <div class="code">
+# Step 1: Download VirtualBox (FREE)
+# → https://virtualbox.org → Download VirtualBox
+
+# Step 2: Download Kali Linux VM image (pre-built, no install needed!)
+# → https://kali.org/get-kali → Virtual Machines → VirtualBox
+
+# Step 3: Import it
+# VirtualBox → File → Import Appliance → select the .ova file
+
+# Default credentials:
+Username: kali
+Password: kali
+
+# First thing to do after boot:
+sudo apt update && sudo apt upgrade -y
+  </div>
+
+  <div class="callout info">
+    <strong>💡 RAM tip:</strong> Give the VM at least 4GB RAM and 2 CPU cores. 8GB RAM preferred. Your laptop needs at least 8GB total for this to work smoothly.
+  </div>
+
+  <h3>Option B: TryHackMe AttackBox (No install needed)</h3>
+  <p>TryHackMe has a browser-based Kali machine called AttackBox. Free users get 1 hour/day. Premium gets unlimited. Perfect if you can't install a VM.</p>
+
+  <div class="code">
+# Access the AttackBox:
+# 1. Sign up at tryhackme.com (FREE)
+# 2. Start any room
+# 3. Click "Start AttackBox" button
+# 4. Wait 2 minutes → full Kali Linux in your browser
+# No downloads. No VM. Just a browser tab.
+  </div>
+
+  <h3>Option C: WSL2 (Windows users)</h3>
+  <div class="code">
+# Open PowerShell as Administrator:
+wsl --install -d kali-linux
+
+# After reboot, open Kali from Start menu
+# First setup:
+sudo apt update
+sudo apt install -y kali-tools-web kali-tools-information-gathering
+
+# Install Burp Suite for Windows separately:
+# → portswigger.net/burp/communitydownload
+  </div>
+
+  <h3>Essential Tools — Learn These First</h3>
+  <div class="grid cols-2">
+    <div class="card">
+      <h4>🔥 Burp Suite (Web Hacking #1)</h4>
+      <p style="color:var(--ink-dim); font-size:0.9rem;">A proxy that sits between your browser and the website. Every request goes through it. You can see, modify, repeat, and fuzz every single HTTP request. Absolutely essential for web app hacking.</p>
+      <div class="code" style="font-size:12px; margin-top:8px;">
+# Free Community Edition:
+# portswigger.net/burp/communitydownload
+# Set Firefox proxy: 127.0.0.1:8080
+# Install CA cert for HTTPS interception
+      </div>
+    </div>
+    <div class="card">
+      <h4>🗺️ nmap (Reconnaissance #1)</h4>
+      <p style="color:var(--ink-dim); font-size:0.9rem;">Network scanner. Finds open ports, running services, operating systems. First thing you run on any target. "What can I even attack here?"</p>
+      <div class="code" style="font-size:12px; margin-top:8px;">
+# Basic scan:
+nmap -sV -sC TARGET_IP
+
+# More aggressive (takes longer):
+nmap -A -p- TARGET_IP
+
+# -sV: detect service versions
+# -sC: run default scripts
+# -A:  all of the above + more
+      </div>
+    </div>
+    <div class="card">
+      <h4>🕷️ gobuster (Directory Discovery)</h4>
+      <p style="color:var(--ink-dim); font-size:0.9rem;">Brute-forces hidden directories and files on web servers. Found /admin or /backup on countless real sites. Combined with Burp, it reveals the full attack surface.</p>
+      <div class="code" style="font-size:12px; margin-top:8px;">
+gobuster dir \
+  -u http://target.com \
+  -w /usr/share/wordlists/dirbuster/directory-list-2.3-medium.txt \
+  -x php,html,txt \
+  -t 50
+      </div>
+    </div>
+    <div class="card">
+      <h4>🔑 hydra (Password Attacks)</h4>
+      <p style="color:var(--ink-dim); font-size:0.9rem;">Brute-force login forms, SSH, FTP, and 50+ other protocols. Default credentials and weak passwords are still one of the most common vulnerabilities found in real engagements.</p>
+      <div class="code" style="font-size:12px; margin-top:8px;">
+# SSH brute force:
+hydra -l admin -P /usr/share/wordlists/rockyou.txt \
+  TARGET_IP ssh
+
+# Web login form:
+hydra -l admin -P rockyou.txt \
+  TARGET_IP http-post-form \
+  "/login:user=^USER^&pass=^PASS^:Invalid"
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider">// // //</div>
+
+<!-- ═══════════════ CHAPTER 4: THINKING LIKE A HACKER ═══════════════ -->
+<section class="chapter" id="methodology">
+  <div class="chapter-num">Chapter 04 // Methodology</div>
+  <h2><span class="emoji">🎯</span> How to actually approach a target</h2>
+
+  <p class="lead">Random clicking around a website won't find bugs. Real hackers follow a methodology. Here's the exact thought process.</p>
+
+  <div class="playground">
+    <div class="playground-header"><h4>🎯 The Pentesting Lifecycle — What happens in what order</h4></div>
+    <div style="display:grid; gap:8px;">
+      <div style="display:flex; gap:14px; padding:14px; background:rgba(0,255,157,0.05); border-radius:8px; align-items:center;">
+        <div style="background:var(--accent); color:#000; font-weight:900; padding:6px 12px; border-radius:6px; font-family:var(--mono); font-size:13px; flex-shrink:0;">Phase 1</div>
+        <div>
+          <div style="font-weight:700;">🔍 Reconnaissance (Recon)</div>
+          <div style="color:var(--ink-dim); font-size:0.9rem;">Collect information WITHOUT touching the target. Subdomain enumeration, WHOIS lookups, Google dorks, Shodan, LinkedIn employee research, GitHub leaks. The more you know before attacking, the more targeted your attacks are.</div>
+        </div>
+      </div>
+      <div style="display:flex; gap:14px; padding:14px; background:rgba(0,212,255,0.05); border-radius:8px; align-items:center;">
+        <div style="background:var(--accent-3); color:#000; font-weight:900; padding:6px 12px; border-radius:6px; font-family:var(--mono); font-size:13px; flex-shrink:0;">Phase 2</div>
+        <div>
+          <div style="font-weight:700;">🔎 Scanning &amp; Enumeration</div>
+          <div style="color:var(--ink-dim); font-size:0.9rem;">Now you interact with the target. Port scanning with nmap, directory brute-forcing with gobuster, technology fingerprinting with Wappalyzer, finding hidden parameters with arjun. Map the full attack surface.</div>
+        </div>
+      </div>
+      <div style="display:flex; gap:14px; padding:14px; background:rgba(255,182,39,0.05); border-radius:8px; align-items:center;">
+        <div style="background:var(--warn); color:#000; font-weight:900; padding:6px 12px; border-radius:6px; font-family:var(--mono); font-size:13px; flex-shrink:0;">Phase 3</div>
+        <div>
+          <div style="font-weight:700;">💥 Exploitation</div>
+          <div style="color:var(--ink-dim); font-size:0.9rem;">Test your hypotheses. Inject SQL payloads. Try XSS in input fields. Attempt auth bypass. Fuzz parameters. Use Metasploit for known CVEs. This is the creative phase — you're an artist now.</div>
+        </div>
+      </div>
+      <div style="display:flex; gap:14px; padding:14px; background:rgba(255,46,99,0.05); border-radius:8px; align-items:center;">
+        <div style="background:var(--accent-2); color:#fff; font-weight:900; padding:6px 12px; border-radius:6px; font-family:var(--mono); font-size:13px; flex-shrink:0;">Phase 4</div>
+        <div>
+          <div style="font-weight:700;">🚪 Post-Exploitation</div>
+          <div style="color:var(--ink-dim); font-size:0.9rem;">You got in. Now what? In CTFs: find the flag. In pentests: demonstrate impact (can you reach other systems? steal data?). In bug bounties: document the vuln clearly for the report.</div>
+        </div>
+      </div>
+      <div style="display:flex; gap:14px; padding:14px; background:rgba(0,255,157,0.05); border-radius:8px; align-items:center;">
+        <div style="background:linear-gradient(135deg,var(--accent),var(--accent-2)); color:#000; font-weight:900; padding:6px 12px; border-radius:6px; font-family:var(--mono); font-size:13px; flex-shrink:0;">Phase 5</div>
+        <div>
+          <div style="font-weight:700;">📝 Reporting</div>
+          <div style="color:var(--ink-dim); font-size:0.9rem;">Write up what you found, how you found it, and the impact. In bug bounties, a clear professional report gets paid. A vague report gets rejected. Learn to write these well.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider">// // //</div>
+
+<!-- ═══════════════ CHAPTER 5: FREE RESOURCES ═══════════════ -->
+<section class="chapter" id="resources">
+  <div class="chapter-num">Chapter 05 // Free Resources</div>
+  <h2><span class="emoji">📚</span> Everything you need is free</h2>
+
+  <p class="lead">You don't need to spend money on courses. Here's the full free stack that will take you from zero to your first bug bounty.</p>
+
+  <h3>Learning Platforms (Hands-On)</h3>
+  <div class="grid cols-2">
+    <a class="card is-link" href="https://tryhackme.com" target="_blank">
+      <h4>🟢 TryHackMe</h4>
+      <p>Best for beginners. Guided rooms with hints, browser-based machines, structured paths. Free tier is enough to get started. Start with "Jr Penetration Tester" path.</p>
+      <div class="card-badge">FREE tier</div>
+    </a>
+    <a class="card is-link" href="https://portswigger.net/web-security" target="_blank">
+      <h4>🔶 PortSwigger Web Security Academy</h4>
+      <p>100% free. Browser-based labs. Made by the creators of Burp Suite. The absolute best resource for web app hacking. Do every single lab.</p>
+      <div class="card-badge">100% FREE</div>
+    </a>
+    <a class="card is-link" href="https://hackthebox.com" target="_blank">
+      <h4>🔴 HackTheBox</h4>
+      <p>Harder than THM, no hand-holding. Retired machines have walkthroughs by IppSec on YouTube. Free tier has plenty. Start with "Starting Point" machines.</p>
+      <div class="card-badge">FREE tier</div>
+    </a>
+    <a class="card is-link" href="https://www.hacker101.com" target="_blank">
+      <h4>💰 Hacker101 (HackerOne)</h4>
+      <p>Free web security course made by HackerOne. Includes CTF challenges that let you earn private program invites on HackerOne. Directly connected to bug bounties.</p>
+      <div class="card-badge">100% FREE</div>
+    </a>
+  </div>
+
+  <h3>YouTube Channels (Watch these)</h3>
+  <div class="grid cols-3">
+    <div class="card">
+      <h4>📺 IppSec</h4>
+      <p style="color:var(--ink-dim); font-size:0.9rem;">Solves every retired HTB machine. The gold standard. Watch his methodology, not just the solution. Search "ippsec.rocks" to find videos by technique.</p>
+    </div>
+    <div class="card">
+      <h4>📺 TCM Security (TCMSec)</h4>
+      <p style="color:var(--ink-dim); font-size:0.9rem;">Practical ethical hacking courses. His free YouTube content covers network pentesting, AD attacks, and methodology. Huge channel, great explanations.</p>
+    </div>
+    <div class="card">
+      <h4>📺 John Hammond</h4>
+      <p style="color:var(--ink-dim); font-size:0.9rem;">CTF walkthroughs, malware analysis, lots of variety. Excellent for seeing how a professional thinks through problems. Watch his CTF content especially.</p>
+    </div>
+    <div class="card">
+      <h4>📺 LiveOverflow</h4>
+      <p style="color:var(--ink-dim); font-size:0.9rem;">Deep technical content. Binary exploitation, browser hacking, CTF. More advanced, but his older videos on "How to get into security" are essential viewing.</p>
+    </div>
+    <div class="card">
+      <h4>📺 NetworkChuck</h4>
+      <p style="color:var(--ink-dim); font-size:0.9rem;">Best for making networking and Linux approachable. High energy, visual learning. Watch his "FREE Ethical Hacking" series for motivation and fundamentals.</p>
+    </div>
+    <div class="card">
+      <h4>📺 NahamSec</h4>
+      <p style="color:var(--ink-dim); font-size:0.9rem;">Bug bounty focused. Live hacking streams. Real methodology for finding real bugs. If bug bounty is your goal, follow everything NahamSec does.</p>
+    </div>
+  </div>
+
+  <h3>Books (Actually worth reading)</h3>
+  <div class="grid cols-2">
+    <div class="card">
+      <h4>📖 The Web Application Hacker's Handbook</h4>
+      <p style="color:var(--ink-dim); font-size:0.9rem;">The bible of web app hacking. Dense, technical, comprehensive. Read it after you've done some labs — it makes more sense with context. Find PDFs freely online.</p>
+    </div>
+    <div class="card">
+      <h4>📖 Bug Bounty Bootcamp (No Starch Press)</h4>
+      <p style="color:var(--ink-dim); font-size:0.9rem;">More modern, written by Vickie Li. Specifically for bug bounty hunters. Covers recon, every vuln type, and reporting. Best book for the bug bounty path.</p>
+    </div>
+  </div>
+
+  <h3>Cheat Sheets (Bookmark these)</h3>
+  <div class="code safe">
+HackTricks:         https://book.hacktricks.xyz   ← Everything, search by technique
+GTFOBins:           https://gtfobins.github.io    ← Unix binary exploitation
+PayloadsAllTheThings: https://github.com/swisskyrepo/PayloadsAllTheThings
+OWASP Testing Guide:  https://owasp.org/www-project-web-security-testing-guide/
+Exploit-DB:         https://exploit-db.com        ← Public CVE exploits
+RevShells:          https://revshells.com         ← Reverse shell generator
+CyberChef:          https://gchq.github.io/CyberChef ← Encode/decode everything
+  </div>
+</section>
+
+<div class="divider">// // //</div>
+
+<!-- ═══════════════ CHAPTER 6: QUIZ ═══════════════ -->
+<section class="chapter" id="quiz">
+  <div class="chapter-num">Chapter 06 // Check Yourself</div>
+  <h2><span class="emoji">🎮</span> Quick-fire quiz</h2>
+
+  <div class="quiz" id="q1">
+    <h4>Question 1 of 4 🎯</h4>
+    <p class="q">You're on a bug bounty program and discover a vulnerability on a subdomain that's NOT listed in the program scope. What do you do?</p>
+    <div class="options">
+      <div class="opt" onclick="answer('q1', this, false)">A. Exploit it fully — the vulnerability exists, it should be fixed</div>
+      <div class="opt" onclick="answer('q1', this, false)">B. Report it immediately, it's clearly a bug</div>
+      <div class="opt" onclick="answer('q1', this, true)">C. Stop immediately, do not test further, and report out-of-scope to the program at your own risk</div>
+      <div class="opt" onclick="answer('q1', this, false)">D. Post it on Twitter for clout</div>
+    </div>
+    <div class="feedback" id="q1-fb"></div>
+  </div>
+
+  <div class="quiz" id="q2">
+    <h4>Question 2 of 4 🎯</h4>
+    <p class="q">What tool would you use to find hidden directories and files on a web server?</p>
+    <div class="options">
+      <div class="opt" onclick="answer('q2', this, false)">A. nmap</div>
+      <div class="opt" onclick="answer('q2', this, true)">B. gobuster or ffuf</div>
+      <div class="opt" onclick="answer('q2', this, false)">C. hydra</div>
+      <div class="opt" onclick="answer('q2', this, false)">D. Wireshark</div>
+    </div>
+    <div class="feedback" id="q2-fb"></div>
+  </div>
+
+  <div class="quiz" id="q3">
+    <h4>Question 3 of 4 🎯</h4>
+    <p class="q">What is the FIRST phase of a penetration test?</p>
+    <div class="options">
+      <div class="opt" onclick="answer('q3', this, false)">A. Exploitation — just start trying things</div>
+      <div class="opt" onclick="answer('q3', this, false)">B. Scanning with nmap</div>
+      <div class="opt" onclick="answer('q3', this, true)">C. Reconnaissance — gather information first</div>
+      <div class="opt" onclick="answer('q3', this, false)">D. Writing the report</div>
+    </div>
+    <div class="feedback" id="q3-fb"></div>
+  </div>
+
+  <div class="quiz" id="q4">
+    <h4>Question 4 of 4 🎯</h4>
+    <p class="q">Which platform is best for a complete beginner who wants to practice hacking with guidance?</p>
+    <div class="options">
+      <div class="opt" onclick="answer('q4', this, false)">A. HackTheBox (zero hints, hard)</div>
+      <div class="opt" onclick="answer('q4', this, true)">B. TryHackMe (guided rooms, beginner-friendly)</div>
+      <div class="opt" onclick="answer('q4', this, false)">C. Bug bounty programs immediately</div>
+      <div class="opt" onclick="answer('q4', this, false)">D. Hacking your school's network</div>
+    </div>
+    <div class="feedback" id="q4-fb"></div>
+  </div>
+</section>
+
+<!-- NEXT STEPS -->
+<section class="chapter">
+  <h3>🚀 What's next?</h3>
+  <div class="grid cols-3">
+    <a class="card is-link" href="../linux-essentials/index.html">
+      <h4>🐧 Linux Essentials</h4>
+      <p>The terminal commands every hacker needs. Hands-on practice.</p>
+      <div class="card-badge">Next →</div>
+    </a>
+    <a class="card is-link" href="../networking-101/index.html">
+      <h4>🌐 Networking 101</h4>
+      <p>TCP/IP, DNS, HTTP — how the internet actually works.</p>
+    </a>
+    <a class="card is-link" href="../../topics/web/sql-injection/index.html">
+      <h4>💉 SQL Injection</h4>
+      <p>Your first web attack. Interactive demos, real CVEs.</p>
+    </a>
+  </div>
+</section>
+
+<script src="../../assets/app.js"></script>
+<script src="../../assets/glossary.js"></script>
+<script>
+function toggleStage(id) {
+  const el = document.getElementById(id);
+  el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+function answer(qid, el, correct) {
+  const opts = el.closest('.quiz').querySelectorAll('.opt');
+  opts.forEach(o => o.style.pointerEvents = 'none');
+  el.classList.add(correct ? 'correct' : 'wrong');
+  const fb = document.getElementById(qid + '-fb');
+  fb.className = 'feedback ' + (correct ? 'win' : 'lose');
+  fb.textContent = correct
+    ? ['🎉 Correct! Nice work!', '✅ Exactly right!', '🔥 You got it!', '💯 Perfect!'][Math.floor(Math.random()*4)]
+    : ['❌ Not quite — try to remember this!', '😅 Nope — check the chapter above!', '💀 Not that one. Re-read Chapter 03!'][Math.floor(Math.random()*3)];
+}
+</script>
+</body>
+</html>

